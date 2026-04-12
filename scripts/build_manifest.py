@@ -7,11 +7,11 @@ Run: python scripts/build_manifest.py
 import os
 import json
 
-BASE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "FBX")
+BASE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fbx")
 ANIM_DIR = os.path.join(BASE, "ANIM")
 POSE_DIR = os.path.join(BASE, "POSE")
 MANIFEST = os.path.join(BASE, "manifest.json")
-TEXTURES_DIR = os.path.join(os.path.dirname(BASE), "TEXTURES")
+TEXTURES_DIR = os.path.join(os.path.dirname(BASE), "textures")
 
 
 def scan():

@@ -11,8 +11,8 @@ import { PropsControls } from './props-controls.js';
 import { TextureLibrary } from './texture-library.js';
 
 // --- Config ---
-const MODEL_PATH = 'FBX/Gloops_skeleton.fbx';
-const MANIFEST_PATH = 'FBX/manifest.json';
+const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
+const MANIFEST_PATH = 'fbx/manifest.json';
 const BG_COLOR = 0x1a1a2e;
 const STORAGE_KEY = 'gloops_preset';
 
@@ -542,7 +542,7 @@ async function init() {
         for (const [catName, catData] of Object.entries(manifestData.categories)) {
             character.registerCategory(catName, catData.type, catData.folder);
             for (const file of catData.files) {
-                const url = `FBX/${catData.folder}/${file}`;
+                const url = `fbx/${catData.folder}/${file}`;
                 loadPromises.push(
                     character.loadItem(catName, file, url).catch(err => {
                         console.warn(`Failed to load ${url}:`, err);

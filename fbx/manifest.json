@@ -43,260 +43,260 @@
         }
     },
     "textures": {
-        "TEXTURES/body_ID": "TEXTURES/body_ID.png",
-        "png/baseCO_0": "TEXTURES/colors/png/baseCO_0.png",
-        "png/baseCO_1": "TEXTURES/colors/png/baseCO_1.png",
-        "png/baseCO_10": "TEXTURES/colors/png/baseCO_10.png",
-        "png/baseCO_11": "TEXTURES/colors/png/baseCO_11.png",
-        "png/baseCO_12": "TEXTURES/colors/png/baseCO_12.png",
-        "png/baseCO_13": "TEXTURES/colors/png/baseCO_13.png",
-        "png/baseCO_14": "TEXTURES/colors/png/baseCO_14.png",
-        "png/baseCO_15": "TEXTURES/colors/png/baseCO_15.png",
-        "png/baseCO_16": "TEXTURES/colors/png/baseCO_16.png",
-        "png/baseCO_17": "TEXTURES/colors/png/baseCO_17.png",
-        "png/baseCO_18": "TEXTURES/colors/png/baseCO_18.png",
-        "png/baseCO_19": "TEXTURES/colors/png/baseCO_19.png",
-        "png/baseCO_2": "TEXTURES/colors/png/baseCO_2.png",
-        "png/baseCO_20": "TEXTURES/colors/png/baseCO_20.png",
-        "png/baseCO_21": "TEXTURES/colors/png/baseCO_21.png",
-        "png/baseCO_3": "TEXTURES/colors/png/baseCO_3.png",
-        "png/baseCO_4": "TEXTURES/colors/png/baseCO_4.png",
-        "png/baseCO_5": "TEXTURES/colors/png/baseCO_5.png",
-        "png/baseCO_6": "TEXTURES/colors/png/baseCO_6.png",
-        "png/baseCO_7": "TEXTURES/colors/png/baseCO_7.png",
-        "png/baseCO_8": "TEXTURES/colors/png/baseCO_8.png",
-        "png/baseCO_9": "TEXTURES/colors/png/baseCO_9.png",
-        "body/body_DS": "TEXTURES/body/body_DS.png",
-        "body/body_DW": "TEXTURES/body/body_DW.png",
-        "body/body_Femal": "TEXTURES/body/body_Femal.png",
-        "body/body_ID": "TEXTURES/body/body_ID.png",
-        "body/body_Normal": "TEXTURES/body/body_Normal.png",
-        "body/body_Occ": "TEXTURES/body/body_Occ.png",
-        "body/body_Pattern.0": "TEXTURES/body/body_Pattern.0.png",
-        "body/body_Pattern.1": "TEXTURES/body/body_Pattern.1.png",
-        "body/body_Pattern.10": "TEXTURES/body/body_Pattern.10.png",
-        "body/body_Pattern.11": "TEXTURES/body/body_Pattern.11.png",
-        "body/body_Pattern.12": "TEXTURES/body/body_Pattern.12.png",
-        "body/body_Pattern.13": "TEXTURES/body/body_Pattern.13.png",
-        "body/body_Pattern.14": "TEXTURES/body/body_Pattern.14.png",
-        "body/body_Pattern.15": "TEXTURES/body/body_Pattern.15.png",
-        "body/body_Pattern.16": "TEXTURES/body/body_Pattern.16.png",
-        "body/body_Pattern.17": "TEXTURES/body/body_Pattern.17.png",
-        "body/body_Pattern.18": "TEXTURES/body/body_Pattern.18.png",
-        "body/body_Pattern.2": "TEXTURES/body/body_Pattern.2.png",
-        "body/body_Pattern.3": "TEXTURES/body/body_Pattern.3.png",
-        "body/body_Pattern.4": "TEXTURES/body/body_Pattern.4.png",
-        "body/body_Pattern.5": "TEXTURES/body/body_Pattern.5.png",
-        "body/body_Pattern.6": "TEXTURES/body/body_Pattern.6.png",
-        "body/body_Pattern.7": "TEXTURES/body/body_Pattern.7.png",
-        "body/body_Pattern.8": "TEXTURES/body/body_Pattern.8.png",
-        "body/body_Pattern.9": "TEXTURES/body/body_Pattern.9.png",
-        "body/body_Ramp": "TEXTURES/body/body_Ramp.png",
-        "body/body_Roughness": "TEXTURES/body/body_Roughness.png",
-        "body/body_SSS": "TEXTURES/body/body_SSS.png",
-        "horns/horns_DS": "TEXTURES/horns/horns_DS.png",
-        "horns/horns_ID": "TEXTURES/horns/horns_ID.png",
-        "horns/horns_Normal": "TEXTURES/horns/horns_Normal.png",
-        "horns/horns_Occ": "TEXTURES/horns/horns_Occ.png",
-        "horns/horns_Pattern.0": "TEXTURES/horns/horns_Pattern.0.png",
-        "horns/horns_Pattern.1": "TEXTURES/horns/horns_Pattern.1.png",
-        "horns/horns_Pattern.10": "TEXTURES/horns/horns_Pattern.10.png",
-        "horns/horns_Pattern.11": "TEXTURES/horns/horns_Pattern.11.png",
-        "horns/horns_Pattern.12": "TEXTURES/horns/horns_Pattern.12.png",
-        "horns/horns_Pattern.13": "TEXTURES/horns/horns_Pattern.13.png",
-        "horns/horns_Pattern.14": "TEXTURES/horns/horns_Pattern.14.png",
-        "horns/horns_Pattern.15": "TEXTURES/horns/horns_Pattern.15.png",
-        "horns/horns_Pattern.2": "TEXTURES/horns/horns_Pattern.2.png",
-        "horns/horns_Pattern.3": "TEXTURES/horns/horns_Pattern.3.png",
-        "horns/horns_Pattern.4": "TEXTURES/horns/horns_Pattern.4.png",
-        "horns/horns_Pattern.5": "TEXTURES/horns/horns_Pattern.5.png",
-        "horns/horns_Pattern.6": "TEXTURES/horns/horns_Pattern.6.png",
-        "horns/horns_Pattern.7": "TEXTURES/horns/horns_Pattern.7.png",
-        "horns/horns_Pattern.8": "TEXTURES/horns/horns_Pattern.8.png",
-        "horns/horns_Pattern.9": "TEXTURES/horns/horns_Pattern.9.png",
-        "horns/horns_Ramp": "TEXTURES/horns/horns_Ramp.png",
-        "horns/horns_Roughness": "TEXTURES/horns/horns_Roughness.png",
-        "horns/horns_SSS": "TEXTURES/horns/horns_SSS.png",
-        "eyes/eyes_Bump": "TEXTURES/eyes/eyes_Bump.png",
-        "eyes/eyes_DS": "TEXTURES/eyes/eyes_DS.png",
-        "eyes/eyes_Diffuse.0": "TEXTURES/eyes/eyes_Diffuse.0.png",
-        "eyes/eyes_Diffuse.1": "TEXTURES/eyes/eyes_Diffuse.1.png",
-        "eyes/eyes_Diffuse.10": "TEXTURES/eyes/eyes_Diffuse.10.png",
-        "eyes/eyes_Diffuse.11": "TEXTURES/eyes/eyes_Diffuse.11.png",
-        "eyes/eyes_Diffuse.2": "TEXTURES/eyes/eyes_Diffuse.2.png",
-        "eyes/eyes_Diffuse.3": "TEXTURES/eyes/eyes_Diffuse.3.png",
-        "eyes/eyes_Diffuse.4": "TEXTURES/eyes/eyes_Diffuse.4.png",
-        "eyes/eyes_Diffuse.5": "TEXTURES/eyes/eyes_Diffuse.5.png",
-        "eyes/eyes_Diffuse.6": "TEXTURES/eyes/eyes_Diffuse.6.png",
-        "eyes/eyes_Diffuse.7": "TEXTURES/eyes/eyes_Diffuse.7.png",
-        "eyes/eyes_Diffuse.8": "TEXTURES/eyes/eyes_Diffuse.8.png",
-        "eyes/eyes_Diffuse.9": "TEXTURES/eyes/eyes_Diffuse.9.png",
-        "eyes/eyes_Emit": "TEXTURES/eyes/eyes_Emit.png",
-        "eyes/eyes_Metalness": "TEXTURES/eyes/eyes_Metalness.png",
-        "eyes/eyes_Roughness": "TEXTURES/eyes/eyes_Roughness.png",
-        "eyes/eyes_SSS": "TEXTURES/eyes/eyes_SSS.png",
-        "eyeGlass/eyeGlass_Alpha": "TEXTURES/eyeGlass/eyeGlass_Alpha.png",
-        "eyeGlass/eyeGlass_Emit": "TEXTURES/eyeGlass/eyeGlass_Emit.png"
+        "textures/body_ID": "textures/body_ID.png",
+        "png/baseCO_0": "textures/colors/png/baseCO_0.png",
+        "png/baseCO_1": "textures/colors/png/baseCO_1.png",
+        "png/baseCO_10": "textures/colors/png/baseCO_10.png",
+        "png/baseCO_11": "textures/colors/png/baseCO_11.png",
+        "png/baseCO_12": "textures/colors/png/baseCO_12.png",
+        "png/baseCO_13": "textures/colors/png/baseCO_13.png",
+        "png/baseCO_14": "textures/colors/png/baseCO_14.png",
+        "png/baseCO_15": "textures/colors/png/baseCO_15.png",
+        "png/baseCO_16": "textures/colors/png/baseCO_16.png",
+        "png/baseCO_17": "textures/colors/png/baseCO_17.png",
+        "png/baseCO_18": "textures/colors/png/baseCO_18.png",
+        "png/baseCO_19": "textures/colors/png/baseCO_19.png",
+        "png/baseCO_2": "textures/colors/png/baseCO_2.png",
+        "png/baseCO_20": "textures/colors/png/baseCO_20.png",
+        "png/baseCO_21": "textures/colors/png/baseCO_21.png",
+        "png/baseCO_3": "textures/colors/png/baseCO_3.png",
+        "png/baseCO_4": "textures/colors/png/baseCO_4.png",
+        "png/baseCO_5": "textures/colors/png/baseCO_5.png",
+        "png/baseCO_6": "textures/colors/png/baseCO_6.png",
+        "png/baseCO_7": "textures/colors/png/baseCO_7.png",
+        "png/baseCO_8": "textures/colors/png/baseCO_8.png",
+        "png/baseCO_9": "textures/colors/png/baseCO_9.png",
+        "body/body_DS": "textures/body/body_DS.png",
+        "body/body_DW": "textures/body/body_DW.png",
+        "body/body_Femal": "textures/body/body_Femal.png",
+        "body/body_ID": "textures/body/body_ID.png",
+        "body/body_Normal": "textures/body/body_Normal.png",
+        "body/body_Occ": "textures/body/body_Occ.png",
+        "body/body_Pattern.0": "textures/body/body_Pattern.0.png",
+        "body/body_Pattern.1": "textures/body/body_Pattern.1.png",
+        "body/body_Pattern.10": "textures/body/body_Pattern.10.png",
+        "body/body_Pattern.11": "textures/body/body_Pattern.11.png",
+        "body/body_Pattern.12": "textures/body/body_Pattern.12.png",
+        "body/body_Pattern.13": "textures/body/body_Pattern.13.png",
+        "body/body_Pattern.14": "textures/body/body_Pattern.14.png",
+        "body/body_Pattern.15": "textures/body/body_Pattern.15.png",
+        "body/body_Pattern.16": "textures/body/body_Pattern.16.png",
+        "body/body_Pattern.17": "textures/body/body_Pattern.17.png",
+        "body/body_Pattern.18": "textures/body/body_Pattern.18.png",
+        "body/body_Pattern.2": "textures/body/body_Pattern.2.png",
+        "body/body_Pattern.3": "textures/body/body_Pattern.3.png",
+        "body/body_Pattern.4": "textures/body/body_Pattern.4.png",
+        "body/body_Pattern.5": "textures/body/body_Pattern.5.png",
+        "body/body_Pattern.6": "textures/body/body_Pattern.6.png",
+        "body/body_Pattern.7": "textures/body/body_Pattern.7.png",
+        "body/body_Pattern.8": "textures/body/body_Pattern.8.png",
+        "body/body_Pattern.9": "textures/body/body_Pattern.9.png",
+        "body/body_Ramp": "textures/body/body_Ramp.png",
+        "body/body_Roughness": "textures/body/body_Roughness.png",
+        "body/body_SSS": "textures/body/body_SSS.png",
+        "horns/horns_DS": "textures/horns/horns_DS.png",
+        "horns/horns_ID": "textures/horns/horns_ID.png",
+        "horns/horns_Normal": "textures/horns/horns_Normal.png",
+        "horns/horns_Occ": "textures/horns/horns_Occ.png",
+        "horns/horns_Pattern.0": "textures/horns/horns_Pattern.0.png",
+        "horns/horns_Pattern.1": "textures/horns/horns_Pattern.1.png",
+        "horns/horns_Pattern.10": "textures/horns/horns_Pattern.10.png",
+        "horns/horns_Pattern.11": "textures/horns/horns_Pattern.11.png",
+        "horns/horns_Pattern.12": "textures/horns/horns_Pattern.12.png",
+        "horns/horns_Pattern.13": "textures/horns/horns_Pattern.13.png",
+        "horns/horns_Pattern.14": "textures/horns/horns_Pattern.14.png",
+        "horns/horns_Pattern.15": "textures/horns/horns_Pattern.15.png",
+        "horns/horns_Pattern.2": "textures/horns/horns_Pattern.2.png",
+        "horns/horns_Pattern.3": "textures/horns/horns_Pattern.3.png",
+        "horns/horns_Pattern.4": "textures/horns/horns_Pattern.4.png",
+        "horns/horns_Pattern.5": "textures/horns/horns_Pattern.5.png",
+        "horns/horns_Pattern.6": "textures/horns/horns_Pattern.6.png",
+        "horns/horns_Pattern.7": "textures/horns/horns_Pattern.7.png",
+        "horns/horns_Pattern.8": "textures/horns/horns_Pattern.8.png",
+        "horns/horns_Pattern.9": "textures/horns/horns_Pattern.9.png",
+        "horns/horns_Ramp": "textures/horns/horns_Ramp.png",
+        "horns/horns_Roughness": "textures/horns/horns_Roughness.png",
+        "horns/horns_SSS": "textures/horns/horns_SSS.png",
+        "eyes/eyes_Bump": "textures/eyes/eyes_Bump.png",
+        "eyes/eyes_DS": "textures/eyes/eyes_DS.png",
+        "eyes/eyes_Diffuse.0": "textures/eyes/eyes_Diffuse.0.png",
+        "eyes/eyes_Diffuse.1": "textures/eyes/eyes_Diffuse.1.png",
+        "eyes/eyes_Diffuse.10": "textures/eyes/eyes_Diffuse.10.png",
+        "eyes/eyes_Diffuse.11": "textures/eyes/eyes_Diffuse.11.png",
+        "eyes/eyes_Diffuse.2": "textures/eyes/eyes_Diffuse.2.png",
+        "eyes/eyes_Diffuse.3": "textures/eyes/eyes_Diffuse.3.png",
+        "eyes/eyes_Diffuse.4": "textures/eyes/eyes_Diffuse.4.png",
+        "eyes/eyes_Diffuse.5": "textures/eyes/eyes_Diffuse.5.png",
+        "eyes/eyes_Diffuse.6": "textures/eyes/eyes_Diffuse.6.png",
+        "eyes/eyes_Diffuse.7": "textures/eyes/eyes_Diffuse.7.png",
+        "eyes/eyes_Diffuse.8": "textures/eyes/eyes_Diffuse.8.png",
+        "eyes/eyes_Diffuse.9": "textures/eyes/eyes_Diffuse.9.png",
+        "eyes/eyes_Emit": "textures/eyes/eyes_Emit.png",
+        "eyes/eyes_Metalness": "textures/eyes/eyes_Metalness.png",
+        "eyes/eyes_Roughness": "textures/eyes/eyes_Roughness.png",
+        "eyes/eyes_SSS": "textures/eyes/eyes_SSS.png",
+        "eyeGlass/eyeGlass_Alpha": "textures/eyeGlass/eyeGlass_Alpha.png",
+        "eyeGlass/eyeGlass_Emit": "textures/eyeGlass/eyeGlass_Emit.png"
     },
     "autoConnect": {
         "body": {
             "displacementMap": [
                 {
                     "id": "body/body_DS",
-                    "path": "TEXTURES/body/body_DS.png",
+                    "path": "textures/body/body_DS.png",
                     "variant": null
                 }
             ],
             "diffuseWeightMap": [
                 {
                     "id": "body/body_DW",
-                    "path": "TEXTURES/body/body_DW.png",
+                    "path": "textures/body/body_DW.png",
                     "variant": null
                 }
             ],
             "variant": [
                 {
                     "id": "body/body_Femal",
-                    "path": "TEXTURES/body/body_Femal.png",
+                    "path": "textures/body/body_Femal.png",
                     "variant": null
                 }
             ],
             "rgbMask": [
                 {
                     "id": "body/body_ID",
-                    "path": "TEXTURES/body/body_ID.png",
+                    "path": "textures/body/body_ID.png",
                     "variant": null
                 }
             ],
             "normalMap": [
                 {
                     "id": "body/body_Normal",
-                    "path": "TEXTURES/body/body_Normal.png",
+                    "path": "textures/body/body_Normal.png",
                     "variant": null
                 }
             ],
             "aoMap": [
                 {
                     "id": "body/body_Occ",
-                    "path": "TEXTURES/body/body_Occ.png",
+                    "path": "textures/body/body_Occ.png",
                     "variant": null
                 }
             ],
             "pattern": [
                 {
                     "id": "body/body_Pattern.0",
-                    "path": "TEXTURES/body/body_Pattern.0.png",
+                    "path": "textures/body/body_Pattern.0.png",
                     "variant": 0
                 },
                 {
                     "id": "body/body_Pattern.1",
-                    "path": "TEXTURES/body/body_Pattern.1.png",
+                    "path": "textures/body/body_Pattern.1.png",
                     "variant": 1
                 },
                 {
                     "id": "body/body_Pattern.10",
-                    "path": "TEXTURES/body/body_Pattern.10.png",
+                    "path": "textures/body/body_Pattern.10.png",
                     "variant": 10
                 },
                 {
                     "id": "body/body_Pattern.11",
-                    "path": "TEXTURES/body/body_Pattern.11.png",
+                    "path": "textures/body/body_Pattern.11.png",
                     "variant": 11
                 },
                 {
                     "id": "body/body_Pattern.12",
-                    "path": "TEXTURES/body/body_Pattern.12.png",
+                    "path": "textures/body/body_Pattern.12.png",
                     "variant": 12
                 },
                 {
                     "id": "body/body_Pattern.13",
-                    "path": "TEXTURES/body/body_Pattern.13.png",
+                    "path": "textures/body/body_Pattern.13.png",
                     "variant": 13
                 },
                 {
                     "id": "body/body_Pattern.14",
-                    "path": "TEXTURES/body/body_Pattern.14.png",
+                    "path": "textures/body/body_Pattern.14.png",
                     "variant": 14
                 },
                 {
                     "id": "body/body_Pattern.15",
-                    "path": "TEXTURES/body/body_Pattern.15.png",
+                    "path": "textures/body/body_Pattern.15.png",
                     "variant": 15
                 },
                 {
                     "id": "body/body_Pattern.16",
-                    "path": "TEXTURES/body/body_Pattern.16.png",
+                    "path": "textures/body/body_Pattern.16.png",
                     "variant": 16
                 },
                 {
                     "id": "body/body_Pattern.17",
-                    "path": "TEXTURES/body/body_Pattern.17.png",
+                    "path": "textures/body/body_Pattern.17.png",
                     "variant": 17
                 },
                 {
                     "id": "body/body_Pattern.18",
-                    "path": "TEXTURES/body/body_Pattern.18.png",
+                    "path": "textures/body/body_Pattern.18.png",
                     "variant": 18
                 },
                 {
                     "id": "body/body_Pattern.2",
-                    "path": "TEXTURES/body/body_Pattern.2.png",
+                    "path": "textures/body/body_Pattern.2.png",
                     "variant": 2
                 },
                 {
                     "id": "body/body_Pattern.3",
-                    "path": "TEXTURES/body/body_Pattern.3.png",
+                    "path": "textures/body/body_Pattern.3.png",
                     "variant": 3
                 },
                 {
                     "id": "body/body_Pattern.4",
-                    "path": "TEXTURES/body/body_Pattern.4.png",
+                    "path": "textures/body/body_Pattern.4.png",
                     "variant": 4
                 },
                 {
                     "id": "body/body_Pattern.5",
-                    "path": "TEXTURES/body/body_Pattern.5.png",
+                    "path": "textures/body/body_Pattern.5.png",
                     "variant": 5
                 },
                 {
                     "id": "body/body_Pattern.6",
-                    "path": "TEXTURES/body/body_Pattern.6.png",
+                    "path": "textures/body/body_Pattern.6.png",
                     "variant": 6
                 },
                 {
                     "id": "body/body_Pattern.7",
-                    "path": "TEXTURES/body/body_Pattern.7.png",
+                    "path": "textures/body/body_Pattern.7.png",
                     "variant": 7
                 },
                 {
                     "id": "body/body_Pattern.8",
-                    "path": "TEXTURES/body/body_Pattern.8.png",
+                    "path": "textures/body/body_Pattern.8.png",
                     "variant": 8
                 },
                 {
                     "id": "body/body_Pattern.9",
-                    "path": "TEXTURES/body/body_Pattern.9.png",
+                    "path": "textures/body/body_Pattern.9.png",
                     "variant": 9
                 }
             ],
             "blendMask": [
                 {
                     "id": "body/body_Ramp",
-                    "path": "TEXTURES/body/body_Ramp.png",
+                    "path": "textures/body/body_Ramp.png",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "body/body_Roughness",
-                    "path": "TEXTURES/body/body_Roughness.png",
+                    "path": "textures/body/body_Roughness.png",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "body/body_SSS",
-                    "path": "TEXTURES/body/body_SSS.png",
+                    "path": "textures/body/body_SSS.png",
                     "variant": null
                 }
             ]
@@ -305,131 +305,131 @@
             "displacementMap": [
                 {
                     "id": "horns/horns_DS",
-                    "path": "TEXTURES/horns/horns_DS.png",
+                    "path": "textures/horns/horns_DS.png",
                     "variant": null
                 }
             ],
             "rgbMask": [
                 {
                     "id": "horns/horns_ID",
-                    "path": "TEXTURES/horns/horns_ID.png",
+                    "path": "textures/horns/horns_ID.png",
                     "variant": null
                 }
             ],
             "normalMap": [
                 {
                     "id": "horns/horns_Normal",
-                    "path": "TEXTURES/horns/horns_Normal.png",
+                    "path": "textures/horns/horns_Normal.png",
                     "variant": null
                 }
             ],
             "aoMap": [
                 {
                     "id": "horns/horns_Occ",
-                    "path": "TEXTURES/horns/horns_Occ.png",
+                    "path": "textures/horns/horns_Occ.png",
                     "variant": null
                 }
             ],
             "pattern": [
                 {
                     "id": "horns/horns_Pattern.0",
-                    "path": "TEXTURES/horns/horns_Pattern.0.png",
+                    "path": "textures/horns/horns_Pattern.0.png",
                     "variant": 0
                 },
                 {
                     "id": "horns/horns_Pattern.1",
-                    "path": "TEXTURES/horns/horns_Pattern.1.png",
+                    "path": "textures/horns/horns_Pattern.1.png",
                     "variant": 1
                 },
                 {
                     "id": "horns/horns_Pattern.10",
-                    "path": "TEXTURES/horns/horns_Pattern.10.png",
+                    "path": "textures/horns/horns_Pattern.10.png",
                     "variant": 10
                 },
                 {
                     "id": "horns/horns_Pattern.11",
-                    "path": "TEXTURES/horns/horns_Pattern.11.png",
+                    "path": "textures/horns/horns_Pattern.11.png",
                     "variant": 11
                 },
                 {
                     "id": "horns/horns_Pattern.12",
-                    "path": "TEXTURES/horns/horns_Pattern.12.png",
+                    "path": "textures/horns/horns_Pattern.12.png",
                     "variant": 12
                 },
                 {
                     "id": "horns/horns_Pattern.13",
-                    "path": "TEXTURES/horns/horns_Pattern.13.png",
+                    "path": "textures/horns/horns_Pattern.13.png",
                     "variant": 13
                 },
                 {
                     "id": "horns/horns_Pattern.14",
-                    "path": "TEXTURES/horns/horns_Pattern.14.png",
+                    "path": "textures/horns/horns_Pattern.14.png",
                     "variant": 14
                 },
                 {
                     "id": "horns/horns_Pattern.15",
-                    "path": "TEXTURES/horns/horns_Pattern.15.png",
+                    "path": "textures/horns/horns_Pattern.15.png",
                     "variant": 15
                 },
                 {
                     "id": "horns/horns_Pattern.2",
-                    "path": "TEXTURES/horns/horns_Pattern.2.png",
+                    "path": "textures/horns/horns_Pattern.2.png",
                     "variant": 2
                 },
                 {
                     "id": "horns/horns_Pattern.3",
-                    "path": "TEXTURES/horns/horns_Pattern.3.png",
+                    "path": "textures/horns/horns_Pattern.3.png",
                     "variant": 3
                 },
                 {
                     "id": "horns/horns_Pattern.4",
-                    "path": "TEXTURES/horns/horns_Pattern.4.png",
+                    "path": "textures/horns/horns_Pattern.4.png",
                     "variant": 4
                 },
                 {
                     "id": "horns/horns_Pattern.5",
-                    "path": "TEXTURES/horns/horns_Pattern.5.png",
+                    "path": "textures/horns/horns_Pattern.5.png",
                     "variant": 5
                 },
                 {
                     "id": "horns/horns_Pattern.6",
-                    "path": "TEXTURES/horns/horns_Pattern.6.png",
+                    "path": "textures/horns/horns_Pattern.6.png",
                     "variant": 6
                 },
                 {
                     "id": "horns/horns_Pattern.7",
-                    "path": "TEXTURES/horns/horns_Pattern.7.png",
+                    "path": "textures/horns/horns_Pattern.7.png",
                     "variant": 7
                 },
                 {
                     "id": "horns/horns_Pattern.8",
-                    "path": "TEXTURES/horns/horns_Pattern.8.png",
+                    "path": "textures/horns/horns_Pattern.8.png",
                     "variant": 8
                 },
                 {
                     "id": "horns/horns_Pattern.9",
-                    "path": "TEXTURES/horns/horns_Pattern.9.png",
+                    "path": "textures/horns/horns_Pattern.9.png",
                     "variant": 9
                 }
             ],
             "blendMask": [
                 {
                     "id": "horns/horns_Ramp",
-                    "path": "TEXTURES/horns/horns_Ramp.png",
+                    "path": "textures/horns/horns_Ramp.png",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "horns/horns_Roughness",
-                    "path": "TEXTURES/horns/horns_Roughness.png",
+                    "path": "textures/horns/horns_Roughness.png",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "horns/horns_SSS",
-                    "path": "TEXTURES/horns/horns_SSS.png",
+                    "path": "textures/horns/horns_SSS.png",
                     "variant": null
                 }
             ]
@@ -438,104 +438,104 @@
             "bumpMap": [
                 {
                     "id": "eyes/eyes_Bump",
-                    "path": "TEXTURES/eyes/eyes_Bump.png",
+                    "path": "textures/eyes/eyes_Bump.png",
                     "variant": null
                 }
             ],
             "displacementMap": [
                 {
                     "id": "eyes/eyes_DS",
-                    "path": "TEXTURES/eyes/eyes_DS.png",
+                    "path": "textures/eyes/eyes_DS.png",
                     "variant": null
                 }
             ],
             "diffuse": [
                 {
                     "id": "eyes/eyes_Diffuse.0",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.0.png",
+                    "path": "textures/eyes/eyes_Diffuse.0.png",
                     "variant": 0
                 },
                 {
                     "id": "eyes/eyes_Diffuse.1",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.1.png",
+                    "path": "textures/eyes/eyes_Diffuse.1.png",
                     "variant": 1
                 },
                 {
                     "id": "eyes/eyes_Diffuse.10",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.10.png",
+                    "path": "textures/eyes/eyes_Diffuse.10.png",
                     "variant": 10
                 },
                 {
                     "id": "eyes/eyes_Diffuse.11",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.11.png",
+                    "path": "textures/eyes/eyes_Diffuse.11.png",
                     "variant": 11
                 },
                 {
                     "id": "eyes/eyes_Diffuse.2",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.2.png",
+                    "path": "textures/eyes/eyes_Diffuse.2.png",
                     "variant": 2
                 },
                 {
                     "id": "eyes/eyes_Diffuse.3",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.3.png",
+                    "path": "textures/eyes/eyes_Diffuse.3.png",
                     "variant": 3
                 },
                 {
                     "id": "eyes/eyes_Diffuse.4",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.4.png",
+                    "path": "textures/eyes/eyes_Diffuse.4.png",
                     "variant": 4
                 },
                 {
                     "id": "eyes/eyes_Diffuse.5",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.5.png",
+                    "path": "textures/eyes/eyes_Diffuse.5.png",
                     "variant": 5
                 },
                 {
                     "id": "eyes/eyes_Diffuse.6",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.6.png",
+                    "path": "textures/eyes/eyes_Diffuse.6.png",
                     "variant": 6
                 },
                 {
                     "id": "eyes/eyes_Diffuse.7",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.7.png",
+                    "path": "textures/eyes/eyes_Diffuse.7.png",
                     "variant": 7
                 },
                 {
                     "id": "eyes/eyes_Diffuse.8",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.8.png",
+                    "path": "textures/eyes/eyes_Diffuse.8.png",
                     "variant": 8
                 },
                 {
                     "id": "eyes/eyes_Diffuse.9",
-                    "path": "TEXTURES/eyes/eyes_Diffuse.9.png",
+                    "path": "textures/eyes/eyes_Diffuse.9.png",
                     "variant": 9
                 }
             ],
             "emissiveMap": [
                 {
                     "id": "eyes/eyes_Emit",
-                    "path": "TEXTURES/eyes/eyes_Emit.png",
+                    "path": "textures/eyes/eyes_Emit.png",
                     "variant": null
                 }
             ],
             "metalnessMap": [
                 {
                     "id": "eyes/eyes_Metalness",
-                    "path": "TEXTURES/eyes/eyes_Metalness.png",
+                    "path": "textures/eyes/eyes_Metalness.png",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "eyes/eyes_Roughness",
-                    "path": "TEXTURES/eyes/eyes_Roughness.png",
+                    "path": "textures/eyes/eyes_Roughness.png",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "eyes/eyes_SSS",
-                    "path": "TEXTURES/eyes/eyes_SSS.png",
+                    "path": "textures/eyes/eyes_SSS.png",
                     "variant": null
                 }
             ]
@@ -544,14 +544,14 @@
             "alphaMap": [
                 {
                     "id": "eyeGlass/eyeGlass_Alpha",
-                    "path": "TEXTURES/eyeGlass/eyeGlass_Alpha.png",
+                    "path": "textures/eyeGlass/eyeGlass_Alpha.png",
                     "variant": null
                 }
             ],
             "emissiveMap": [
                 {
                     "id": "eyeGlass/eyeGlass_Emit",
-                    "path": "TEXTURES/eyeGlass/eyeGlass_Emit.png",
+                    "path": "textures/eyeGlass/eyeGlass_Emit.png",
                     "variant": null
                 }
             ]
