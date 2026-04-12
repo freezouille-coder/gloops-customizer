@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gloops - Character Customizer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="app">
+        <canvas id="viewport"></canvas>
+
+        <div id="panel">
+            <h1>Gloops</h1>
+            <div id="panel-tabs">
+                <button class="panel-tab active" data-tab="anim">Anim</button>
+                <button class="panel-tab" data-tab="materials">Mat</button>
+                <button class="panel-tab" data-tab="props">Props</button>
+                <button class="panel-tab" data-tab="scene">Scene</button>
+            </div>
+
+            <!-- Animations tab -->
+            <div id="tab-anim" class="tab-content active">
+                <div id="loading">Chargement du personnage...</div>
+                <div id="panel-header">
+                    <button id="btn-random-all" title="Randomize All">🎲 Random All</button>
+                    <button id="btn-reset" title="Reset All">↺ Reset</button>
+                </div>
+                <div id="controls-container"></div>
+            </div>
+
+            <!-- Materials tab -->
+            <div id="tab-materials" class="tab-content">
+                <div id="mat-header">
+                    <button id="btn-save-preset" title="Save Preset">💾 Save</button>
+                    <button id="btn-load-preset" title="Load Preset">📂 Load</button>
+                </div>
+                <div id="material-controls-container"></div>
+            </div>
+
+            <!-- Props tab -->
+            <div id="tab-props" class="tab-content">
+                <div id="props-controls-container"></div>
+            </div>
+
+            <!-- Scene tab -->
+            <div id="tab-scene" class="tab-content">
+                <div id="scene-controls-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

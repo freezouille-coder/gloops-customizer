@@ -1,0 +1,35 @@
+{
+    "poses": [
+        "Baby.fbx",
+        "Big.fbx",
+        "Canine.fbx",
+        "DefaultBig.fbx",
+        "DefaultSmall.fbx",
+        "Demon.fbx",
+        "FullRabbit.fbx",
+        "Rabbit.fbx",
+        "Sharp.fbx",
+        "SmallCanine.fbx",
+        "Vampire.fbx"
+    ],
+    "anims": [
+        "01_peace.fbx",
+        "02_waouh.fbx",
+        "03_happy.fbx",
+        "04_inlove.fbx",
+        "05_playful.fbx",
+        "06_satisfied.fbx",
+        "07_thug.fbx",
+        "08_worried.fbx",
+        "09_frustrated.fbx",
+        "10_disappointed.fbx",
+        "11_angry.fbx",
+        "11_angry_V2.fbx",
+        "12_despising.fbx",
+        "13_sad.fbx",
+        "14_afraid.fbx",
+        "15_crying.fbx",
+        "16_annihilated.fbx",
+        "16_annihilated_V2.fbx"
+    ]
+}
