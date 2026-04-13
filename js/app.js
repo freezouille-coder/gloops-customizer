@@ -15,7 +15,7 @@ import { AudioManager, buildAudioPlayer } from './audio.js';
 // --- Config ---
 const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
 const MANIFEST_PATH = 'fbx/manifest.json';
-const BG_COLOR = 0x1a1a2e;
+const BG_COLOR = 0x1a1828;
 const STORAGE_KEY = 'gloops_preset';
 
 // --- Three.js Setup ---
@@ -563,6 +563,52 @@ async function _applyCharacterDefaults() {
         ground.material.color.set(0x111122); // dark to blend with background
         ground.material.needsUpdate = true;
     }
+
+    // Rendering defaults: better quality out of the box
+    // Tone mapping ACES for richer contrast
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+
+    // SSAO for depth
+    if (typeof postFX !== 'undefined' && postFX.ssaoPass) {
+        postFX.setSSAO(true);
+        postFX.setSSAORadius(16);
+        postFX.setSSAOIntensity(0.15);
+    }
+
+    // Environment IBL for subtle reflections
+    const pmremGen = new THREE.PMREMGenerator(renderer);
+    pmremGen.compileEquirectangularShader();
+    const envSize = 256;
+    const envCanvas = document.createElement('canvas');
+    envCanvas.width = envSize; envCanvas.height = envSize;
+    const envCtx = envCanvas.getContext('2d');
+    const envGrad = envCtx.createLinearGradient(0, 0, 0, envSize);
+    envGrad.addColorStop(0, '#e8d0b0');   // warm top
+    envGrad.addColorStop(0.5, '#f5e8d8'); // bright middle
+    envGrad.addColorStop(1, '#887766');    // ground
+    envCtx.fillStyle = envGrad;
+    envCtx.fillRect(0, 0, envSize, envSize);
+    const envTex = new THREE.CanvasTexture(envCanvas);
+    envTex.mapping = THREE.EquirectangularReflectionMapping;
+    envTex.colorSpace = THREE.SRGBColorSpace;
+    const envMap = pmremGen.fromEquirectangular(envTex).texture;
+    scene.environment = envMap;
+    // Set env intensity on all materials
+    scene.traverse(child => {
+        if (child.isMesh && child.material) {
+            child.material.envMapIntensity = 0.4;
+        }
+    });
+    envTex.dispose();
+    pmremGen.dispose();
+
+    // Warmer lights
+    scene.traverse(child => {
+        if (child.isDirectionalLight) {
+            child.intensity *= 1.1;
+        }
+    });
 }
 
 // Mobile generate button
