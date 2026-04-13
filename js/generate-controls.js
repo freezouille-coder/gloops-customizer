@@ -19,7 +19,9 @@ export class GenerateControls {
         // --- Random All button ---
         const randomAllBtn = document.createElement('button');
         randomAllBtn.textContent = '🎲 Generate Random Character';
-        randomAllBtn.style.cssText = 'width:100%;padding:12px;margin:8px 0;background:#e94560;color:white;border:none;border-radius:6px;font-size:1rem;font-weight:bold;cursor:pointer;';
+        randomAllBtn.style.cssText = 'width:calc(100% - 16px);padding:14px;margin:8px;background:linear-gradient(135deg,#e94560,#ff6b8a);color:white;border:none;border-radius:12px;font-size:1.05rem;font-weight:800;cursor:pointer;letter-spacing:0.5px;box-shadow:0 4px 15px rgba(233,69,96,0.4);transition:transform 0.1s;';
+        randomAllBtn.addEventListener('mousedown', () => randomAllBtn.style.transform = 'scale(0.97)');
+        randomAllBtn.addEventListener('mouseup', () => randomAllBtn.style.transform = '');
         randomAllBtn.addEventListener('click', () => this._randomizeAll());
         this.container.appendChild(randomAllBtn);
 

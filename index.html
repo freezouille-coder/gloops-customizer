@@ -19,7 +19,9 @@
         <canvas id="viewport"></canvas>
 
         <div id="panel">
-            <h1>Gloops</h1>
+            <div id="panel-logo">
+                <img src="images/ui/LogoGLOOPS.png" alt="Gloops" id="logo-img">
+            </div>
             <div id="panel-tabs">
                 <button class="panel-tab active" data-tab="generate">Gen</button>
                 <button class="panel-tab" data-tab="anim">Anim</button>
@@ -28,6 +30,8 @@
                 <button class="panel-tab" data-tab="scene">Scene</button>
             </div>
 
+            <div id="loading">Chargement du personnage...</div>
+
             <!-- Generate tab -->
             <div id="tab-generate" class="tab-content active">
                 <div id="generate-controls-container"></div>
@@ -35,7 +39,6 @@
 
             <!-- Animations tab -->
             <div id="tab-anim" class="tab-content">
-                <div id="loading">Chargement du personnage...</div>
                 <div id="panel-header">
                     <button id="btn-random-all" title="Randomize All">🎲 Random All</button>
                     <button id="btn-reset" title="Reset All">↺ Reset</button>

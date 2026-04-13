@@ -4,9 +4,11 @@
     box-sizing: border-box;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #1a1a2e;
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+    background: #0d0d1a;
     color: #e0e0e0;
     overflow: hidden;
     height: 100vh;
@@ -28,52 +30,57 @@ body {
 #panel {
     width: 320px;
     min-width: 320px;
-    background: #16213e;
-    border-left: 2px solid #0f3460;
+    background: linear-gradient(180deg, #1a1030 0%, #0f0a20 100%);
+    border-left: 2px solid #2a1a4a;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-#panel h1 {
+#panel-logo {
     text-align: center;
-    padding: 10px;
-    font-size: 1.2rem;
-    letter-spacing: 2px;
-    color: #e94560;
-    border-bottom: none;
+    padding: 8px 16px 4px;
+    flex-shrink: 0;
+}
+
+#logo-img {
+    width: 160px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(233, 69, 96, 0.4));
 }
 
 /* --- Tabs --- */
 #panel-tabs {
     display: flex;
-    border-bottom: 2px solid #0f3460;
+    gap: 3px;
+    padding: 4px 8px;
     flex-shrink: 0;
 }
 
 .panel-tab {
     flex: 1;
-    padding: 8px;
-    background: none;
+    padding: 6px 4px;
+    background: rgba(255,255,255,0.05);
     border: none;
-    color: #666;
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-radius: 8px;
+    color: #887;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     cursor: pointer;
     transition: all 0.2s;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
 }
 
 .panel-tab:hover {
-    color: #aaa;
+    color: #ddd;
+    background: rgba(255,255,255,0.1);
 }
 
 .panel-tab.active {
-    color: #e94560;
-    border-bottom-color: #e94560;
+    color: #fff;
+    background: linear-gradient(135deg, #e94560, #c73050);
+    box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4);
 }
 
 .tab-content {
@@ -110,27 +117,31 @@ body {
 }
 
 #btn-random-all {
-    background: #e94560;
+    background: linear-gradient(135deg, #e94560, #ff6b8a);
     color: white;
+    border-radius: 8px;
 }
 #btn-random-all:hover {
-    background: #c73650;
+    background: linear-gradient(135deg, #c73650, #e94560);
 }
 
 #btn-reset {
-    background: #0f3460;
-    color: #e0e0e0;
+    background: rgba(255,255,255,0.08);
+    color: #ccc;
+    border-radius: 8px;
 }
 #btn-reset:hover {
-    background: #1a4a8a;
+    background: rgba(255,255,255,0.15);
 }
 
 /* --- Loading --- */
 #loading {
     text-align: center;
-    padding: 40px 16px;
-    color: #888;
-    font-style: italic;
+    padding: 20px 16px;
+    color: #e094c0;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
 }
 #loading.hidden {
     display: none;
@@ -179,10 +190,10 @@ body {
 .category-select {
     width: 100%;
     padding: 8px 12px;
-    background: #0f3460;
+    background: rgba(255,255,255,0.06);
     color: #e0e0e0;
-    border: 1px solid #1a4a8a;
-    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
     font-size: 0.85rem;
     cursor: pointer;
     outline: none;
@@ -263,17 +274,17 @@ body {
     flex: 1;
     padding: 6px 10px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.8rem;
-    font-weight: 600;
-    background: #0f3460;
+    font-weight: 700;
+    background: rgba(255,255,255,0.08);
     color: #e0e0e0;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
 
 #mat-header button:hover {
-    background: #1a4a8a;
+    background: rgba(255,255,255,0.15);
 }
 
 #scene-controls-container {
@@ -307,11 +318,11 @@ body {
 
 .mat-section-title {
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #e94560;
-    padding: 6px 14px;
+    color: #e094c0;
+    padding: 8px 14px;
 }
 
 .mat-section-toggle {
@@ -477,7 +488,7 @@ body {
     width: 24px;
     height: 24px;
     border: 2px solid transparent;
-    border-radius: 4px;
+    border-radius: 50%;
     cursor: pointer;
     transition: all 0.15s;
     padding: 0;

@@ -1,5 +1,10 @@
 """
-Scan FBX/ANIM/, FBX/POSE/ subfolders and TEXTURES/ to generate FBX/manifest.json
+Scan fbx/ANIM/, fbx/POSE/ and images/chr/ to generate fbx/manifest.json
+
+New structure:
+  images/chr/{mesh}/              -> base textures ({mesh}_{Type}.png)
+  images/chr/{mesh}/diffuse/      -> diffuse variants ({mesh}_Diffuse.{N}.png)
+  images/chr/{mesh}/pattern/      -> pattern variants ({mesh}_Pattern.{N}.png)
 
 Run: python scripts/build_manifest.py
 """
@@ -7,11 +12,30 @@ Run: python scripts/build_manifest.py
 import os
 import json
 
-BASE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fbx")
-ANIM_DIR = os.path.join(BASE, "ANIM")
-POSE_DIR = os.path.join(BASE, "POSE")
-MANIFEST = os.path.join(BASE, "manifest.json")
-TEXTURES_DIR = os.path.join(os.path.dirname(BASE), "textures")
+WEB_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FBX_DIR = os.path.join(WEB_ROOT, "fbx")
+ANIM_DIR = os.path.join(FBX_DIR, "ANIM")
+POSE_DIR = os.path.join(FBX_DIR, "POSE")
+MANIFEST = os.path.join(FBX_DIR, "manifest.json")
+IMAGES_DIR = os.path.join(WEB_ROOT, "images", "chr")
+
+TEXTURE_TYPES = {
+    'diffuse': 'diffuse', 'basecolor': 'diffuse', 'color': 'diffuse',
+    'id': 'rgbMask', 'mask': 'rgbMask',
+    'normal': 'normalMap',
+    'roughness': 'roughnessMap', 'rough': 'roughnessMap',
+    'metalness': 'metalnessMap', 'metal': 'metalnessMap', 'metallic': 'metalnessMap',
+    'occ': 'aoMap', 'ao': 'aoMap', 'occlusion': 'aoMap',
+    'sss': 'sssMap', 'subsurface': 'sssMap',
+    'ramp': 'blendMask',
+    'ds': 'displacementMap', 'displacement': 'displacementMap', 'height': 'displacementMap',
+    'alpha': 'alphaMap', 'opacity': 'alphaMap',
+    'emit': 'emissiveMap', 'emissive': 'emissiveMap',
+    'bump': 'bumpMap', 'bp': 'bumpMap',
+    'dw': 'diffuseWeightMap', 'diffusew': 'diffuseWeightMap',
+    'pattern': 'pattern',
+    'femal': 'variant',
+}
 
 
 def scan():
@@ -43,59 +67,28 @@ def scan():
                         "files": files
                     }
 
-    # Scan TEXTURES with auto-connect naming convention
-    # Convention: {mesh}_{Type}.png or {mesh}_{Type}.{variant}.png
-    # Types: Diffuse, ID (RGBA mask), Normal, Roughness, Metalness, Occ, SSS, Ramp, DS, Alpha, Emit
+    # Scan images/chr/
     textures = {}
-    auto_connect = {}  # mesh_name -> { type: [paths] }
+    auto_connect = {}
 
-    TEXTURE_TYPES = {
-        'diffuse': 'diffuse', 'basecolor': 'diffuse', 'color': 'diffuse',
-        'id': 'rgbMask', 'mask': 'rgbMask',
-        'normal': 'normalMap',
-        'roughness': 'roughnessMap', 'rough': 'roughnessMap',
-        'metalness': 'metalnessMap', 'metal': 'metalnessMap', 'metallic': 'metalnessMap',
-        'occ': 'aoMap', 'ao': 'aoMap', 'occlusion': 'aoMap',
-        'sss': 'sssMap', 'subsurface': 'sssMap',
-        'ramp': 'blendMask',
-        'ds': 'displacementMap', 'displacement': 'displacementMap', 'height': 'displacementMap',
-        'alpha': 'alphaMap', 'opacity': 'alphaMap',
-        'emit': 'emissiveMap', 'emissive': 'emissiveMap',
-        'femal': 'variant',
-        'bump': 'bumpMap', 'bp': 'bumpMap',
-        'diffusew': 'diffuseWeightMap', 'dw': 'diffuseWeightMap',
-        'pattern': 'pattern',
-    }
+    if os.path.exists(IMAGES_DIR):
+        for mesh_folder in sorted(os.listdir(IMAGES_DIR)):
+            mesh_path = os.path.join(IMAGES_DIR, mesh_folder)
+            if not os.path.isdir(mesh_path):
+                continue
 
-    if os.path.exists(TEXTURES_DIR):
-        for root, dirs, files in os.walk(TEXTURES_DIR):
-            folder = os.path.basename(root)
-            for f in sorted(files):
-                if f.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    full_path = os.path.join(root, f)
-                    rel_path = os.path.relpath(full_path, os.path.dirname(BASE)).replace("\\", "/")
-                    name = os.path.splitext(f)[0]
-                    tex_id = "{}/{}".format(folder, name)
-                    textures[tex_id] = rel_path
+            # Scan base textures in mesh folder
+            _scan_folder(mesh_path, mesh_folder, mesh_folder, textures, auto_connect)
 
-                    # Parse for auto-connect
-                    # Try to match: folder_Type or folder_Type.variant
-                    name_lower = name.lower()
-                    parts = name_lower.replace(folder.lower() + '_', '').split('.')
-                    type_name = parts[0]
-                    variant = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+            # Scan diffuse/ subfolder
+            diffuse_path = os.path.join(mesh_path, "diffuse")
+            if os.path.isdir(diffuse_path):
+                _scan_folder(diffuse_path, mesh_folder, mesh_folder, textures, auto_connect)
 
-                    mapped_type = TEXTURE_TYPES.get(type_name)
-                    if mapped_type:
-                        if folder not in auto_connect:
-                            auto_connect[folder] = {}
-                        if mapped_type not in auto_connect[folder]:
-                            auto_connect[folder][mapped_type] = []
-                        auto_connect[folder][mapped_type].append({
-                            'id': tex_id,
-                            'path': rel_path,
-                            'variant': variant
-                        })
+            # Scan pattern/ subfolder
+            pattern_path = os.path.join(mesh_path, "pattern")
+            if os.path.isdir(pattern_path):
+                _scan_folder(pattern_path, mesh_folder, mesh_folder, textures, auto_connect)
 
     manifest = {
         "categories": categories,
@@ -111,18 +104,55 @@ def scan():
     for name, data in categories.items():
         print("  {} ({}) - {} files".format(name, data["type"], len(data["files"])))
     print("Textures: {} files".format(len(textures)))
-    for tid, path in list(textures.items())[:10]:
-        print("  {} -> {}".format(tid, path))
-    if len(textures) > 10:
-        print("  ... and {} more".format(len(textures) - 10))
     print("\nAuto-connect:")
     for mesh, types in auto_connect.items():
         print("  {}:".format(mesh))
         for typ, entries in types.items():
-            paths = [e['path'] for e in entries]
-            print("    {} -> {} file(s)".format(typ, len(paths)))
+            print("    {} -> {} file(s)".format(typ, len(entries)))
 
     return manifest
+
+
+def _scan_folder(folder_path, mesh_folder, mesh_name, textures, auto_connect):
+    """Scan a folder for texture files and add to textures + auto_connect."""
+    for f in sorted(os.listdir(folder_path)):
+        if not f.lower().endswith(('.png', '.jpg', '.jpeg')):
+            continue
+
+        full_path = os.path.join(folder_path, f)
+        rel_path = os.path.relpath(full_path, os.path.dirname(os.path.dirname(folder_path)))
+        # Make path relative to WEB_ROOT
+        rel_from_web = os.path.relpath(full_path, os.path.dirname(os.path.dirname(os.path.dirname(folder_path))))
+        rel_from_web = rel_from_web.replace("\\", "/")
+
+        name = os.path.splitext(f)[0]
+        tex_id = "{}/{}".format(mesh_folder, name)
+        textures[tex_id] = rel_from_web
+
+        # Parse type and variant
+        name_lower = name.lower()
+        # Remove mesh prefix: body_Normal -> normal, eyes_Diffuse.0 -> diffuse.0
+        stripped = name_lower
+        for prefix in [mesh_name.lower() + '_', mesh_name.lower()]:
+            if stripped.startswith(prefix):
+                stripped = stripped[len(prefix):]
+                break
+
+        parts = stripped.split('.')
+        type_name = parts[0]
+        variant = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+
+        mapped_type = TEXTURE_TYPES.get(type_name)
+        if mapped_type:
+            if mesh_name not in auto_connect:
+                auto_connect[mesh_name] = {}
+            if mapped_type not in auto_connect[mesh_name]:
+                auto_connect[mesh_name][mapped_type] = []
+            auto_connect[mesh_name][mapped_type].append({
+                'id': tex_id,
+                'path': rel_from_web,
+                'variant': variant
+            })
 
 
 if __name__ == "__main__":
