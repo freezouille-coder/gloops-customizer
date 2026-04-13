@@ -293,6 +293,7 @@ export class ShadingManager {
         }
 
         // Apply pattern on diffuse (both Casual and Luxury apply hue/sat shift)
+        // Pattern is masked by RGB mask channel (patternChannel: 'R'=0, 'G'=1, 'B'=2)
         if (entry.patternMap) {
             const data = ctx.getImageData(0, 0, w, h);
             const pc = document.createElement('canvas'); pc.width = w; pc.height = h;
@@ -303,9 +304,25 @@ export class ShadingManager {
             const satShift = entry.patternSatShift || 0;
             const isCasual = entry.patternMode === 'casual';
 
+            // Get RGB mask for channel restriction
+            let rgbMaskData = null;
+            const patCh = entry._patternChannel; // 0=R, 1=G, 2=B, undefined=all
+            if (patCh !== undefined && entry.rgbMask) {
+                const mc = document.createElement('canvas'); mc.width = w; mc.height = h;
+                mc.getContext('2d').drawImage(entry.rgbMask, 0, 0, w, h);
+                rgbMaskData = mc.getContext('2d').getImageData(0, 0, w, h);
+            }
+
             for (let i = 0; i < data.data.length; i += 4) {
-                const p = pData.data[i] / 255;
+                let p = pData.data[i] / 255;
                 if (p < 0.01) continue;
+
+                // Restrict pattern to specific RGB mask channel
+                if (rgbMaskData && patCh !== undefined) {
+                    const channelWeight = rgbMaskData.data[i + patCh] / 255;
+                    p *= channelWeight;
+                    if (p < 0.01) continue;
+                }
 
                 const amount = p * intensity;
                 let r = data.data[i] / 255;

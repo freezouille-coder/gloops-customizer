@@ -329,6 +329,31 @@ body {
     background: rgba(255,255,255,0.15);
 }
 
+#scene-header {
+    display: flex;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+}
+
+#scene-header button {
+    flex: 1;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.08);
+    color: #e0e0e0;
+    transition: all 0.2s;
+}
+
+#scene-header button:hover {
+    background: rgba(255,255,255,0.15);
+}
+
 #scene-controls-container {
     padding: 8px 0;
     flex: 1;

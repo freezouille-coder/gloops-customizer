@@ -489,8 +489,126 @@ async function _autoConnectTextures(autoConnect) {
     }
 }
 
+async function _applyCharacterDefaults() {
+    let config;
+    try {
+        config = await fetch('config/character.json').then(r => r.json());
+    } catch (e) { return; }
+
+    const defaults = config.defaults || {};
+    const linked = config.linkedColors || {};
+    const findMat = (kw) => shadingManager.getMaterialNames().find(n => n.toLowerCase().includes(kw));
+
+    // Sheen on all materials
+    if (defaults.sheen) {
+        for (const name of shadingManager.getMaterialNames()) {
+            shadingManager.setSheen(name, defaults.sheen.intensity || 0);
+            shadingManager.setSheenRoughness(name, defaults.sheen.roughness || 0.5);
+        }
+    }
+
+    // Horns B = always black
+    if (defaults.horns) {
+        const hornsMat = findMat('horns');
+        if (hornsMat) {
+            if (defaults.horns.B_A) shadingManager.setRGBColorA(hornsMat, 2, defaults.horns.B_A);
+            if (defaults.horns.B_B) shadingManager.setRGBColorB(hornsMat, 2, defaults.horns.B_B);
+        }
+    }
+
+    // Pattern default hue/sat per mode
+    if (defaults.pattern) {
+        for (const name of shadingManager.getMaterialNames()) {
+            const entry = shadingManager.getEntry(name);
+            if (entry) {
+                entry._patternDefaults = defaults.pattern;
+            }
+        }
+    }
+
+    // Pattern channel restrictions (body=R, horns=G)
+    const patternChannels = config.patternChannels || {};
+    const chMap = {'R':0,'G':1,'B':2};
+    for (const [meshKw, ch] of Object.entries(patternChannels)) {
+        const mat = findMat(meshKw);
+        if (mat) {
+            const entry = shadingManager.getEntry(mat);
+            if (entry) entry._patternChannel = chMap[ch];
+        }
+    }
+
+    // Ground: shadow catcher with gradient alpha
+    if (ground) {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+        gradient.addColorStop(0.7, 'rgba(255,255,255,0.2)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        ground.material.alphaMap = new THREE.CanvasTexture(canvas);
+        ground.material.transparent = true;
+        ground.material.needsUpdate = true;
+    }
+}
+
 document.getElementById('btn-save-preset')?.addEventListener('click', savePreset);
 document.getElementById('btn-load-preset')?.addEventListener('click', loadPreset);
+
+// Scene save/load
+document.getElementById('btn-save-scene')?.addEventListener('click', () => {
+    const sceneData = {
+        fov: camera.fov,
+        background: '#' + scene.background.getHexString(),
+        ground: {
+            visible: ground.visible,
+            color: '#' + ground.material.color.getHexString(),
+            roughness: ground.material.roughness,
+            metalness: ground.material.metalness,
+            opacity: ground.material.opacity,
+        },
+        camera: {
+            posX: camera.position.x, posY: camera.position.y, posZ: camera.position.z,
+            targetX: orbit.target.x, targetY: orbit.target.y, targetZ: orbit.target.z,
+        },
+        toneMapping: renderer.toneMapping,
+        toneMappingExposure: renderer.toneMappingExposure,
+    };
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const blob = new Blob([JSON.stringify(sceneData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Gloops_scene_${ts}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-load-scene')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', () => {
+        if (!input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const sceneData = JSON.parse(e.target.result);
+                _applyScenePreset(sceneData);
+            } catch (err) {
+                alert('Invalid scene file.');
+            }
+        };
+        reader.readAsText(input.files[0]);
+    });
+    input.click();
+});
 
 // --- Audio ---
 const audioManager = new AudioManager();
@@ -551,16 +669,20 @@ async function init() {
         const autoConnect = manifestData.autoConnect || {};
         await _autoConnectTextures(autoConnect);
 
+        // Apply character defaults from config
+        await _applyCharacterDefaults();
+
         scene.add(model);
 
         // Camera
         const finalBox = new THREE.Box3().setFromObject(model);
         const finalCenter = finalBox.getCenter(new THREE.Vector3());
         orbit.target.copy(finalCenter);
+        // 3/4 view from right, more distant
         camera.position.set(
-            finalCenter.x,
-            finalCenter.y + size.y * 0.3,
-            finalCenter.z + size.y * 1.5
+            finalCenter.x + size.y * 0.8,   // offset right
+            finalCenter.y + size.y * 0.2,   // slightly above
+            finalCenter.z + size.y * 2.2    // further away
         );
         orbit.update();
 

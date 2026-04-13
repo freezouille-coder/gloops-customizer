@@ -199,7 +199,15 @@ export class GenerateControls {
             case 'palette': {
                 const pick = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
                 const mat = this._findMat(attr.material);
-                if (mat) this.sm.setRGBColorA(mat, attr.channel || 0, pick.hex);
+                if (!mat) break;
+                const ch = attr.channel || 0;
+                if (attr.side === 'B') {
+                    this.sm.setRGBColorB(mat, ch, pick.hex);
+                } else {
+                    this.sm.setRGBColorA(mat, ch, pick.hex);
+                }
+                // Apply linked colors
+                this._applyLinkedColors(key, pick.hex);
                 break;
             }
             case 'pattern': {
@@ -226,8 +234,22 @@ export class GenerateControls {
             }
             case 'mode': {
                 const pick = attr.options[Math.floor(Math.random() * attr.options.length)];
-                for (const name of this.sm.getMaterialNames()) {
-                    this.sm.setPatternMode(name, pick);
+                if (attr.material) {
+                    const mat = this._findMat(attr.material);
+                    if (mat) {
+                        this.sm.setPatternMode(mat, pick);
+                        // Apply pattern hue/sat defaults per mode
+                        const entry = this.sm.getEntry(mat);
+                        const patDef = entry && entry._patternDefaults && entry._patternDefaults[pick];
+                        if (patDef) {
+                            this.sm.setPatternHueShift(mat, patDef.hue || 0);
+                            this.sm.setPatternSatShift(mat, patDef.sat || 0);
+                        }
+                    }
+                } else {
+                    for (const name of this.sm.getMaterialNames()) {
+                        this.sm.setPatternMode(name, pick);
+                    }
                 }
                 break;
             }
@@ -246,6 +268,37 @@ export class GenerateControls {
                     if (items.length > 0) {
                         const pick = items[Math.floor(Math.random() * items.length)];
                         this.character.selectItem(attr.category, pick.filename);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply linked colors: when body tongue color changes,
+     * horns R color follows automatically.
+     */
+    _applyLinkedColors(key, hex) {
+        const linked = this.config.linkedColors || {};
+        // Check if any linked color references this key's material+channel
+        // e.g. "horns_R_A": "body_G_A" means horns R Color A = body G Color A
+        for (const [target, source] of Object.entries(linked)) {
+            const [tMesh, tCh, tSide] = target.split('_');
+            const [sMesh, sCh, sSide] = source.split('_');
+
+            // Check if the current randomization matches the source
+            const randomizable = this.config.randomizable || {};
+            for (const [rKey, rAttr] of Object.entries(randomizable)) {
+                if (rAttr.material === sMesh &&
+                    rAttr.channel === {'R':0,'G':1,'B':2}[sCh] &&
+                    rAttr.side === sSide &&
+                    rKey === key) {
+                    // Apply to target
+                    const tMat = this._findMat(tMesh);
+                    const tChIdx = {'R':0,'G':1,'B':2}[tCh];
+                    if (tMat && tChIdx !== undefined) {
+                        if (tSide === 'B') this.sm.setRGBColorB(tMat, tChIdx, hex);
+                        else this.sm.setRGBColorA(tMat, tChIdx, hex);
                     }
                 }
             }
