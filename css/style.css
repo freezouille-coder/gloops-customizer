@@ -49,6 +49,48 @@ body {
     filter: drop-shadow(0 2px 8px rgba(233, 69, 96, 0.4));
 }
 
+/* --- Audio Player --- */
+#audio-player {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 12px 6px;
+    flex-shrink: 0;
+}
+
+#audio-mute {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+#audio-mute:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+#audio-volume {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    outline: none;
+}
+
+#audio-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e094c0;
+    cursor: pointer;
+}
+
 /* --- Tabs --- */
 #panel-tabs {
     display: flex;

@@ -10,6 +10,7 @@ import { PropsManager } from './props.js';
 import { PropsControls } from './props-controls.js';
 import { TextureLibrary } from './texture-library.js';
 import { GenerateControls } from './generate-controls.js';
+import { AudioManager, buildAudioPlayer } from './audio.js';
 
 // --- Config ---
 const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
@@ -491,6 +492,9 @@ async function _autoConnectTextures(autoConnect) {
 document.getElementById('btn-save-preset')?.addEventListener('click', savePreset);
 document.getElementById('btn-load-preset')?.addEventListener('click', loadPreset);
 
+// --- Audio ---
+const audioManager = new AudioManager();
+
 // --- Init ---
 const character = new Character();
 const loadingEl = document.getElementById('loading');
@@ -605,6 +609,22 @@ async function init() {
             const genControls = new GenerateControls(character, shadingManager, manifestData);
             await genControls.build(genContainer);
         }
+
+        // Audio player — add under logo
+        const logoDiv = document.getElementById('panel-logo');
+        if (logoDiv) {
+            logoDiv.appendChild(buildAudioPlayer(audioManager));
+        }
+
+        // Hook audio to emotion selection
+        const origSelectItem = character.selectItem.bind(character);
+        character.selectItem = (catName, filename) => {
+            origSelectItem(catName, filename);
+            if (catName === 'Emotion') {
+                if (filename) audioManager.play(filename);
+                else audioManager.stop();
+            }
+        };
 
         // Props
         const propsContainer = document.getElementById('props-controls-container');

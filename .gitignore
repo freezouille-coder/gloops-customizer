@@ -1,6 +1,8 @@
 .claude/
 presets/
 TEXTURES/colors/*.exr
+textures/colors/*.exr
+sound/*.wav
 *.pyc
 __pycache__/
 node_modules/
