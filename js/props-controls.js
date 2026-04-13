@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 export class PropsControls {
     constructor(propsManager) {
         this.pm = propsManager;
@@ -10,14 +8,128 @@ export class PropsControls {
         this.container = container;
         this.container.innerHTML = '';
 
-        // --- Add Prop section ---
-        const addSection = document.createElement('div');
-        addSection.className = 'mat-section';
+        const groups = this.pm.getCatalogByCategory();
+        const hasProps = Object.keys(groups).length > 0;
 
-        const addTitle = document.createElement('div');
-        addTitle.className = 'mat-section-title';
-        addTitle.textContent = 'Add Prop';
-        addSection.appendChild(addTitle);
+        if (!hasProps) {
+            // Show file upload for custom props
+            this.container.appendChild(this._buildUploadSection());
+            return;
+        }
+
+        // Build catalog sections by category
+        for (const [category, props] of Object.entries(groups)) {
+            this.container.appendChild(this._buildCategorySection(category, props));
+        }
+
+        // Custom upload at the end
+        this.container.appendChild(this._buildUploadSection());
+
+        // Active props controls
+        const activeDiv = document.createElement('div');
+        activeDiv.id = 'active-props-list';
+        this.container.appendChild(activeDiv);
+        this._rebuildActiveList();
+    }
+
+    _buildCategorySection(category, props) {
+        const section = document.createElement('div');
+        section.className = 'mat-section';
+
+        const header = document.createElement('div');
+        header.className = 'mat-section-title mat-section-toggle';
+        const label = document.createElement('span');
+        label.textContent = category;
+        const arrow = document.createElement('span');
+        arrow.className = 'section-arrow';
+        arrow.textContent = '▼';
+        header.appendChild(label);
+        header.appendChild(arrow);
+        section.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'section-content';
+
+        // None option
+        const noneRow = document.createElement('div');
+        noneRow.className = 'gen-row';
+        const noneBtn = document.createElement('button');
+        noneBtn.className = 'prop-select-btn';
+        noneBtn.textContent = '✕ None';
+        noneBtn.addEventListener('click', () => {
+            // Deactivate all props in this category
+            for (const p of props) {
+                const id = 'prop_' + p.name;
+                if (this.pm.props.has(id)) {
+                    this.pm.deactivateProp(id);
+                }
+            }
+            this._updateCategoryHighlight(content, null);
+            this._rebuildActiveList();
+        });
+        noneRow.appendChild(noneBtn);
+        content.appendChild(noneRow);
+
+        // Prop buttons
+        for (const prop of props) {
+            const row = document.createElement('div');
+            row.className = 'gen-row';
+
+            const btn = document.createElement('button');
+            btn.className = 'prop-select-btn';
+            btn.dataset.propName = prop.name;
+            btn.textContent = prop.name.replace(/[_-]/g, ' ');
+            if (prop.animation) {
+                btn.textContent += ' 🎬'; // has animation indicator
+            }
+
+            btn.addEventListener('click', async () => {
+                btn.textContent = 'Loading...';
+                await this.pm.activateProp(prop.name);
+                btn.textContent = prop.name.replace(/[_-]/g, ' ') + (prop.animation ? ' 🎬' : '');
+                this._updateCategoryHighlight(content, prop.name);
+                this._rebuildActiveList();
+            });
+
+            row.appendChild(btn);
+            content.appendChild(row);
+        }
+
+        section.appendChild(content);
+
+        header.addEventListener('click', () => {
+            const hidden = content.style.display === 'none';
+            content.style.display = hidden ? '' : 'none';
+            arrow.textContent = hidden ? '▼' : '▶';
+        });
+
+        return section;
+    }
+
+    _updateCategoryHighlight(content, activeName) {
+        content.querySelectorAll('.prop-select-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.propName === activeName);
+        });
+    }
+
+    _buildUploadSection() {
+        const section = document.createElement('div');
+        section.className = 'mat-section';
+
+        const header = document.createElement('div');
+        header.className = 'mat-section-title mat-section-toggle';
+        const label = document.createElement('span');
+        label.textContent = 'Custom Upload';
+        const arrow = document.createElement('span');
+        arrow.className = 'section-arrow';
+        arrow.textContent = '▶';
+        header.appendChild(label);
+        header.appendChild(arrow);
+        section.appendChild(header);
+
+        const content = document.createElement('div');
+        content.className = 'section-content';
+        content.style.display = 'none';
 
         // Bone selector
         const boneRow = document.createElement('div');
@@ -27,234 +139,93 @@ export class PropsControls {
         boneLbl.textContent = 'Bone';
         const boneSelect = document.createElement('select');
         boneSelect.className = 'category-select';
-        boneSelect.id = 'prop-bone-select';
         boneSelect.style.flex = '1';
-
-        // Group bones by category for easier navigation
-        const boneNames = this.pm.getBoneNames();
-        const groups = { head: [], hand: [], spine: [], other: [] };
-        for (const name of boneNames) {
-            const n = name.toLowerCase();
-            if (n.includes('head') || n.includes('eye') || n.includes('jaw') || n.includes('ear')) {
-                groups.head.push(name);
-            } else if (n.includes('hand') || n.includes('finger') || n.includes('index') || n.includes('thumb')) {
-                groups.hand.push(name);
-            } else if (n.includes('spine') || n.includes('pelvis') || n.includes('chest')) {
-                groups.spine.push(name);
-            } else {
-                groups.other.push(name);
-            }
+        for (const name of this.pm.getBoneNames()) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            boneSelect.appendChild(opt);
         }
-
-        for (const [groupName, bones] of Object.entries(groups)) {
-            if (bones.length === 0) continue;
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = groupName.charAt(0).toUpperCase() + groupName.slice(1);
-            for (const bone of bones) {
-                const opt = document.createElement('option');
-                opt.value = bone;
-                opt.textContent = bone;
-                optgroup.appendChild(opt);
-            }
-            boneSelect.appendChild(optgroup);
-        }
-
         boneRow.appendChild(boneLbl);
         boneRow.appendChild(boneSelect);
-        addSection.appendChild(boneRow);
+        content.appendChild(boneRow);
 
-        // Maintain offset checkbox
-        const offsetRow = document.createElement('div');
-        offsetRow.className = 'mat-row';
-        const offsetLbl = document.createElement('span');
-        offsetLbl.className = 'mat-label';
-        offsetLbl.textContent = 'Maintain Offset';
-        const offsetCb = document.createElement('input');
-        offsetCb.type = 'checkbox';
-        offsetCb.className = 'mat-checkbox';
-        offsetCb.id = 'prop-maintain-offset';
-        offsetCb.checked = false;
-        offsetRow.appendChild(offsetLbl);
-        offsetRow.appendChild(offsetCb);
-        addSection.appendChild(offsetRow);
-
-        // Upload button
-        const uploadRow = document.createElement('div');
-        uploadRow.className = 'mat-row';
+        // Upload
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = '.fbx';
         fileInput.style.display = 'none';
 
         const uploadBtn = document.createElement('button');
-        uploadBtn.textContent = '+ Add Prop (FBX)';
-        uploadBtn.className = 'mat-btn';
-        uploadBtn.style.flex = '1';
-        uploadBtn.style.padding = '8px';
+        uploadBtn.className = 'prop-select-btn';
+        uploadBtn.textContent = '+ Upload FBX';
         uploadBtn.style.width = '100%';
-        uploadBtn.style.fontSize = '0.85rem';
-        uploadBtn.style.background = '#0f3460';
 
         fileInput.addEventListener('change', async () => {
             if (!fileInput.files[0]) return;
-            const boneName = boneSelect.value;
-            const maintain = offsetCb.checked;
+            // Manual upload logic (simplified)
             uploadBtn.textContent = 'Loading...';
             try {
-                await this.pm.loadProp(fileInput.files[0], boneName, maintain);
-                this._rebuildPropsList();
-                uploadBtn.textContent = '+ Add Prop (FBX)';
+                await this.pm.loadPropFromFile(fileInput.files[0], boneSelect.value);
+                this._rebuildActiveList();
             } catch (e) {
-                console.error('Failed to load prop:', e);
-                uploadBtn.textContent = 'Error! Try again';
-                setTimeout(() => { uploadBtn.textContent = '+ Add Prop (FBX)'; }, 2000);
+                console.error(e);
             }
+            uploadBtn.textContent = '+ Upload FBX';
             fileInput.value = '';
         });
-
         uploadBtn.addEventListener('click', () => fileInput.click());
+
+        const uploadRow = document.createElement('div');
+        uploadRow.className = 'mat-row';
         uploadRow.appendChild(uploadBtn);
         uploadRow.appendChild(fileInput);
-        addSection.appendChild(uploadRow);
+        content.appendChild(uploadRow);
 
-        this.container.appendChild(addSection);
+        section.appendChild(content);
 
-        // --- Props List ---
-        const listDiv = document.createElement('div');
-        listDiv.id = 'props-list';
-        this.container.appendChild(listDiv);
+        header.addEventListener('click', () => {
+            const hidden = content.style.display === 'none';
+            content.style.display = hidden ? '' : 'none';
+            arrow.textContent = hidden ? '▼' : '▶';
+        });
 
-        this._rebuildPropsList();
+        return section;
     }
 
-    _rebuildPropsList() {
-        const listDiv = document.getElementById('props-list');
+    _rebuildActiveList() {
+        const listDiv = document.getElementById('active-props-list');
         if (!listDiv) return;
         listDiv.innerHTML = '';
 
-        const props = this.pm.getProps();
-        if (props.length === 0) {
-            const empty = document.createElement('p');
-            empty.style.padding = '16px';
-            empty.style.color = '#666';
-            empty.style.textAlign = 'center';
-            empty.textContent = 'No props attached.';
-            listDiv.appendChild(empty);
-            return;
-        }
+        const active = this.pm.getActiveProps();
+        if (active.length === 0) return;
 
-        for (const { id, name, boneName, materials } of props) {
-            const section = document.createElement('div');
-            section.className = 'mat-section';
+        const title = document.createElement('div');
+        title.className = 'mat-section-title';
+        title.textContent = 'Active Props';
+        title.style.paddingTop = '12px';
+        listDiv.appendChild(title);
 
-            // Header with name + delete
-            const header = document.createElement('div');
-            header.className = 'mat-section-title';
-            header.style.display = 'flex';
-            header.style.justifyContent = 'space-between';
-            header.style.alignItems = 'center';
+        for (const { id, name, boneName } of active) {
+            const row = document.createElement('div');
+            row.className = 'gen-row';
 
-            const title = document.createElement('span');
-            title.textContent = `${name}`;
+            const lbl = document.createElement('span');
+            lbl.className = 'gen-label';
+            lbl.textContent = `${name.replace(/[_-]/g, ' ')} → ${boneName}`;
 
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '✕';
-            deleteBtn.className = 'mat-btn mat-btn-clear';
-            deleteBtn.title = 'Remove prop';
-            deleteBtn.addEventListener('click', () => {
-                this.pm.removeProp(id);
-                this._rebuildPropsList();
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '✕';
+            removeBtn.className = 'mat-btn mat-btn-clear';
+            removeBtn.addEventListener('click', () => {
+                this.pm.deactivateProp(id);
+                this._rebuildActiveList();
             });
 
-            header.appendChild(title);
-            header.appendChild(deleteBtn);
-            section.appendChild(header);
-
-            // Bone selector (reparent)
-            section.appendChild(this._row('Bone', this._boneDropdown(id, boneName)));
-
-            // Position
-            section.appendChild(this._sliderRow('Pos X', 0, -2, 2, 0.01,
-                (v) => { const p = this.pm.getProp(id); this.pm.setPosition(id, v, p.model.position.y, p.model.position.z); }));
-            section.appendChild(this._sliderRow('Pos Y', 0, -2, 2, 0.01,
-                (v) => { const p = this.pm.getProp(id); this.pm.setPosition(id, p.model.position.x, v, p.model.position.z); }));
-            section.appendChild(this._sliderRow('Pos Z', 0, -2, 2, 0.01,
-                (v) => { const p = this.pm.getProp(id); this.pm.setPosition(id, p.model.position.x, p.model.position.y, v); }));
-
-            // Rotation
-            section.appendChild(this._sliderRow('Rot X', 0, -180, 180, 1,
-                (v) => this.pm.setRotation(id, v, 0, 0)));
-            section.appendChild(this._sliderRow('Rot Y', 0, -180, 180, 1,
-                (v) => this.pm.setRotation(id, 0, v, 0)));
-            section.appendChild(this._sliderRow('Rot Z', 0, -180, 180, 1,
-                (v) => this.pm.setRotation(id, 0, 0, v)));
-
-            // Scale
-            section.appendChild(this._sliderRow('Scale', 1, 0.01, 5, 0.01,
-                (v) => this.pm.setScale(id, v)));
-
-            // Materials list
-            if (materials.length > 0) {
-                const matTitle = document.createElement('div');
-                matTitle.className = 'palette-sublabel';
-                matTitle.textContent = `Materials: ${materials.join(', ')}`;
-                matTitle.style.fontSize = '0.6rem';
-                section.appendChild(matTitle);
-            }
-
-            listDiv.appendChild(section);
+            row.appendChild(lbl);
+            row.appendChild(removeBtn);
+            listDiv.appendChild(row);
         }
-    }
-
-    _boneDropdown(propId, currentBone) {
-        const select = document.createElement('select');
-        select.className = 'category-select';
-        select.style.flex = '1';
-        for (const name of this.pm.getBoneNames()) {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            if (name === currentBone) opt.selected = true;
-            select.appendChild(opt);
-        }
-        select.addEventListener('change', () => {
-            this.pm.reparent(propId, select.value);
-        });
-        return select;
-    }
-
-    _row(label, element) {
-        const row = document.createElement('div');
-        row.className = 'mat-row';
-        const lbl = document.createElement('span');
-        lbl.className = 'mat-label';
-        lbl.textContent = label;
-        row.appendChild(lbl);
-        row.appendChild(element);
-        return row;
-    }
-
-    _sliderRow(label, value, min, max, step, onChange) {
-        const row = document.createElement('div');
-        row.className = 'mat-row';
-        const lbl = document.createElement('span');
-        lbl.className = 'mat-label';
-        lbl.textContent = label;
-        lbl.style.minWidth = '40px';
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = min; slider.max = max; slider.step = step; slider.value = value;
-        slider.className = 'mat-slider';
-        const val = document.createElement('span');
-        val.className = 'mat-slider-value';
-        val.textContent = parseFloat(value).toFixed(2);
-        slider.addEventListener('input', () => {
-            val.textContent = parseFloat(slider.value).toFixed(2);
-            onChange(parseFloat(slider.value));
-        });
-        row.appendChild(lbl);
-        row.appendChild(slider);
-        row.appendChild(val);
-        return row;
     }
 }

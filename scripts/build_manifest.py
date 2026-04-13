@@ -17,6 +17,8 @@ FBX_DIR = os.path.join(WEB_ROOT, "fbx")
 ANIM_DIR = os.path.join(FBX_DIR, "ANIM")
 POSE_DIR = os.path.join(FBX_DIR, "POSE")
 SET_DIR = os.path.join(FBX_DIR, "SET")
+PROPS_DIR = os.path.join(FBX_DIR, "PROPS")
+PROPS_ANIM_DIR = os.path.join(ANIM_DIR, "Props")
 MANIFEST = os.path.join(FBX_DIR, "manifest.json")
 IMAGES_DIR = os.path.join(WEB_ROOT, "images", "chr")
 
@@ -89,6 +91,40 @@ def scan():
                                 name = os.path.splitext(f)[0]
                                 sets[set_name]["textures"][name] = rel
 
+    # Scan PROPS
+    props = {}
+    if os.path.exists(PROPS_DIR):
+        for f in sorted(os.listdir(PROPS_DIR)):
+            if not f.lower().endswith('.fbx'):
+                continue
+            prop_name = os.path.splitext(f)[0]
+            prop_entry = {
+                "model": "PROPS/{}".format(f),
+                "bone": "head",  # default bone, can be overridden in config
+            }
+            # Check if matching animation exists
+            anim_file = os.path.join(PROPS_ANIM_DIR, f) if os.path.exists(PROPS_ANIM_DIR) else None
+            if anim_file and os.path.exists(anim_file):
+                prop_entry["animation"] = "ANIM/Props/{}".format(f)
+
+            # Try to detect category from name
+            name_lower = prop_name.lower()
+            if 'glass' in name_lower or 'sunglass' in name_lower:
+                prop_entry["category"] = "Glasses"
+                prop_entry["bone"] = "head"
+            elif 'hat' in name_lower or 'cap' in name_lower:
+                prop_entry["category"] = "Hats"
+                prop_entry["bone"] = "head"
+            else:
+                prop_entry["category"] = "Accessories"
+
+            props[prop_name] = prop_entry
+
+    print("Props: {} items".format(len(props)))
+    for name, data in props.items():
+        has_anim = "animation" in data
+        print("  {} ({}) bone:{} anim:{}".format(name, data.get("category", "?"), data["bone"], "YES" if has_anim else "no"))
+
     # Scan images/chr/
     textures = {}
     auto_connect = {}
@@ -114,6 +150,7 @@ def scan():
 
     manifest = {
         "categories": categories,
+        "props": props,
         "sets": sets,
         "textures": textures,
         "autoConnect": auto_connect

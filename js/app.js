@@ -839,6 +839,7 @@ async function init() {
         const propsContainer = document.getElementById('props-controls-container');
         if (propsContainer) {
             const propsManager = new PropsManager(scene, character);
+            propsManager.loadCatalog(manifestData.props || {});
             const propsControls = new PropsControls(propsManager);
             propsControls.build(propsContainer);
         }
