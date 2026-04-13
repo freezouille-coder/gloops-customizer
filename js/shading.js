@@ -84,9 +84,7 @@ export class ShadingManager {
             const { oldMat, name, meshes } = info;
 
             // Create MeshPhysicalMaterial (extends Standard with SSS, Sheen, Clearcoat)
-            const color = (oldMat.color && oldMat.color.getHSL({}).l > 0.05)
-                ? oldMat.color.clone()
-                : new THREE.Color(0x88aacc);
+            const color = new THREE.Color(0xffffff); // Default white
 
             const newMat = new THREE.MeshPhysicalMaterial({
                 color: color,

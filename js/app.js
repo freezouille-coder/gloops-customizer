@@ -9,6 +9,7 @@ import { PostProcessing } from './postprocessing.js';
 import { PropsManager } from './props.js';
 import { PropsControls } from './props-controls.js';
 import { TextureLibrary } from './texture-library.js';
+import { GenerateControls } from './generate-controls.js';
 
 // --- Config ---
 const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
@@ -455,6 +456,28 @@ async function _autoConnectTextures(autoConnect) {
                 console.log(`  ${type} -> ${primary.path}`);
             }
         }
+
+        // Per-material defaults
+        const matLower = matName.toLowerCase();
+
+        // Eyes: emissive use base color ON + load variant 8 as default diffuse
+        if (matLower.includes('eye') && !matLower.includes('glass') && !matLower.includes('brow') && !matLower.includes('lid')) {
+            shadingManager.setEmissiveUseBaseColor(matName, true);
+            const entry = shadingManager.getEntry(matName);
+            if (entry) entry.material.emissiveIntensity = 1;
+
+            // Load variant 8 as default if available
+            if (folderData['diffuse']) {
+                const v8 = folderData['diffuse'].find(e => e.variant === 8);
+                if (v8) {
+                    const v8Img = await loadImg(v8.path);
+                    if (v8Img) {
+                        shadingManager.setRGBTextureA(matName, 0, v8Img, v8.path);
+                        console.log(`  Default eye diffuse: variant 8`);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -567,6 +590,13 @@ async function init() {
         if (sceneContainer) {
             const sceneCtrl = new SceneControls(scene, camera, renderer, ground, postFX);
             sceneCtrl.build(sceneContainer);
+        }
+
+        // Generate
+        const genContainer = document.getElementById('generate-controls-container');
+        if (genContainer) {
+            const genControls = new GenerateControls(character, shadingManager, manifestData);
+            genControls.build(genContainer);
         }
 
         // Props

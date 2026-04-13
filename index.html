@@ -21,14 +21,20 @@
         <div id="panel">
             <h1>Gloops</h1>
             <div id="panel-tabs">
-                <button class="panel-tab active" data-tab="anim">Anim</button>
+                <button class="panel-tab active" data-tab="generate">Gen</button>
+                <button class="panel-tab" data-tab="anim">Anim</button>
                 <button class="panel-tab" data-tab="materials">Mat</button>
                 <button class="panel-tab" data-tab="props">Props</button>
                 <button class="panel-tab" data-tab="scene">Scene</button>
             </div>
 
+            <!-- Generate tab -->
+            <div id="tab-generate" class="tab-content active">
+                <div id="generate-controls-container"></div>
+            </div>
+
             <!-- Animations tab -->
-            <div id="tab-anim" class="tab-content active">
+            <div id="tab-anim" class="tab-content">
                 <div id="loading">Chargement du personnage...</div>
                 <div id="panel-header">
                     <button id="btn-random-all" title="Randomize All">🎲 Random All</button>
