@@ -99,7 +99,7 @@ export class ShaderControls {
 
         // --- Diffuse Weight ---
         detail.appendChild(this._buildSection('Diffuse / Specular', [
-            this._buildSlider('Diffuse Weight', 1.0, 0, 1, 0.01,
+            this._buildSlider('Diffuse Weight', 1.0, 0, 2, 0.01,
                 (v) => this.sm.setDiffuseWeight(name, v)),
             this._buildTextureOnly('Diffuse Weight Map', entry.diffuseWeightMap,
                 (t) => this.sm.setDiffuseWeightMap(name, t),

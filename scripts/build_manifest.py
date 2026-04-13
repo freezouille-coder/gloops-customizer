@@ -16,6 +16,7 @@ WEB_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FBX_DIR = os.path.join(WEB_ROOT, "fbx")
 ANIM_DIR = os.path.join(FBX_DIR, "ANIM")
 POSE_DIR = os.path.join(FBX_DIR, "POSE")
+SET_DIR = os.path.join(FBX_DIR, "SET")
 MANIFEST = os.path.join(FBX_DIR, "manifest.json")
 IMAGES_DIR = os.path.join(WEB_ROOT, "images", "chr")
 
@@ -67,6 +68,27 @@ def scan():
                         "files": files
                     }
 
+    # Scan SET subfolders
+    sets = {}
+    if os.path.exists(SET_DIR):
+        for set_name in sorted(os.listdir(SET_DIR)):
+            set_path = os.path.join(SET_DIR, set_name)
+            if os.path.isdir(set_path):
+                fbx_files = [f for f in os.listdir(set_path) if f.lower().endswith('.fbx')]
+                if fbx_files:
+                    sets[set_name] = {
+                        "fbx": "SET/{}/{}".format(set_name, fbx_files[0]),
+                        "textures": {}
+                    }
+                    # Check for set textures
+                    set_tex_dir = os.path.join(WEB_ROOT, "images", "set", set_name)
+                    if os.path.exists(set_tex_dir):
+                        for f in sorted(os.listdir(set_tex_dir)):
+                            if f.lower().endswith(('.png', '.jpg', '.hdr')):
+                                rel = os.path.relpath(os.path.join(set_tex_dir, f), WEB_ROOT).replace("\\", "/")
+                                name = os.path.splitext(f)[0]
+                                sets[set_name]["textures"][name] = rel
+
     # Scan images/chr/
     textures = {}
     auto_connect = {}
@@ -92,6 +114,7 @@ def scan():
 
     manifest = {
         "categories": categories,
+        "sets": sets,
         "textures": textures,
         "autoConnect": auto_connect
     }

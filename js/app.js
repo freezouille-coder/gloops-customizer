@@ -543,21 +543,22 @@ async function _applyCharacterDefaults() {
         }
     }
 
-    // Ground: shadow catcher with gradient alpha
+    // Ground: shadow catcher — nearly invisible, shadow shows through
     if (ground) {
         const size = 512;
         const canvas = document.createElement('canvas');
         canvas.width = size; canvas.height = size;
         const ctx = canvas.getContext('2d');
         const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-        gradient.addColorStop(0, 'rgba(255,255,255,1)');
-        gradient.addColorStop(0.4, 'rgba(255,255,255,0.8)');
-        gradient.addColorStop(0.7, 'rgba(255,255,255,0.2)');
+        gradient.addColorStop(0, 'rgba(255,255,255,0.6)');
+        gradient.addColorStop(0.3, 'rgba(255,255,255,0.4)');
+        gradient.addColorStop(0.6, 'rgba(255,255,255,0.15)');
         gradient.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, size, size);
         ground.material.alphaMap = new THREE.CanvasTexture(canvas);
         ground.material.transparent = true;
+        ground.material.color.set(0x111122); // dark to blend with background
         ground.material.needsUpdate = true;
     }
 }

@@ -726,7 +726,8 @@ body {
 
 .gen-swatch.active {
     border-color: white;
-    box-shadow: 0 0 4px #ffffffaa;
+    box-shadow: 0 0 6px #ffffffcc;
+    transform: scale(1.25);
 }
 
 .gen-thumb {
