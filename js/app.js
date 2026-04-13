@@ -478,6 +478,13 @@ async function _autoConnectTextures(autoConnect) {
                 }
             }
         }
+
+        // EyeGlass: emissive use base color ON if emissive map exists
+        if (matLower.includes('glass') && folderData['emissiveMap']) {
+            shadingManager.setEmissiveUseBaseColor(matName, true);
+            const entry = shadingManager.getEntry(matName);
+            if (entry) entry.material.emissiveIntensity = 1;
+        }
     }
 }
 
@@ -596,7 +603,7 @@ async function init() {
         const genContainer = document.getElementById('generate-controls-container');
         if (genContainer) {
             const genControls = new GenerateControls(character, shadingManager, manifestData);
-            genControls.build(genContainer);
+            await genControls.build(genContainer);
         }
 
         // Props

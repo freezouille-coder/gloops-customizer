@@ -1,0 +1,112 @@
+{
+    "colorNames": {
+        "Red": "Rouge Passion",
+        "Tomato": "Tomate",
+        "Orange": "Orange Vif",
+        "Ambre": "Ambre Dore",
+        "Yellow": "Jaune Soleil",
+        "Lime": "Citron Vert",
+        "Green": "Vert Prairie",
+        "Turkoize": "Turquoise",
+        "Cyan": "Cyan Ocean",
+        "Blue": "Bleu Royal",
+        "Purple": "Violet Mystique",
+        "Magenta": "Magenta Pop",
+        "Black": "Noir Eclipse",
+        "White": "Blanc Neige",
+        "Brown": "Brun Chocolat",
+        "Peach": "Peche Douce",
+        "Mint": "Menthe Fraiche",
+        "Salmon": "Saumon Rose",
+        "Lavande": "Lavande",
+        "Grey": "Gris Perle",
+        "Olive": "Olive",
+        "Beige": "Beige Sable"
+    },
+
+    "channelLabels": {
+        "body": {
+            "R_A": "Body Color",
+            "R_B": "Body Accent",
+            "G_A": "Belly Color",
+            "G_B": "Belly Accent",
+            "B_A": "Detail Color",
+            "B_B": "Detail Accent"
+        },
+        "horns": {
+            "R_A": "Horn Base",
+            "R_B": "Horn Tip",
+            "G_A": "Horn Detail A",
+            "G_B": "Horn Detail B",
+            "B_A": "Horn Accent A",
+            "B_B": "Horn Accent B"
+        }
+    },
+
+    "randomizable": {
+        "emotion": {
+            "label": "Emotion",
+            "enabled": true,
+            "category": "Emotion"
+        },
+        "teeths": {
+            "label": "Teeth Style",
+            "enabled": true,
+            "category": "Teeths"
+        },
+        "bodyColor": {
+            "label": "Body Color",
+            "enabled": true,
+            "material": "body",
+            "channel": 0,
+            "type": "palette"
+        },
+        "hornsColor": {
+            "label": "Horns Color",
+            "enabled": true,
+            "material": "horns",
+            "channel": 0,
+            "type": "palette"
+        },
+        "bodyPattern": {
+            "label": "Body Pattern",
+            "enabled": true,
+            "material": "body",
+            "type": "pattern"
+        },
+        "hornsPattern": {
+            "label": "Horns Pattern",
+            "enabled": true,
+            "material": "horns",
+            "type": "pattern"
+        },
+        "patternMode": {
+            "label": "Pattern Mode",
+            "enabled": true,
+            "type": "mode",
+            "options": ["casual", "luxury"]
+        },
+        "eyeStyle": {
+            "label": "Eye Style",
+            "enabled": true,
+            "material": "eyes",
+            "type": "diffuseVariant"
+        },
+        "patternHue": {
+            "label": "Pattern Hue",
+            "enabled": false,
+            "material": "body",
+            "type": "range",
+            "min": -60,
+            "max": 60
+        },
+        "patternSat": {
+            "label": "Pattern Saturation",
+            "enabled": false,
+            "material": "body",
+            "type": "range",
+            "min": -0.3,
+            "max": 0.3
+        }
+    }
+}

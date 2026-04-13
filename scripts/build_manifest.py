@@ -120,10 +120,8 @@ def _scan_folder(folder_path, mesh_folder, mesh_name, textures, auto_connect):
             continue
 
         full_path = os.path.join(folder_path, f)
-        rel_path = os.path.relpath(full_path, os.path.dirname(os.path.dirname(folder_path)))
-        # Make path relative to WEB_ROOT
-        rel_from_web = os.path.relpath(full_path, os.path.dirname(os.path.dirname(os.path.dirname(folder_path))))
-        rel_from_web = rel_from_web.replace("\\", "/")
+        # Always relative to WEB_ROOT
+        rel_from_web = os.path.relpath(full_path, WEB_ROOT).replace("\\", "/")
 
         name = os.path.splitext(f)[0]
         tex_id = "{}/{}".format(mesh_folder, name)
