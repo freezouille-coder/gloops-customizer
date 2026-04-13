@@ -39,18 +39,29 @@ orbit.enableDamping = true;
 orbit.dampingFactor = 0.08;
 orbit.update();
 
-// --- Lights (initial — will be replaced by SceneControls presets) ---
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+// --- Lights (3-point studio, more contrast) ---
+scene.add(new THREE.AmbientLight(0xfff5e6, 0.3)); // low ambient for contrast
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(3, 5, 4);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(1024, 1024);
-scene.add(dirLight);
+const keyLight = new THREE.DirectionalLight(0xfff0dd, 1.8); // warm key, strong
+keyLight.position.set(4, 6, 3);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.near = 0.1;
+keyLight.shadow.camera.far = 30;
+keyLight.shadow.camera.left = -5;
+keyLight.shadow.camera.right = 5;
+keyLight.shadow.camera.top = 5;
+keyLight.shadow.camera.bottom = -5;
+keyLight.shadow.bias = -0.001;
+scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0x8888ff, 0.4);
-fillLight.position.set(-3, 2, -2);
+const fillLight = new THREE.DirectionalLight(0x99bbff, 0.5); // cool fill
+fillLight.position.set(-4, 3, -1);
 scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.9); // rim/back light
+rimLight.position.set(0, 4, -5);
+scene.add(rimLight);
 
 // --- Ground ---
 const ground = new THREE.Mesh(
@@ -564,19 +575,18 @@ async function _applyCharacterDefaults() {
         ground.material.needsUpdate = true;
     }
 
-    // Rendering defaults: better quality out of the box
-    // Tone mapping ACES for richer contrast
+    // Rendering defaults
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.0;
 
-    // SSAO for depth
+    // SSAO
     if (typeof postFX !== 'undefined' && postFX.ssaoPass) {
         postFX.setSSAO(true);
         postFX.setSSAORadius(16);
-        postFX.setSSAOIntensity(0.15);
+        postFX.setSSAOIntensity(0.12);
     }
 
-    // Environment IBL for subtle reflections
+    // Environment IBL
     const pmremGen = new THREE.PMREMGenerator(renderer);
     pmremGen.compileEquirectangularShader();
     const envSize = 256;
@@ -584,9 +594,10 @@ async function _applyCharacterDefaults() {
     envCanvas.width = envSize; envCanvas.height = envSize;
     const envCtx = envCanvas.getContext('2d');
     const envGrad = envCtx.createLinearGradient(0, 0, 0, envSize);
-    envGrad.addColorStop(0, '#e8d0b0');   // warm top
-    envGrad.addColorStop(0.5, '#f5e8d8'); // bright middle
-    envGrad.addColorStop(1, '#887766');    // ground
+    envGrad.addColorStop(0, '#d8c0a0');
+    envGrad.addColorStop(0.4, '#f0e0d0');
+    envGrad.addColorStop(0.6, '#e0d0c0');
+    envGrad.addColorStop(1, '#665544');
     envCtx.fillStyle = envGrad;
     envCtx.fillRect(0, 0, envSize, envSize);
     const envTex = new THREE.CanvasTexture(envCanvas);
@@ -594,21 +605,11 @@ async function _applyCharacterDefaults() {
     envTex.colorSpace = THREE.SRGBColorSpace;
     const envMap = pmremGen.fromEquirectangular(envTex).texture;
     scene.environment = envMap;
-    // Set env intensity on all materials
     scene.traverse(child => {
-        if (child.isMesh && child.material) {
-            child.material.envMapIntensity = 0.4;
-        }
+        if (child.isMesh && child.material) child.material.envMapIntensity = 0.5;
     });
     envTex.dispose();
     pmremGen.dispose();
-
-    // Warmer lights
-    scene.traverse(child => {
-        if (child.isDirectionalLight) {
-            child.intensity *= 1.1;
-        }
-    });
 }
 
 // Mobile generate button
