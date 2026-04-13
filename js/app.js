@@ -458,7 +458,7 @@ async function _autoConnectTextures(autoConnect) {
         }
 
         // Per-material defaults
-        const matLower = matName.toLowerCase();
+        // matLower already defined above
 
         // Eyes: emissive use base color ON + load variant 8 as default diffuse
         if (matLower.includes('eye') && !matLower.includes('glass') && !matLower.includes('brow') && !matLower.includes('lid')) {
