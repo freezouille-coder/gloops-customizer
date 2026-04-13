@@ -174,11 +174,12 @@ export class Character {
             if (fname === filename) {
                 item.action.setEffectiveWeight(1);
                 item.action.enabled = true;
+                item.action.time = 0;
                 if (cat.type === 'pose') {
                     item.action.paused = true;
-                    item.action.time = 0;
                 } else {
-                    item.action.time = 0;
+                    item.action.paused = false;
+                    item.action.play(); // ensure it's playing and reset
                 }
             } else {
                 item.action.setEffectiveWeight(0);

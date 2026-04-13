@@ -768,10 +768,14 @@ async function init() {
             await genControls.build(genContainer);
         }
 
-        // Audio player — add under logo
-        const logoDiv = document.getElementById('panel-logo');
-        if (logoDiv) {
-            logoDiv.appendChild(buildAudioPlayer(audioManager));
+        // Audio player — add in panel, after logo (desktop) or after mobile btn (mobile)
+        const audioPlayerEl = buildAudioPlayer(audioManager);
+        const mobileBtn = document.getElementById('mobile-generate-btn');
+        if (window.innerWidth <= 768 && mobileBtn) {
+            mobileBtn.parentNode.insertBefore(audioPlayerEl, mobileBtn);
+        } else {
+            const logoDiv = document.getElementById('panel-logo');
+            if (logoDiv) logoDiv.appendChild(audioPlayerEl);
         }
 
         // Hook audio to emotion selection

@@ -37,6 +37,7 @@ export class AudioManager {
 
     /**
      * Play the sound for an emotion filename.
+     * Syncs audio start with animation restart.
      */
     play(emotionFilename) {
         const soundPath = this.soundMap[emotionFilename];
@@ -45,10 +46,10 @@ export class AudioManager {
             return;
         }
 
-        if (this.currentSound === soundPath) return; // already playing
+        // Always restart from beginning for sync
         this.currentSound = soundPath;
-
         this.audio.src = soundPath;
+        this.audio.currentTime = 0;
         this.audio.volume = this.muted ? 0 : this.volume;
         this.audio.play().catch(() => {}); // ignore autoplay block
     }
