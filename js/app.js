@@ -29,7 +29,8 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(BG_COLOR);
 
-const camera = new THREE.PerspectiveCamera(20, 1, 0.1, 1000);
+const isMobileInit = window.innerWidth <= 768;
+const camera = new THREE.PerspectiveCamera(isMobileInit ? 40 : 20, 1, 0.1, 1000);
 camera.position.set(0, 1.2, 3);
 
 const orbit = new OrbitControls(camera, canvas);
