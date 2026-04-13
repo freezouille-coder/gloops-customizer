@@ -65,8 +65,9 @@ const postFX = new PostProcessing(renderer, scene, camera);
 
 // --- Resize ---
 function resize() {
+    const isMobile = window.innerWidth <= 768;
     const panel = document.getElementById('panel');
-    const w = window.innerWidth - panel.offsetWidth;
+    const w = isMobile ? window.innerWidth : window.innerWidth - panel.offsetWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h);
     postFX.resize(w, h);

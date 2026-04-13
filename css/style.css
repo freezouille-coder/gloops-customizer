@@ -13,6 +13,7 @@
     }
     #viewport {
         flex: 1;
+        width: 100%;
     }
     #panel {
         position: fixed;
@@ -21,21 +22,20 @@
         right: 0;
         width: 100%;
         min-width: unset;
-        max-height: 80px;
+        max-height: none;
+        height: auto;
         border-left: none;
-        border-top: 2px solid #2a1a4a;
-        flex-direction: row;
+        border-top: none;
+        flex-direction: column;
         align-items: center;
-        padding: 8px 12px;
-        gap: 8px;
-        overflow: hidden;
+        padding: 0;
+        gap: 0;
+        overflow: visible;
         z-index: 100;
+        background: transparent;
     }
     #panel-logo {
-        padding: 0;
-    }
-    #logo-img {
-        width: 80px;
+        display: none;
     }
     #audio-player,
     #panel-tabs,
@@ -45,23 +45,30 @@
     }
     #mobile-generate-btn {
         display: flex !important;
+        flex-direction: column;
         align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: linear-gradient(135deg, #e94560, #ff6b8a);
+        gap: 6px;
+        width: calc(100% - 32px);
+        margin: 0 16px 16px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #2a1a4a, #1a1030);
+        border: 2px solid #e94560;
         color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 0.9rem;
+        border-radius: 16px;
+        font-size: 1.1rem;
         font-weight: 800;
+        letter-spacing: 1px;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
-        flex: 1;
+        box-shadow: 0 4px 20px rgba(233, 69, 96, 0.5), 0 0 40px rgba(233, 69, 96, 0.15);
     }
     #mobile-generate-btn img {
-        width: 24px;
+        width: 120px;
         height: auto;
-        filter: brightness(10);
+        filter: drop-shadow(0 2px 6px rgba(233, 69, 96, 0.5));
+    }
+    #mobile-generate-btn:active {
+        transform: scale(0.96);
+        box-shadow: 0 2px 10px rgba(233, 69, 96, 0.4);
     }
 }
 
