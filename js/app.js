@@ -15,7 +15,7 @@ import { AudioManager, buildAudioPlayer } from './audio.js';
 // --- Config ---
 const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
 const MANIFEST_PATH = 'fbx/manifest.json';
-const BG_COLOR = 0x1a1828;
+const BG_COLOR = 0xc8beb0; // warm light grey, matches ground
 const STORAGE_KEY = 'gloops_preset';
 
 // --- Three.js Setup ---
@@ -571,7 +571,7 @@ async function _applyCharacterDefaults() {
         ctx.fillRect(0, 0, size, size);
         ground.material.alphaMap = new THREE.CanvasTexture(canvas);
         ground.material.transparent = true;
-        ground.material.color.set(0x111122); // dark to blend with background
+        ground.material.color.set(0xb8aea0); // slightly darker than bg for subtle shadow
         ground.material.needsUpdate = true;
     }
 
