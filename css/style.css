@@ -6,6 +6,65 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
+/* --- Mobile --- */
+@media (max-width: 768px) {
+    #app {
+        flex-direction: column;
+    }
+    #viewport {
+        flex: 1;
+    }
+    #panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        min-width: unset;
+        max-height: 80px;
+        border-left: none;
+        border-top: 2px solid #2a1a4a;
+        flex-direction: row;
+        align-items: center;
+        padding: 8px 12px;
+        gap: 8px;
+        overflow: hidden;
+        z-index: 100;
+    }
+    #panel-logo {
+        padding: 0;
+    }
+    #logo-img {
+        width: 80px;
+    }
+    #audio-player,
+    #panel-tabs,
+    .tab-content,
+    #loading {
+        display: none !important;
+    }
+    #mobile-generate-btn {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #e94560, #ff6b8a);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+        flex: 1;
+    }
+    #mobile-generate-btn img {
+        width: 24px;
+        height: auto;
+        filter: brightness(10);
+    }
+}
+
 body {
     font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
     background: #0d0d1a;

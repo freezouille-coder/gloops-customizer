@@ -504,6 +504,12 @@ async function _applyCharacterDefaults() {
         for (const name of shadingManager.getMaterialNames()) {
             shadingManager.setSheen(name, defaults.sheen.intensity || 0);
             shadingManager.setSheenRoughness(name, defaults.sheen.roughness || 0.5);
+            // Sheen use base color: take diffuse hue, reduce saturation, max value
+            const entry = shadingManager.getEntry(name);
+            if (entry && defaults.sheen.useBaseColor) {
+                entry._sheenUseBaseColor = true;
+                entry._sheenSatMult = defaults.sheen.saturationMult || 0.5;
+            }
         }
     }
 
@@ -555,6 +561,33 @@ async function _applyCharacterDefaults() {
         ground.material.needsUpdate = true;
     }
 }
+
+// Mobile generate button
+document.getElementById('mobile-generate-btn')?.addEventListener('click', async () => {
+    try {
+        const cfg = await fetch('config/character.json').then(r => r.json());
+        const randomizable = cfg.randomizable || {};
+        for (const [key, attr] of Object.entries(randomizable)) {
+            if (attr.enabled === false) continue;
+            // Quick randomize using same logic as GenerateControls
+            if (attr.category) {
+                const items = character.getCategoryItems(attr.category);
+                if (items.length > 0) {
+                    const pick = items[Math.floor(Math.random() * items.length)];
+                    character.selectItem(attr.category, pick.filename);
+                }
+            } else if (attr.type === 'palette') {
+                const { COLOR_PALETTE } = await import('./palette.js');
+                const pick = COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)];
+                const mat = shadingManager.getMaterialNames().find(n => n.toLowerCase().includes(attr.material));
+                if (mat) {
+                    if (attr.side === 'B') shadingManager.setRGBColorB(mat, attr.channel || 0, pick.hex);
+                    else shadingManager.setRGBColorA(mat, attr.channel || 0, pick.hex);
+                }
+            }
+        }
+    } catch (e) { console.error(e); }
+});
 
 document.getElementById('btn-save-preset')?.addEventListener('click', savePreset);
 document.getElementById('btn-load-preset')?.addEventListener('click', loadPreset);

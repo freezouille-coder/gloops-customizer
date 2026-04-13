@@ -45,8 +45,10 @@
 
     "defaults": {
         "sheen": {
-            "intensity": 1,
-            "roughness": 0.4
+            "intensity": 0.5,
+            "roughness": 0.35,
+            "useBaseColor": true,
+            "saturationMult": 0.5
         },
         "pattern": {
             "casual": { "hue": -40, "sat": -0.20 },

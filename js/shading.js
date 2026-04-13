@@ -412,6 +412,53 @@ export class ShadingManager {
             this._updateEmissiveMap(entry);
         }
 
+        // Sync sheen color from base color (hue only, reduced sat, max value)
+        if (entry._sheenUseBaseColor) {
+            // Sample average color from the composited canvas
+            const sampleData = ctx.getImageData(0, 0, w, h);
+            let rAvg = 0, gAvg = 0, bAvg = 0, count = 0;
+            const step = 8; // sample every 8th pixel for speed
+            for (let si = 0; si < sampleData.data.length; si += 4 * step) {
+                rAvg += sampleData.data[si]; gAvg += sampleData.data[si+1]; bAvg += sampleData.data[si+2];
+                count++;
+            }
+            if (count > 0) {
+                rAvg /= count * 255; gAvg /= count * 255; bAvg /= count * 255;
+                // RGB to HSL
+                const max = Math.max(rAvg, gAvg, bAvg), min = Math.min(rAvg, gAvg, bAvg);
+                let h = 0, s = 0;
+                if (max !== min) {
+                    const d = max - min;
+                    s = d / (max + min > 1 ? 2 - max - min : max + min);
+                    if (max === rAvg) h = ((gAvg - bAvg) / d + (gAvg < bAvg ? 6 : 0)) / 6;
+                    else if (max === gAvg) h = ((bAvg - rAvg) / d + 2) / 6;
+                    else h = ((rAvg - gAvg) / d + 4) / 6;
+                }
+                // Apply: keep hue, reduce saturation, max lightness (value=1)
+                const satMult = entry._sheenSatMult || 0.5;
+                const newS = s * satMult;
+                const newL = 0.75; // bright sheen
+                // HSL to RGB
+                const hue2rgb = (p2, q2, t2) => {
+                    if (t2 < 0) t2 += 1; if (t2 > 1) t2 -= 1;
+                    if (t2 < 1/6) return p2 + (q2 - p2) * 6 * t2;
+                    if (t2 < 1/2) return q2;
+                    if (t2 < 2/3) return p2 + (q2 - p2) * (2/3 - t2) * 6;
+                    return p2;
+                };
+                let sr, sg, sb;
+                if (newS === 0) { sr = sg = sb = newL; }
+                else {
+                    const q = newL < 0.5 ? newL * (1 + newS) : newL + newS - newL * newS;
+                    const p2 = 2 * newL - q;
+                    sr = hue2rgb(p2, q, h + 1/3);
+                    sg = hue2rgb(p2, q, h);
+                    sb = hue2rgb(p2, q, h - 1/3);
+                }
+                entry.material.sheenColor.setRGB(sr, sg, sb);
+            }
+        }
+
         entry.material.needsUpdate = true;
     }
 
