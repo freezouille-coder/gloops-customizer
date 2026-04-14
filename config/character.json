@@ -81,6 +81,11 @@
             "enabled": true,
             "category": "Teeths"
         },
+        "horns": {
+            "label": "Horns / Hair",
+            "enabled": true,
+            "category": "Horns"
+        },
         "bodyRootColor": {
             "label": "Body Root Color",
             "enabled": true,

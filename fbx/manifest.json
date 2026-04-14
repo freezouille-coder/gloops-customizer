@@ -24,6 +24,65 @@
                 "16_annihilated_V2.fbx"
             ]
         },
+        "Horns": {
+            "type": "anim",
+            "folder": "ANIM/Horns",
+            "files": [
+                "Hat_AngelRing.fbx",
+                "Hat_ArkAngel.fbx",
+                "Hat_Bandana.fbx",
+                "Hat_Bob.fbx",
+                "Hat_Ceasar.fbx",
+                "Hat_CowBoy.fbx",
+                "Hat_Fakir.fbx",
+                "Hat_Foxy.fbx",
+                "Hat_Indiana.fbx",
+                "Hat_Max.fbx",
+                "Hat_MushHat.fbx",
+                "Hat_Ouesh.fbx",
+                "Hat_Rasta.fbx",
+                "Hat_RastaBag.fbx",
+                "Hat_SmallDeamon.fbx",
+                "Hat_Sport.fbx",
+                "Hat_Tennis.fbx",
+                "Hat_Worker.fbx",
+                "Tied.fbx",
+                "ananas.fbx",
+                "bald.fbx",
+                "carrot.fbx",
+                "conch.fbx",
+                "corona.fbx",
+                "cow.fbx",
+                "crest.fbx",
+                "earshorns.fbx",
+                "horn01.fbx",
+                "horns02.fbx",
+                "horns03.fbx",
+                "horns04.fbx",
+                "horns05.fbx",
+                "horns06.fbx",
+                "kakarot.fbx",
+                "magician.fbx",
+                "medusa.fbx",
+                "militar.fbx",
+                "pigtails.fbx",
+                "pulpo.fbx",
+                "smalltwo.fbx",
+                "timi.fbx"
+            ]
+        },
+        "Move": {
+            "type": "anim",
+            "folder": "ANIM/Move",
+            "files": [
+                "_tpose_template.fbx",
+                "run.fbx",
+                "run_panic.fbx",
+                "shake.fbx",
+                "walk.fbx",
+                "walk_stupid.fbx"
+            ]
+        },
         "Teeths": {
             "type": "anim",
             "folder": "ANIM/Teeths",
@@ -42,6 +101,8 @@
             ]
         }
     },
+    "props": {},
+    "sets": {},
     "textures": {
         "body/body_DS": "images/chr/body/body_DS.png",
         "body/body_DW": "images/chr/body/body_DW.png",

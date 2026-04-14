@@ -770,6 +770,97 @@ body {
     border-color: #e94560;
 }
 
+/* --- Character preset library --- */
+.gen-presets {
+    margin: 4px 8px 12px;
+    padding: 8px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+}
+.gen-presets-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #e94560;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.gen-presets-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+.gen-preset-name {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #fff;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    min-width: 0;
+}
+.gen-preset-btn {
+    background: rgba(233,69,96,0.2);
+    border: 1px solid rgba(233,69,96,0.5);
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.gen-preset-btn:hover { background: rgba(233,69,96,0.4); }
+
+.gen-preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+.gen-preset-empty {
+    font-size: 0.72rem;
+    color: #888;
+    font-style: italic;
+    padding: 4px 2px;
+}
+.gen-preset-item {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+.gen-preset-load {
+    flex: 1;
+    text-align: left;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #ddd;
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.gen-preset-load:hover {
+    background: rgba(233,69,96,0.2);
+    color: #fff;
+}
+.gen-preset-mini {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #aaa;
+    border-radius: 5px;
+    width: 22px;
+    height: 22px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+}
+.gen-preset-mini:hover { background: rgba(233,69,96,0.3); color: #fff; }
+
 /* --- Prop Buttons --- */
 .prop-select-btn {
     padding: 6px 12px;
@@ -805,4 +896,236 @@ body {
 .variant-thumb:hover {
     border-color: #e94560 !important;
     transform: scale(1.1);
+}
+
+/* === GAME MODE === */
+#btn-play {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 50;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4ade80, #16a34a);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(22,163,74,0.4);
+}
+#btn-play:hover { transform: scale(1.05); }
+#panel.game-mode { display: none !important; }
+
+.game-hud {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    font-family: inherit;
+}
+.game-hud.hidden { display: none; }
+.game-hud .gh-top {
+    position: absolute; top: 12px; left: 12px; right: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+    pointer-events: auto;
+}
+.game-hud .gh-inv {
+    display: flex; gap: 10px;
+    background: rgba(0,0,0,0.55);
+    padding: 8px 14px; border-radius: 12px;
+    color: #fff; font-size: 1.1rem; font-weight: 700;
+}
+.game-hud .gh-item b { font-size: 1.2rem; margin-left: 4px; }
+.game-hud .gh-exit {
+    background: rgba(0,0,0,0.55); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 8px 14px; font-weight: 700; cursor: pointer;
+}
+.game-hud .gh-exit:hover { background: rgba(233,69,96,0.7); }
+
+.game-hud .gh-prompt {
+    position: absolute; top: 60px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff; padding: 6px 14px; border-radius: 20px;
+    font-size: 0.9rem; font-weight: 700;
+}
+.game-hud .gh-prompt.hidden { display: none; }
+
+.game-hud .gh-interact {
+    position: absolute; bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #e94560, #ff6b8a);
+    color: #fff; border: none; border-radius: 14px;
+    padding: 12px 24px; font-size: 1rem; font-weight: 800;
+    cursor: pointer; pointer-events: auto;
+    box-shadow: 0 4px 18px rgba(233,69,96,0.5);
+}
+.game-hud .gh-interact.hidden { display: none; }
+
+.game-hud .gh-joy {
+    position: absolute; left: 24px; bottom: 24px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.18);
+    border-radius: 50%;
+    pointer-events: auto;
+    touch-action: none;
+}
+.game-hud .gh-joy-stick {
+    position: absolute; left: 50%; top: 50%;
+    width: 50px; height: 50px;
+    margin: -25px 0 0 -25px;
+    background: rgba(255,255,255,0.3);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+}
+@media (min-width: 769px) {
+    .game-hud .gh-joy { display: none; }
+}
+
+.game-dialogue {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 0 20px 80px;
+    z-index: 200;
+    pointer-events: auto;
+}
+.game-dialogue.hidden { display: none; }
+.gd-card {
+    background: linear-gradient(135deg, #1a1f3a, #0f1426);
+    border: 2px solid #e94560;
+    border-radius: 16px;
+    padding: 18px 22px;
+    width: 100%;
+    max-width: 520px;
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+.gd-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+}
+.gd-name { font-size: 1.15rem; font-weight: 800; color: #e94560; }
+.gd-mood { font-size: 0.78rem; color: #aaa; font-weight: 600; }
+.gd-line {
+    min-height: 50px;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #ddd;
+    margin-bottom: 14px;
+    font-style: italic;
+}
+.gd-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+}
+.gd-btn {
+    flex: 1 1 30%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gd-btn:hover { background: rgba(233,69,96,0.3); border-color: #e94560; }
+.gd-btn-bye:hover { background: rgba(150,150,150,0.3); border-color: #888; }
+
+/* Crosshair (mouse aim reticle) */
+.game-hud .gh-crosshair {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 24px; height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 2px solid rgba(255,255,255,0.85);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+.game-hud .gh-crosshair .gh-cross-dot {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 4px; height: 4px;
+    margin: -2px 0 0 -2px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+}
+@media (max-width: 768px) {
+    .game-hud .gh-crosshair { display: none; }
+}
+
+/* Controls help overlay (bottom-left, toggleable with H key) */
+.game-hud .gh-help {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    min-width: 200px;
+    background: rgba(10, 15, 30, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 14px 12px;
+    color: #eee;
+    font-size: 0.78rem;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+.game-hud .gh-help.collapsed .gh-help-body {
+    display: none;
+}
+.game-hud .gh-help.collapsed {
+    opacity: 0.55;
+}
+.game-hud .gh-help-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #e94560;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.game-hud .gh-help-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.6rem;
+    color: #fff;
+    letter-spacing: 0;
+}
+.game-hud .gh-help-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 0;
+}
+.game-hud .gh-key {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.72rem;
+    min-width: 50px;
+    text-align: center;
+}
+.game-hud .gh-act {
+    color: #bbb;
+    font-weight: 500;
+}
+@media (max-width: 768px) {
+    .game-hud .gh-help { display: none; }
 }

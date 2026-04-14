@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Gloops — Animations TODO</title>
+<style>
+    :root {
+        --accent: #e94560;
+        --accent-soft: #ff6b8a;
+        --bg: #f4efe8;
+        --card: #ffffff;
+        --ink: #1a1f3a;
+        --dim: #6a6a7a;
+        --ok: #16a34a;
+        --wait: #c9a238;
+        --missing: #c44;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        line-height: 1.5;
+        padding: 40px 24px 80px;
+    }
+    .wrap { max-width: 920px; margin: 0 auto; }
+    header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    h1 {
+        font-size: 2.2rem;
+        color: var(--accent);
+        margin: 0 0 6px;
+        letter-spacing: -0.5px;
+    }
+    .subtitle {
+        color: var(--dim);
+        font-size: 1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin: 22px auto 30px;
+        flex-wrap: wrap;
+    }
+    .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: var(--dim);
+    }
+    .pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+    .pill.ok { background: #d5f1dc; color: var(--ok); }
+    .pill.wait { background: #fbf1d5; color: var(--wait); }
+    .pill.missing { background: #fadbdb; color: var(--missing); }
+
+    h2 {
+        font-size: 1.35rem;
+        margin: 36px 0 14px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--accent);
+    }
+
+    .group {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 6px 0;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px 18px;
+        text-align: left;
+        border-bottom: 1px solid #ececec;
+    }
+    tr:last-child td { border-bottom: none; }
+    th {
+        background: #fafafa;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--dim);
+        font-weight: 700;
+    }
+    td.name { font-weight: 700; color: var(--ink); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.9rem; }
+    td.note { color: var(--dim); font-size: 0.88rem; }
+    td.status { text-align: center; width: 110px; }
+    td.loop { text-align: center; width: 70px; color: var(--dim); }
+    td.duration { width: 90px; color: var(--dim); font-size: 0.85rem; }
+
+    .specs {
+        background: var(--card);
+        border-radius: 14px;
+        padding: 20px 26px;
+        margin: 30px 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        border-left: 4px solid var(--accent);
+    }
+    .specs h3 {
+        margin: 0 0 8px;
+        color: var(--accent);
+        font-size: 1rem;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
+    .specs ul { margin: 8px 0 0; padding-left: 20px; }
+    .specs li { margin-bottom: 4px; font-size: 0.92rem; }
+    .specs code {
+        background: #f4f4f4;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.85em;
+    }
+
+    .priority-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: var(--accent);
+        color: #fff;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+    .priority-badge.p2 { background: var(--wait); }
+    .priority-badge.p3 { background: #6a7;  }
+
+    footer {
+        margin-top: 50px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--dim);
+    }
+    footer code { background: #eee; padding: 1px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+    <h1>🎬 Gloops — Liste des animations</h1>
+    <p class="subtitle">Partagée avec l'équipe d'animation. Checklist des animations à produire pour le mode jeu 3e personne et ses PNJ.</p>
+</header>
+
+<div class="legend">
+    <span><span class="pill ok">✓ Livré</span> disponible en jeu</span>
+    <span><span class="pill wait">⏳ En cours</span> en production</span>
+    <span><span class="pill missing">✗ Manquant</span> à produire</span>
+</div>
+
+<!-- ============================================ -->
+<!-- SPECS techniques                             -->
+<!-- ============================================ -->
+<div class="specs">
+    <h3>📐 Spec technique</h3>
+    <ul>
+        <li><strong>Format</strong> : <code>.fbx</code> (binaire), un fichier par animation</li>
+        <li><strong>Rig</strong> : identique à <code>fbx/Gloops_skeleton.fbx</code> (skeleton existant)</li>
+        <li><strong>Frame rate</strong> : 30 fps</li>
+        <li><strong>Root motion</strong> : <em>désactivé</em> — le perso est déplacé par le moteur, pas par l'animation</li>
+        <li><strong>Emplacement</strong> : <code>fbx/ANIM/&lt;Catégorie&gt;/&lt;nom_fichier&gt;.fbx</code></li>
+        <li><strong>Nommage</strong> : snake_case, minuscules (ex: <code>run_panic.fbx</code>)</li>
+        <li><strong>Loop</strong> : les animations de locomotion doivent boucler parfaitement</li>
+    </ul>
+</div>
+
+<!-- ============================================ -->
+<!-- CATÉGORIE : Move (locomotion)                -->
+<!-- ============================================ -->
+<h2>🏃 Move / Locomotion <span class="priority-badge">P1</span></h2>
+<p style="color:var(--dim); margin-top:-8px">Dossier : <code>fbx/ANIM/Move/</code></p>
+
+<div class="group">
+<table>
+<thead>
+<tr>
+    <th>Nom du fichier</th>
+    <th>Usage</th>
+    <th class="duration">Durée</th>
+    <th class="loop">Loop</th>
+    <th class="status">État</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+    <td class="name">walk.fbx</td>
+    <td class="note">Marche joueur, vitesse lente (~4.5 u/s)</td>
+    <td class="duration">1.0 — 1.4s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill ok">✓ Livré</span></td>
+</tr>
+<tr>
+    <td class="name">run.fbx</td>
+    <td class="note">Course joueur, Shift pressé (~8 u/s)</td>
+    <td class="duration">0.6 — 0.8s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill ok">✓ Livré</span></td>
+</tr>
+<tr>
+    <td class="name">walk_stupid.fbx</td>
+    <td class="note">Les PNJ errent bêtement (état idle NPC)</td>
+    <td class="duration">1.0 — 1.6s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill ok">✓ Livré</span></td>
+</tr>
+<tr>
+    <td class="name">run_panic.fbx</td>
+    <td class="note">PNJ fuit quand la voiture/joueur approche</td>
+    <td class="duration">0.5 — 0.8s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill ok">✓ Livré</span></td>
+</tr>
+
+<tr>
+    <td class="name">idle.fbx</td>
+    <td class="note">Pose d'attente du joueur quand aucune touche n'est pressée — respiration, léger balancement</td>
+    <td class="duration">2.0 — 4.0s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">jump.fbx</td>
+    <td class="note">Saut du joueur (Space). Peut être une seule anim avec 3 phases (décollage → airborne → atterrissage) ou 3 fichiers séparés</td>
+    <td class="duration">0.6 — 1.0s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">fall.fbx</td>
+    <td class="note">Chute libre — le joueur est en l'air trop longtemps</td>
+    <td class="duration">0.5 — 0.8s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">land.fbx</td>
+    <td class="note">Impact au sol après un saut ou une chute</td>
+    <td class="duration">0.3 — 0.5s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- ============================================ -->
+<!-- CATÉGORIE : Crush                           -->
+<!-- ============================================ -->
+<h2>💥 Crush / Impact <span class="priority-badge p2">P2</span></h2>
+<p style="color:var(--dim); margin-top:-8px">Dossier : <code>fbx/ANIM/Crush/</code></p>
+
+<div class="group">
+<table>
+<thead>
+<tr>
+    <th>Nom du fichier</th>
+    <th>Usage</th>
+    <th class="duration">Durée</th>
+    <th class="loop">Loop</th>
+    <th class="status">État</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+    <td class="name">crush_fly.fbx</td>
+    <td class="note">Le PNJ s'envole en tournant après avoir été heurté par la voiture (pose figée, la rotation Y est gérée par le moteur)</td>
+    <td class="duration">0.5 — 1.0s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">crush_land.fbx</td>
+    <td class="note">Impact au sol après l'écrasement, petit bounce, puis fond sur place</td>
+    <td class="duration">0.4 — 0.6s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">depression.fbx</td>
+    <td class="note">Le Gloop reste au sol, effondré, après un crush. Actuellement on utilise <code>16_annihilated.fbx</code> existant, mais une pose au sol spécifique serait mieux</td>
+    <td class="duration">3.0 — 5.0s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill wait">⏳ Fallback OK</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- ============================================ -->
+<!-- CATÉGORIE : Vehicle                         -->
+<!-- ============================================ -->
+<h2>🚗 Vehicle <span class="priority-badge p2">P2</span></h2>
+<p style="color:var(--dim); margin-top:-8px">Dossier : <code>fbx/ANIM/Vehicle/</code> — animations pour quand le Gloop est dans un véhicule</p>
+
+<div class="group">
+<table>
+<thead>
+<tr>
+    <th>Nom du fichier</th>
+    <th>Usage</th>
+    <th class="duration">Durée</th>
+    <th class="loop">Loop</th>
+    <th class="status">État</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+    <td class="name">drive_idle.fbx</td>
+    <td class="note">Pose assise dans la voiture. Les "bras" du Gloop autour d'un volant imaginaire</td>
+    <td class="duration">2.0 — 3.0s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">drive_enter.fbx</td>
+    <td class="note">Le Gloop saute dans la voiture — optionnel, fallback = skip</td>
+    <td class="duration">0.8 — 1.2s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">drive_exit.fbx</td>
+    <td class="note">Sortie de véhicule — optionnel</td>
+    <td class="duration">0.8 — 1.2s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">fly_idle.fbx</td>
+    <td class="note">Pose assise dans l'avion, bras sur les commandes</td>
+    <td class="duration">2.0 — 3.0s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- ============================================ -->
+<!-- CATÉGORIE : Social                          -->
+<!-- ============================================ -->
+<h2>💬 Social / Interactions <span class="priority-badge p3">P3</span></h2>
+<p style="color:var(--dim); margin-top:-8px">Dossier : <code>fbx/ANIM/Social/</code></p>
+
+<div class="group">
+<table>
+<thead>
+<tr>
+    <th>Nom du fichier</th>
+    <th>Usage</th>
+    <th class="duration">Durée</th>
+    <th class="loop">Loop</th>
+    <th class="status">État</th>
+</tr>
+</thead>
+<tbody>
+
+<tr>
+    <td class="name">talk.fbx</td>
+    <td class="note">Le Gloop gesticule pendant un dialogue</td>
+    <td class="duration">1.5 — 2.5s</td>
+    <td class="loop">oui</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">give_item.fbx</td>
+    <td class="note">Le joueur tend un donut/carotte à un PNJ. Le bras du Gloop s'étire</td>
+    <td class="duration">0.8 — 1.2s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">pickup.fbx</td>
+    <td class="note">Quand le joueur ramasse un item au sol (anim de 'bouffer' ou de prendre)</td>
+    <td class="duration">0.6 — 1.0s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+<tr>
+    <td class="name">wave.fbx</td>
+    <td class="note">"Au revoir" à un PNJ quand le joueur ferme un dialogue</td>
+    <td class="duration">0.8 — 1.2s</td>
+    <td class="loop">non</td>
+    <td class="status"><span class="pill missing">✗ Manquant</span></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- ============================================ -->
+<!-- Already delivered (reference)               -->
+<!-- ============================================ -->
+<h2>✓ Déjà livré</h2>
+<div class="group">
+<table>
+<thead>
+<tr>
+    <th>Catégorie</th>
+    <th>Contenu</th>
+    <th class="status">État</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td class="name">Emotion</td>
+    <td class="note">16 états d'humeur du Gloop (<code>01_peace</code> → <code>16_annihilated</code>) + 2 variantes</td>
+    <td class="status"><span class="pill ok">✓ 18 fichiers</span></td>
+</tr>
+<tr>
+    <td class="name">Teeths</td>
+    <td class="note">11 variations de dents (Baby, Big, Canine, Demon, Rabbit, Vampire, etc.)</td>
+    <td class="status"><span class="pill ok">✓ 11 fichiers</span></td>
+</tr>
+<tr>
+    <td class="name">Move</td>
+    <td class="note">walk, run, walk_stupid, run_panic</td>
+    <td class="status"><span class="pill ok">✓ 4 fichiers</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<footer>
+<p>Liste générée à partir du code du jeu — voir <code>js/game/game-player.js</code> et <code>js/game/game-npc.js</code> pour l'intégration technique.</p>
+<p>Contact dev : poser les fichiers dans le bon dossier puis les ajouter à <code>fbx/manifest.json</code> sous la catégorie correspondante.</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -11,6 +11,7 @@ import { PropsControls } from './props-controls.js';
 import { TextureLibrary } from './texture-library.js';
 import { GenerateControls } from './generate-controls.js';
 import { AudioManager, buildAudioPlayer } from './audio.js';
+import { Game } from './game/game.js';
 
 // --- Config ---
 const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
@@ -793,7 +794,7 @@ async function init() {
         await Promise.all(loadPromises);
 
         // 3. Build UIs
-        const controls = new Controls(character);
+        const controls = new Controls(character, scene);
         controls.build();
 
         const matContainer = document.getElementById('material-controls-container');
@@ -861,6 +862,15 @@ async function init() {
             }
         }
 
+        // Game mode
+        const characterConfig = await fetch('config/character.json').then(r => r.json()).catch(() => ({}));
+        const game = new Game({ scene, camera, renderer, character, orbit, ground, manifestData, characterConfig });
+        window._game = game;
+        document.getElementById('btn-play')?.addEventListener('click', () => {
+            if (game.active) game.exit();
+            else game.enter();
+        });
+
         loadingEl.classList.add('hidden');
         console.log('Gloops ready!');
 
@@ -881,8 +891,17 @@ init();
 const clock = new THREE.Clock();
 function animate() {
     requestAnimationFrame(animate);
-    character.update(clock.getDelta());
-    orbit.update();
+    const dt = clock.getDelta();
+    character.update(dt);
+    // Orbit first, THEN game — so gameCamera has the final word on
+    // camera position/orientation. OrbitControls.update() ignores the
+    // `enabled` flag and re-applies its own position+lookAt every frame,
+    // so if it runs after gameCamera it clobbers the third-person rig.
+    if (window._game && window._game.active) {
+        window._game.update(dt);
+    } else {
+        orbit.update();
+    }
     postFX.render();
 }
 animate();

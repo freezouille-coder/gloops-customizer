@@ -215,8 +215,9 @@ def bake_blendshapes(geo_nodes, start_frame, end_frame):
 
 def do_export_fbx(output_path, start_frame, end_frame, skeleton_root, geo_nodes,
                   export_blendshapes=True):
-    """Unparent skeleton+geos to world, configure FBX, export."""
-    all_nodes = [skeleton_root] + geo_nodes
+    """Unparent skeleton+geos to world, configure FBX, export.
+    If geo_nodes is empty, exports the skeleton only (no meshes, no shapes)."""
+    all_nodes = [skeleton_root] + (geo_nodes or [])
 
     for node in all_nodes:
         if cmds.objExists(node):
@@ -232,8 +233,11 @@ def do_export_fbx(output_path, start_frame, end_frame, skeleton_root, geo_nodes,
     mel.eval("FBXExportSmoothMesh -v true;")
     mel.eval("FBXExportTriangulate -v false;")
     mel.eval("FBXExportFileVersion -v FBX201800;")
-    mel.eval("FBXExportShapes -v {};".format("true" if export_blendshapes else "false"))
-    mel.eval("FBXExportSkins -v true;")
+    # Only export shapes (blendshapes) if we actually have meshes to carry them
+    shapes_on = "true" if (export_blendshapes and geo_nodes) else "false"
+    skins_on  = "true" if geo_nodes else "false"
+    mel.eval("FBXExportShapes -v {};".format(shapes_on))
+    mel.eval("FBXExportSkins -v {};".format(skins_on))
     mel.eval("FBXExportBakeComplexAnimation -v true;")
     mel.eval("FBXExportBakeComplexStart -v {};".format(int(start_frame)))
     mel.eval("FBXExportBakeComplexEnd -v {};".format(int(end_frame)))
@@ -247,11 +251,37 @@ def do_export_fbx(output_path, start_frame, end_frame, skeleton_root, geo_nodes,
     cmds.select(all_nodes, replace=True)
     export_path_clean = output_path.replace("\\", "/")
     mel.eval('FBXExport -f "{}" -s;'.format(export_path_clean))
-    print("  >> Exported: {}".format(export_path_clean))
+    print("  >> Exported: {} ({})".format(
+        export_path_clean,
+        "skeleton only" if not geo_nodes else "skeleton + {} meshes".format(len(geo_nodes))
+    ))
+
+
+FPS_UNITS = {
+    None: None,       # keep scene fps unchanged
+    24:  "film",
+    25:  "pal",
+    30:  "ntsc",
+    48:  "show",
+    50:  "palf",
+    60:  "ntscf",
+}
+
+
+def set_scene_fps(fps):
+    """Change the scene's frame-rate unit. Returns the previous unit string
+    so the caller can restore it."""
+    prev = cmds.currentUnit(query=True, time=True)
+    unit = FPS_UNITS.get(fps)
+    if unit and unit != prev:
+        cmds.currentUnit(time=unit, updateAnimation=True)
+        print("  >> Scene FPS changed: {} -> {} ({} fps)".format(prev, unit, fps))
+    return prev
 
 
 def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
-               export_mode, update_manifest, clean_bones=True, clean_threshold=0.001):
+               export_mode, update_manifest, clean_bones=True, clean_threshold=0.001,
+               target_fps=None):
     """Main export loop."""
     items = get_items(source_folder)
     if not items:
@@ -264,6 +294,8 @@ def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
                            message="Skeleton root not found: {}".format(skeleton_root))
         return
 
+    # Geo list is OPTIONAL. If provided, validate each entry.
+    geo_nodes = geo_nodes or []
     for g in geo_nodes:
         if not cmds.objExists(g):
             cmds.confirmDialog(title="Error",
@@ -331,6 +363,11 @@ def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
             cmds.file(scene_path, open=True, force=True)
             continue
 
+        # 1b. Change scene FPS if requested (before detecting range so
+        #     the range is expressed in the target unit).
+        if target_fps:
+            set_scene_fps(target_fps)
+
         # 2. Determine frame range
         if export_mode == "first_frame" or typ == "pose":
             start, end = 1, 1
@@ -352,8 +389,9 @@ def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
                         animated_attrs.add(full)
             print("  >> {} animated joint attrs before bake".format(len(animated_attrs)))
 
-        # 4. Bake blendshapes
-        bake_blendshapes(geo_nodes, start, end)
+        # 4. Bake blendshapes (only if we're exporting geometry with shapes)
+        if geo_nodes:
+            bake_blendshapes(geo_nodes, start, end)
 
         # 5. Clean: remove anim curves that were ADDED by bake
         #    (not present in the original Studio Library pose/anim)
@@ -495,11 +533,23 @@ def run_export(*args):
     if not skeleton_root:
         cmds.confirmDialog(title="Error", message="Pick a skeleton root.")
         return
-    if not geos_text:
-        cmds.confirmDialog(title="Error", message="Pick geometries to export.")
-        return
 
-    geo_nodes = [g.strip() for g in geos_text.split(",") if g.strip()]
+    # Geometries are OPTIONAL — leaving empty exports the skeleton only
+    # (faster, smaller files, ideal for locomotion clips).
+    geo_nodes = [g.strip() for g in geos_text.split(",") if g.strip()] if geos_text else []
+
+    # Read the target-fps dropdown
+    fps_choice = cmds.optionMenu("gloops_fps", q=True, value=True)
+    fps_map = {
+        "Keep scene FPS": None,
+        "24 fps (film)":  24,
+        "25 fps (PAL)":   25,
+        "30 fps (NTSC)":  30,
+        "48 fps":         48,
+        "50 fps":         50,
+        "60 fps":         60,
+    }
+    target_fps = fps_map.get(fps_choice, None)
 
     result = cmds.confirmDialog(
         title="Confirm Export",
@@ -512,7 +562,7 @@ def run_export(*args):
         return
 
     export_all(source, target, skeleton_root, geo_nodes, export_mode, update_manifest,
-               clean_bones, clean_threshold)
+               clean_bones, clean_threshold, target_fps=target_fps)
 
 
 def show_ui():
@@ -562,7 +612,28 @@ def show_ui():
         buttonLabel="<< Selection",
         buttonCommand='pick_geos()',
         columnWidth3=[90, 390, 80], adjustableColumn=2,
-        annotation="Select meshes/groups to export, then click << Selection")
+        annotation="Optional! Leave empty to export skeleton only (smaller, faster).\n"
+                   "Select meshes/groups to export, then click << Selection.")
+
+    cmds.separator(height=6, style="in")
+
+    # --- Target FPS ---
+    cmds.rowLayout(numberOfColumns=2, columnWidth2=[120, 300],
+                   columnAttach=[(1, "right", 5), (2, "left", 5)])
+    cmds.text(label="Target FPS:", align="right")
+    cmds.optionMenu("gloops_fps",
+                    annotation="Resample the animation at a target frame rate before exporting.\n"
+                               "Three.js is frame-rate independent (runs at whatever refresh\n"
+                               "the browser gives), so any of these works — higher = smoother\n"
+                               "but larger FBX files.")
+    cmds.menuItem(label="Keep scene FPS")
+    cmds.menuItem(label="24 fps (film)")
+    cmds.menuItem(label="25 fps (PAL)")
+    cmds.menuItem(label="30 fps (NTSC)")
+    cmds.menuItem(label="48 fps")
+    cmds.menuItem(label="50 fps")
+    cmds.menuItem(label="60 fps")
+    cmds.setParent("..")
 
     cmds.separator(height=6, style="in")
 

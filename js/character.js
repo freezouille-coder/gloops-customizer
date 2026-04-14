@@ -63,7 +63,9 @@ export class Character {
         // Build a list of bone name patterns to KEEP based on category
         const keepPatterns = {
             'Teeths': ['Teeth', 'teeth'],
-            // Add more category patterns as needed
+            // Horns: keep only horns-related bones + morphs so the clip
+            // doesn't clobber body/arms/legs posed by Move animations.
+            'Horns': ['Horns', 'horns', 'BS_Horns', 'Sk_Main_Horns'],
         };
 
         const patterns = keepPatterns[categoryName] || [];
@@ -106,6 +108,31 @@ export class Character {
         }
     }
 
+    /**
+     * Remove root-motion tracks from a clip: any track targeting the
+     * top-most bone (usually "root", "Armature", "hips", "pelvis") and
+     * its quaternion or position. Keeps the in-place pose animation but
+     * prevents the character from being dragged around or rotated by
+     * the clip itself.
+     */
+    /**
+     * Keep only quaternion (rotation) + morphTargetInfluences (face)
+     * tracks on locomotion clips. Drops position/scale tracks that would
+     * push bones into wrong places (causing visible body drift) but keeps
+     * the face morph tracks so the "idiot" expression still plays during
+     * walk_stupid, etc.
+     */
+    _stripRootMotion(clip) {
+        const before = clip.tracks.length;
+        clip.tracks = clip.tracks.filter((t) =>
+            /\.quaternion$/.test(t.name) || t.name.includes('morphTargetInfluences')
+        );
+        const removed = before - clip.tracks.length;
+        if (removed > 0) {
+            console.log(`[stripRootMotion] "${clip.name}" kept ${clip.tracks.length}/${before} (quat + morphs)`);
+        }
+    }
+
     registerCategory(name, type, folder) {
         const isBase = this._categoryOrder.length === 0;
         this.categories.set(name, {
@@ -139,6 +166,10 @@ export class Character {
                     if (!cat.isBase) {
                         this._pruneOverlayClip(clip, categoryName);
                     }
+
+                    // Move animations are played RAW, no filtering,
+                    // no root motion stripping — the user wants them
+                    // exactly as exported from Maya.
 
                     const action = this.mixer.clipAction(clip);
                     action.setEffectiveWeight(0);

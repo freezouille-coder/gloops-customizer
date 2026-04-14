@@ -1,4 +1,5 @@
 import { COLOR_PALETTE } from './palette.js';
+import { CharacterPresets, randomGloopName } from './character-presets.js';
 
 /**
  * Generate tab: create random characters using config from character.json
@@ -10,6 +11,8 @@ export class GenerateControls {
         this.manifest = manifest;
         this.config = null;
         this.container = null;
+        this.presets = new CharacterPresets(character, shadingManager);
+        this._presetListEl = null;
     }
 
     async build(container) {
@@ -28,8 +31,16 @@ export class GenerateControls {
         const randomAllBtn = document.createElement('button');
         randomAllBtn.textContent = '🎲 Generate Random';
         randomAllBtn.id = 'btn-generate-random';
-        randomAllBtn.addEventListener('click', () => this._randomizeAll());
+        randomAllBtn.addEventListener('click', () => {
+            this._randomizeAll();
+            if (this._nameInput && !this._nameInput.value.trim()) {
+                this._nameInput.value = randomGloopName();
+            }
+        });
         this.container.appendChild(randomAllBtn);
+
+        // --- Character Preset library ---
+        this.container.appendChild(this._buildPresetSection());
 
         // --- Build randomizable attributes ---
         const randomizable = this.config.randomizable || {};
@@ -173,6 +184,8 @@ export class GenerateControls {
                 const fullImg = new Image();
                 fullImg.onload = () => {
                     this.sm.setPatternMap(mat, fullImg);
+                    const e = this.sm.getEntry(mat);
+                    if (e) e._patternPath = v.path;
                     row.querySelectorAll('.gen-thumb').forEach(t => t.style.borderColor = 'transparent');
                     thumb.style.borderColor = '#e94560';
                 };
@@ -217,7 +230,10 @@ export class GenerateControls {
                 if (!entry || !entry._patternVariants) break;
                 const pick = entry._patternVariants[Math.floor(Math.random() * entry._patternVariants.length)];
                 const img = new Image();
-                img.onload = () => this.sm.setPatternMap(mat, img);
+                img.onload = () => {
+                    this.sm.setPatternMap(mat, img);
+                    entry._patternPath = pick.path;
+                };
                 img.src = pick.path;
                 break;
             }
@@ -309,5 +325,145 @@ export class GenerateControls {
         if (!keyword) return null;
         const kw = keyword.toLowerCase();
         return this.sm.getMaterialNames().find(n => n.toLowerCase().includes(kw)) || null;
+    }
+
+    // ----- Character preset library -----
+
+    _buildPresetSection() {
+        const wrap = document.createElement('div');
+        wrap.className = 'gen-presets';
+
+        const title = document.createElement('div');
+        title.className = 'gen-presets-title';
+        title.textContent = '👤 Characters';
+        wrap.appendChild(title);
+
+        const row = document.createElement('div');
+        row.className = 'gen-presets-row';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Name (e.g. Boss Bob)';
+        nameInput.className = 'gen-preset-name';
+        this._nameInput = nameInput;
+
+        const diceBtn = document.createElement('button');
+        diceBtn.className = 'gen-preset-btn';
+        diceBtn.textContent = '🎲';
+        diceBtn.title = 'Random name';
+        diceBtn.addEventListener('click', () => {
+            nameInput.value = randomGloopName();
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'gen-preset-btn';
+        saveBtn.textContent = '💾';
+        saveBtn.title = 'Save current Gloop to library';
+        saveBtn.addEventListener('click', () => {
+            const name = (nameInput.value || '').trim();
+            if (!name) { nameInput.focus(); return; }
+            const preset = this.presets.capture(name);
+            this.presets.saveLocal(name, preset);
+            nameInput.value = '';
+            this._refreshPresetList();
+        });
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'gen-preset-btn';
+        downloadBtn.textContent = '⬇';
+        downloadBtn.title = 'Download current Gloop as .json';
+        downloadBtn.addEventListener('click', () => {
+            const name = (nameInput.value || 'gloop').trim();
+            this.presets.download(this.presets.capture(name));
+        });
+
+        const importBtn = document.createElement('button');
+        importBtn.className = 'gen-preset-btn';
+        importBtn.textContent = '⬆';
+        importBtn.title = 'Import .json preset';
+        importBtn.addEventListener('click', async () => {
+            try {
+                const preset = await this.presets.importFile();
+                if (!preset) return;
+                await this.presets.apply(preset);
+                if (preset.name) {
+                    this.presets.saveLocal(preset.name, preset);
+                    this._refreshPresetList();
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Could not import preset: ' + e.message);
+            }
+        });
+
+        row.appendChild(nameInput);
+        row.appendChild(diceBtn);
+        row.appendChild(saveBtn);
+        row.appendChild(downloadBtn);
+        row.appendChild(importBtn);
+        wrap.appendChild(row);
+
+        this._presetListEl = document.createElement('div');
+        this._presetListEl.className = 'gen-preset-list';
+        wrap.appendChild(this._presetListEl);
+        this._refreshPresetList();
+
+        return wrap;
+    }
+
+    _refreshPresetList() {
+        if (!this._presetListEl) return;
+        this._presetListEl.innerHTML = '';
+        const names = this.presets.listLocal();
+        if (names.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'gen-preset-empty';
+            empty.textContent = 'No saved characters yet';
+            this._presetListEl.appendChild(empty);
+            return;
+        }
+        for (const name of names) {
+            const item = document.createElement('div');
+            item.className = 'gen-preset-item';
+
+            const lbl = document.createElement('button');
+            lbl.className = 'gen-preset-load';
+            lbl.textContent = name;
+            lbl.title = 'Load this character';
+            lbl.addEventListener('click', async () => {
+                const preset = this.presets.loadLocal(name);
+                if (preset) {
+                    try { await this.presets.apply(preset); }
+                    catch (e) { console.error(e); }
+                }
+            });
+
+            const dl = document.createElement('button');
+            dl.className = 'gen-preset-mini';
+            dl.textContent = '⬇';
+            dl.title = 'Download .json';
+            dl.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const preset = this.presets.loadLocal(name);
+                if (preset) this.presets.download(preset);
+            });
+
+            const del = document.createElement('button');
+            del.className = 'gen-preset-mini';
+            del.textContent = '×';
+            del.title = 'Delete';
+            del.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                if (confirm(`Delete "${name}"?`)) {
+                    this.presets.deleteLocal(name);
+                    this._refreshPresetList();
+                }
+            });
+
+            item.appendChild(lbl);
+            item.appendChild(dl);
+            item.appendChild(del);
+            this._presetListEl.appendChild(item);
+        }
     }
 }
