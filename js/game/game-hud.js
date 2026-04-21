@@ -21,11 +21,26 @@ export class GameHud {
                     <span class="gh-item">🍩 <b class="gh-donut-count">5</b></span>
                     <span class="gh-item">🥕 <b class="gh-veggie-count">5</b></span>
                 </div>
-                <button class="gh-exit" title="Exit play mode">✕ Exit</button>
+                <!-- Exit button moved to the ESC pause menu. Keep the
+                     element but hidden so existing code that queries
+                     .gh-exit doesn't crash. -->
+                <button class="gh-exit hidden" title="Exit play mode">✕ Exit</button>
+                <div class="gh-hint">ESC = menu</div>
             </div>
             <div class="gh-prompt hidden">Approche un Gloop pour parler</div>
             <button class="gh-interact hidden">💬 Parler</button>
             <!-- Crosshair removed -->
+
+            <!-- Crazy-Taxi mission panel -->
+            <div class="gh-mission hidden">
+                <div class="gh-mission-banner"></div>
+                <div class="gh-mission-row">
+                    <div class="gh-mission-timer">--</div>
+                    <div class="gh-mission-score">💰 <b class="gh-mission-gc">0</b></div>
+                    <div class="gh-mission-deliveries">📦 <b class="gh-mission-count">0</b></div>
+                </div>
+            </div>
+            <div class="gh-mission-popup hidden"></div>
 
             <div class="gh-joy">
                 <div class="gh-joy-stick"></div>
@@ -39,6 +54,15 @@ export class GameHud {
         this.root = root;
         this._donutEl = root.querySelector('.gh-donut-count');
         this._veggieEl = root.querySelector('.gh-veggie-count');
+        // Mission HUD refs
+        this._missionPanel    = root.querySelector('.gh-mission');
+        this._missionBanner   = root.querySelector('.gh-mission-banner');
+        this._missionTimer    = root.querySelector('.gh-mission-timer');
+        this._missionGc       = root.querySelector('.gh-mission-gc');
+        this._missionCount    = root.querySelector('.gh-mission-count');
+        this._missionPopup    = root.querySelector('.gh-mission-popup');
+        this._lastMissionState = null;
+        this._popupTimer = 0;
         this._promptEl = root.querySelector('.gh-prompt');
         this._interactEl = root.querySelector('.gh-interact');
         this._joyEl = root.querySelector('.gh-joy');
@@ -146,6 +170,59 @@ export class GameHud {
 
     setInteractVisible(visible) {
         this._interactEl.classList.toggle('hidden', !visible);
+    }
+
+    /** Called every frame by Game with the MissionManager instance. */
+    updateMission(mm) {
+        if (!this._missionPanel) return;
+        const state = mm.getState();
+
+        // Show panel only while there's an active mission (not IDLE)
+        if (state === 'IDLE') {
+            this._missionPanel.classList.add('hidden');
+        } else {
+            this._missionPanel.classList.remove('hidden');
+        }
+
+        // State-dependent banner
+        let banner = '';
+        if (state === 'OFFERED') banner = `🚖 ${mm.getClientName() || 'Client'} needs a ride — drive over & press F`;
+        else if (state === 'IN_CAR')   banner = `📦 Delivering ${mm.getClientName() || 'client'} to destination`;
+        else if (state === 'COMPLETED') banner = `✅ Delivered! +${mm.getScore() - (this._lastScoreShown ?? 0)} GC`;
+        else if (state === 'FAILED')    banner = `❌ Delivery failed`;
+        this._missionBanner.textContent = banner;
+
+        // Timer
+        if (state === 'IN_CAR') {
+            const t = Math.max(0, Math.ceil(mm.getTimer()));
+            this._missionTimer.textContent = `⏱ ${t}s`;
+            this._missionTimer.classList.toggle('warn', t <= 10);
+        } else {
+            this._missionTimer.textContent = '--';
+            this._missionTimer.classList.remove('warn');
+        }
+
+        // Counters
+        this._missionGc.textContent    = mm.getScore();
+        this._missionCount.textContent = mm.getDeliveries();
+
+        // Popup on state change
+        if (state !== this._lastMissionState) {
+            this._lastMissionState = state;
+            if (state === 'COMPLETED') this._showPopup(`+${mm.getScore() - (this._lastScoreShown ?? 0)} GC!`);
+            else if (state === 'FAILED') this._showPopup('FAILED');
+            this._lastScoreShown = mm.getScore();
+        }
+    }
+
+    _showPopup(text) {
+        if (!this._missionPopup) return;
+        this._missionPopup.textContent = text;
+        this._missionPopup.classList.remove('hidden');
+        clearTimeout(this._missionPopupTimer);
+        this._missionPopupTimer = setTimeout(() => {
+            this._missionPopup.classList.add('hidden');
+        }, 1400);
     }
 
     addItem(type) {

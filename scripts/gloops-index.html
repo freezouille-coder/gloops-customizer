@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops World — Documentation</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:60px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width:700px; margin-inline:auto; }
+  h1 { font-size:42px; margin:0 0 8px; color:var(--accent); }
+  .lede { color:var(--muted); font-size:16px; margin-bottom:40px; }
+  .card { background:var(--panel); border-radius:12px; padding:24px 28px; margin:16px 0; border-left:4px solid var(--accent); text-decoration:none; display:block; transition:background .15s; }
+  .card:hover { background:var(--panel-2); }
+  .card h2 { margin:0 0 6px; font-size:20px; color:var(--accent); }
+  .card p { margin:0; color:var(--muted); font-size:14px; line-height:1.5; }
+  .card .tags { margin-top:10px; }
+  .tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:600; background:var(--panel-2); color:var(--text); margin:2px; }
+</style>
+</head>
+<body>
+
+<h1>🌍 Gloops World</h1>
+<p class="lede">Documentation du projet — Game Design, Pipeline Technique, Conventions.</p>
+
+<a class="card" href="gdd.html">
+  <h2>📜 Game Design Document (GDD)</h2>
+  <p>Le document original : factions, tools, rarity, breeding, merging, buildings, economy, MVP scope.</p>
+  <div class="tags">
+    <span class="tag">Aveggies vs SugarHeads</span>
+    <span class="tag">Breeding</span>
+    <span class="tag">Merging</span>
+    <span class="tag">Buildings</span>
+    <span class="tag">Economy</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-system.html">
+  <h2>⚖️ Breeds, Demons & Corruption</h2>
+  <p>Système de classes unifie avec le GDD : 4 factions, 13 breeds, 9 legendaries, demon network, merging recipes, raids, axe de corruption.</p>
+  <div class="tags">
+    <span class="tag">Factions</span>
+    <span class="tag">Breeds</span>
+    <span class="tag">Legendaries</span>
+    <span class="tag">Synergies</span>
+    <span class="tag">Corruption 0-100</span>
+    <span class="tag">Rebels</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-pipeline.html">
+  <h2>🛠️ Pipeline Technique</h2>
+  <p>Arborescence du projet, generateur de personnage, systeme de materiaux, animations overlay & pruning.</p>
+  <div class="tags">
+    <span class="tag">Arborescence</span>
+    <span class="tag">ShadingManager</span>
+    <span class="tag">Animations</span>
+    <span class="tag">Pruning</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-props.html">
+  <h2>🔧 Paired Props</h2>
+  <p>Systeme de props auto-attaches par convention de nommage. Type A/B/C, offsets, materiaux partages, export Maya.</p>
+  <div class="tags">
+    <span class="tag">Type A/B/C</span>
+    <span class="tag">Batch Export</span>
+    <span class="tag">Offsets JSON</span>
+    <span class="tag">Shared Materials</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-textures.html">
+  <h2>🖼️ Textures & Nomenclature</h2>
+  <p>Convention de nommage des textures, suffixes → slots three.js, structure par materiau.</p>
+  <div class="tags">
+    <span class="tag">_ID _Normal _Roughness</span>
+    <span class="tag">RGB Mask</span>
+    <span class="tag">Patterns</span>
+    <span class="tag">Diffuse variants</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-zones.html">
+  <h2>🗺️ Zones Monde (Maya)</h2>
+  <p>Convention pour delimiter les zones de gameplay dans Maya : pietons, routes, spawns, batiments, barrières, carrefours avec feux, trottoirs.</p>
+  <div class="tags">
+    <span class="tag">zone_pedestrian</span>
+    <span class="tag">zone_drive</span>
+    <span class="tag">zone_spawn</span>
+    <span class="tag">zone_intersection</span>
+    <span class="tag">trafficlight</span>
+    <span class="tag">NURBS paths</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-city.html">
+  <h2>🏙️ City Blocks</h2>
+  <p>Theorie de la ville procedurale : blocs modulaires avec demi-route integree, grille 25 m, palette 1x1 a 4x4, placement glouton pondere. Avec schemas SVG et exemples de layouts.</p>
+  <div class="tags">
+    <span class="tag">block_WxH_NN.glb</span>
+    <span class="tag">Grille 25 m</span>
+    <span class="tag">Demi-route 5 m</span>
+    <span class="tag">Placement auto</span>
+    <span class="tag">Downtown / Grid / Random</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-npcs.html">
+  <h2>👥 NPCs Speciaux</h2>
+  <p>Gardes fixes qui attaquent, PNJ a missions (Papy Mush), marchands — tous les NPCs qui ne sont pas des wanderers generiques.</p>
+  <div class="tags">
+    <span class="tag">spawn_guard</span>
+    <span class="tag">spawn_story</span>
+    <span class="tag">Papy Mush</span>
+    <span class="tag">Missions</span>
+    <span class="tag">FSM</span>
+  </div>
+</a>
+
+<a class="card" href="gloops-scripts.html">
+  <h2>⚙️ Scripts & Checklists</h2>
+  <p>Les 5 scripts Maya/Python, comment les utiliser, et les checklists pas-a-pas pour chaque workflow.</p>
+  <div class="tags">
+    <span class="tag">export_traits.py</span>
+    <span class="tag">build_props_manifest.py</span>
+    <span class="tag">fbx_to_glb.py</span>
+    <span class="tag">Checklists</span>
+  </div>
+</a>
+
+</body>
+</html>

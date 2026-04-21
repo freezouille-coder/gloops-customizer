@@ -24,6 +24,29 @@
                 "16_annihilated_V2.fbx"
             ]
         },
+        "Eyes": {
+            "type": "anim",
+            "folder": "ANIM/Eyes",
+            "files": [
+                "Aviator.fbx",
+                "Cyclop.fbx",
+                "Doctor.fbx",
+                "Geeky.fbx",
+                "Lenon.fbx",
+                "Lolita.fbx",
+                "Merov.fbx",
+                "Mixed.fbx",
+                "Moony.fbx",
+                "Neo.fbx",
+                "Normal.fbx",
+                "Pirate.fbx",
+                "Separate.fbx",
+                "Sherif.fbx",
+                "Smith.fbx",
+                "Stereo.fbx",
+                "ThugLife.fbx"
+            ]
+        },
         "Horns": {
             "type": "anim",
             "folder": "ANIM/Horns",
@@ -103,238 +126,275 @@
     },
     "props": {},
     "sets": {},
+    "cityBlocks": [
+        {
+            "file": "SET/block_1x1_SmallGarden_w5.fbx",
+            "w": 1,
+            "h": 1,
+            "variant": "SmallGarden",
+            "weight": 5
+        },
+        {
+            "file": "SET/block_2x2_Casual_w10.fbx",
+            "w": 2,
+            "h": 2,
+            "variant": "Casual",
+            "weight": 10
+        },
+        {
+            "file": "SET/block_2x2_Police_w1.fbx",
+            "w": 2,
+            "h": 2,
+            "variant": "Police",
+            "weight": 1
+        },
+        {
+            "file": "SET/block_2x2_SuperMarket_w1.fbx",
+            "w": 2,
+            "h": 2,
+            "variant": "SuperMarket",
+            "weight": 1
+        },
+        {
+            "file": "SET/block_2x3_BigPlace_w1.fbx",
+            "w": 2,
+            "h": 3,
+            "variant": "BigPlace",
+            "weight": 1
+        }
+    ],
     "textures": {
-        "body/body_DS": "images/chr/body/body_DS.png",
-        "body/body_DW": "images/chr/body/body_DW.png",
-        "body/body_ID": "images/chr/body/body_ID.png",
-        "body/body_Normal": "images/chr/body/body_Normal.png",
-        "body/body_Occ": "images/chr/body/body_Occ.png",
-        "body/body_Ramp": "images/chr/body/body_Ramp.png",
-        "body/body_Roughness": "images/chr/body/body_Roughness.png",
-        "body/body_SSS": "images/chr/body/body_SSS.png",
-        "body/body_Femal": "images/chr/body/diffuse/body_Femal.png",
-        "body/body_Pattern.0": "images/chr/body/pattern/body_Pattern.0.png",
-        "body/body_Pattern.1": "images/chr/body/pattern/body_Pattern.1.png",
-        "body/body_Pattern.10": "images/chr/body/pattern/body_Pattern.10.png",
-        "body/body_Pattern.11": "images/chr/body/pattern/body_Pattern.11.png",
-        "body/body_Pattern.12": "images/chr/body/pattern/body_Pattern.12.png",
-        "body/body_Pattern.13": "images/chr/body/pattern/body_Pattern.13.png",
-        "body/body_Pattern.14": "images/chr/body/pattern/body_Pattern.14.png",
-        "body/body_Pattern.15": "images/chr/body/pattern/body_Pattern.15.png",
-        "body/body_Pattern.16": "images/chr/body/pattern/body_Pattern.16.png",
-        "body/body_Pattern.17": "images/chr/body/pattern/body_Pattern.17.png",
-        "body/body_Pattern.18": "images/chr/body/pattern/body_Pattern.18.png",
-        "body/body_Pattern.2": "images/chr/body/pattern/body_Pattern.2.png",
-        "body/body_Pattern.3": "images/chr/body/pattern/body_Pattern.3.png",
-        "body/body_Pattern.4": "images/chr/body/pattern/body_Pattern.4.png",
-        "body/body_Pattern.5": "images/chr/body/pattern/body_Pattern.5.png",
-        "body/body_Pattern.6": "images/chr/body/pattern/body_Pattern.6.png",
-        "body/body_Pattern.7": "images/chr/body/pattern/body_Pattern.7.png",
-        "body/body_Pattern.8": "images/chr/body/pattern/body_Pattern.8.png",
-        "body/body_Pattern.9": "images/chr/body/pattern/body_Pattern.9.png",
-        "eyeGlass/eyeGlass_Alpha": "images/chr/eyeGlass/eyeGlass_Alpha.png",
-        "eyeGlass/eyeGlass_Emit": "images/chr/eyeGlass/eyeGlass_Emit.png",
-        "eyes/eyes_Bump": "images/chr/eyes/eyes_Bump.png",
-        "eyes/eyes_DS": "images/chr/eyes/eyes_DS.png",
-        "eyes/eyes_Emit": "images/chr/eyes/eyes_Emit.png",
-        "eyes/eyes_Metalness": "images/chr/eyes/eyes_Metalness.png",
-        "eyes/eyes_Roughness": "images/chr/eyes/eyes_Roughness.png",
-        "eyes/eyes_SSS": "images/chr/eyes/eyes_SSS.png",
-        "eyes/eyes_Diffuse.0": "images/chr/eyes/diffuse/eyes_Diffuse.0.png",
-        "eyes/eyes_Diffuse.1": "images/chr/eyes/diffuse/eyes_Diffuse.1.png",
-        "eyes/eyes_Diffuse.10": "images/chr/eyes/diffuse/eyes_Diffuse.10.png",
-        "eyes/eyes_Diffuse.11": "images/chr/eyes/diffuse/eyes_Diffuse.11.png",
-        "eyes/eyes_Diffuse.2": "images/chr/eyes/diffuse/eyes_Diffuse.2.png",
-        "eyes/eyes_Diffuse.3": "images/chr/eyes/diffuse/eyes_Diffuse.3.png",
-        "eyes/eyes_Diffuse.4": "images/chr/eyes/diffuse/eyes_Diffuse.4.png",
-        "eyes/eyes_Diffuse.5": "images/chr/eyes/diffuse/eyes_Diffuse.5.png",
-        "eyes/eyes_Diffuse.6": "images/chr/eyes/diffuse/eyes_Diffuse.6.png",
-        "eyes/eyes_Diffuse.7": "images/chr/eyes/diffuse/eyes_Diffuse.7.png",
-        "eyes/eyes_Diffuse.8": "images/chr/eyes/diffuse/eyes_Diffuse.8.png",
-        "eyes/eyes_Diffuse.9": "images/chr/eyes/diffuse/eyes_Diffuse.9.png",
-        "horns/horns_DS": "images/chr/horns/horns_DS.png",
-        "horns/horns_ID": "images/chr/horns/horns_ID.png",
-        "horns/horns_Normal": "images/chr/horns/horns_Normal.png",
-        "horns/horns_Occ": "images/chr/horns/horns_Occ.png",
-        "horns/horns_Ramp": "images/chr/horns/horns_Ramp.png",
-        "horns/horns_Roughness": "images/chr/horns/horns_Roughness.png",
-        "horns/horns_SSS": "images/chr/horns/horns_SSS.png",
-        "horns/horns_Pattern.0": "images/chr/horns/pattern/horns_Pattern.0.png",
-        "horns/horns_Pattern.1": "images/chr/horns/pattern/horns_Pattern.1.png",
-        "horns/horns_Pattern.10": "images/chr/horns/pattern/horns_Pattern.10.png",
-        "horns/horns_Pattern.11": "images/chr/horns/pattern/horns_Pattern.11.png",
-        "horns/horns_Pattern.12": "images/chr/horns/pattern/horns_Pattern.12.png",
-        "horns/horns_Pattern.13": "images/chr/horns/pattern/horns_Pattern.13.png",
-        "horns/horns_Pattern.14": "images/chr/horns/pattern/horns_Pattern.14.png",
-        "horns/horns_Pattern.15": "images/chr/horns/pattern/horns_Pattern.15.png",
-        "horns/horns_Pattern.2": "images/chr/horns/pattern/horns_Pattern.2.png",
-        "horns/horns_Pattern.3": "images/chr/horns/pattern/horns_Pattern.3.png",
-        "horns/horns_Pattern.4": "images/chr/horns/pattern/horns_Pattern.4.png",
-        "horns/horns_Pattern.5": "images/chr/horns/pattern/horns_Pattern.5.png",
-        "horns/horns_Pattern.6": "images/chr/horns/pattern/horns_Pattern.6.png",
-        "horns/horns_Pattern.7": "images/chr/horns/pattern/horns_Pattern.7.png",
-        "horns/horns_Pattern.8": "images/chr/horns/pattern/horns_Pattern.8.png",
-        "horns/horns_Pattern.9": "images/chr/horns/pattern/horns_Pattern.9.png"
+        "body/body_DS": "images/webp/chr/body/body_DS.webp",
+        "body/body_DW": "images/webp/chr/body/body_DW.webp",
+        "body/body_ID": "images/webp/chr/body/body_ID.webp",
+        "body/body_Normal": "images/webp/chr/body/body_Normal.webp",
+        "body/body_Occ": "images/webp/chr/body/body_Occ.webp",
+        "body/body_Ramp": "images/webp/chr/body/body_Ramp.webp",
+        "body/body_Roughness": "images/webp/chr/body/body_Roughness.webp",
+        "body/body_SSS": "images/webp/chr/body/body_SSS.webp",
+        "body/body_Femal": "images/webp/chr/body/diffuse/body_Femal.webp",
+        "body/body_Pattern.0": "images/webp/chr/body/pattern/body_Pattern.0.webp",
+        "body/body_Pattern.1": "images/webp/chr/body/pattern/body_Pattern.1.webp",
+        "body/body_Pattern.10": "images/webp/chr/body/pattern/body_Pattern.10.webp",
+        "body/body_Pattern.11": "images/webp/chr/body/pattern/body_Pattern.11.webp",
+        "body/body_Pattern.12": "images/webp/chr/body/pattern/body_Pattern.12.webp",
+        "body/body_Pattern.13": "images/webp/chr/body/pattern/body_Pattern.13.webp",
+        "body/body_Pattern.14": "images/webp/chr/body/pattern/body_Pattern.14.webp",
+        "body/body_Pattern.15": "images/webp/chr/body/pattern/body_Pattern.15.webp",
+        "body/body_Pattern.16": "images/webp/chr/body/pattern/body_Pattern.16.webp",
+        "body/body_Pattern.17": "images/webp/chr/body/pattern/body_Pattern.17.webp",
+        "body/body_Pattern.18": "images/webp/chr/body/pattern/body_Pattern.18.webp",
+        "body/body_Pattern.2": "images/webp/chr/body/pattern/body_Pattern.2.webp",
+        "body/body_Pattern.3": "images/webp/chr/body/pattern/body_Pattern.3.webp",
+        "body/body_Pattern.4": "images/webp/chr/body/pattern/body_Pattern.4.webp",
+        "body/body_Pattern.5": "images/webp/chr/body/pattern/body_Pattern.5.webp",
+        "body/body_Pattern.6": "images/webp/chr/body/pattern/body_Pattern.6.webp",
+        "body/body_Pattern.7": "images/webp/chr/body/pattern/body_Pattern.7.webp",
+        "body/body_Pattern.8": "images/webp/chr/body/pattern/body_Pattern.8.webp",
+        "body/body_Pattern.9": "images/webp/chr/body/pattern/body_Pattern.9.webp",
+        "eyeGlass/eyeGlass_Alpha": "images/webp/chr/eyeGlass/eyeGlass_Alpha.webp",
+        "eyeGlass/eyeGlass_Emit": "images/webp/chr/eyeGlass/eyeGlass_Emit.webp",
+        "eyes/eyes_Bump": "images/webp/chr/eyes/eyes_Bump.webp",
+        "eyes/eyes_DS": "images/webp/chr/eyes/eyes_DS.webp",
+        "eyes/eyes_Emit": "images/webp/chr/eyes/eyes_Emit.webp",
+        "eyes/eyes_Metalness": "images/webp/chr/eyes/eyes_Metalness.webp",
+        "eyes/eyes_Roughness": "images/webp/chr/eyes/eyes_Roughness.webp",
+        "eyes/eyes_SSS": "images/webp/chr/eyes/eyes_SSS.webp",
+        "eyes/eyes_Diffuse.0": "images/webp/chr/eyes/diffuse/eyes_Diffuse.0.webp",
+        "eyes/eyes_Diffuse.1": "images/webp/chr/eyes/diffuse/eyes_Diffuse.1.webp",
+        "eyes/eyes_Diffuse.10": "images/webp/chr/eyes/diffuse/eyes_Diffuse.10.webp",
+        "eyes/eyes_Diffuse.11": "images/webp/chr/eyes/diffuse/eyes_Diffuse.11.webp",
+        "eyes/eyes_Diffuse.2": "images/webp/chr/eyes/diffuse/eyes_Diffuse.2.webp",
+        "eyes/eyes_Diffuse.3": "images/webp/chr/eyes/diffuse/eyes_Diffuse.3.webp",
+        "eyes/eyes_Diffuse.4": "images/webp/chr/eyes/diffuse/eyes_Diffuse.4.webp",
+        "eyes/eyes_Diffuse.5": "images/webp/chr/eyes/diffuse/eyes_Diffuse.5.webp",
+        "eyes/eyes_Diffuse.6": "images/webp/chr/eyes/diffuse/eyes_Diffuse.6.webp",
+        "eyes/eyes_Diffuse.7": "images/webp/chr/eyes/diffuse/eyes_Diffuse.7.webp",
+        "eyes/eyes_Diffuse.8": "images/webp/chr/eyes/diffuse/eyes_Diffuse.8.webp",
+        "eyes/eyes_Diffuse.9": "images/webp/chr/eyes/diffuse/eyes_Diffuse.9.webp",
+        "horns/horns_DS": "images/webp/chr/horns/horns_DS.webp",
+        "horns/horns_ID": "images/webp/chr/horns/horns_ID.webp",
+        "horns/horns_Normal": "images/webp/chr/horns/horns_Normal.webp",
+        "horns/horns_Occ": "images/webp/chr/horns/horns_Occ.webp",
+        "horns/horns_Ramp": "images/webp/chr/horns/horns_Ramp.webp",
+        "horns/horns_Roughness": "images/webp/chr/horns/horns_Roughness.webp",
+        "horns/horns_SSS": "images/webp/chr/horns/horns_SSS.webp",
+        "horns/horns_Pattern.0": "images/webp/chr/horns/pattern/horns_Pattern.0.webp",
+        "horns/horns_Pattern.1": "images/webp/chr/horns/pattern/horns_Pattern.1.webp",
+        "horns/horns_Pattern.10": "images/webp/chr/horns/pattern/horns_Pattern.10.webp",
+        "horns/horns_Pattern.11": "images/webp/chr/horns/pattern/horns_Pattern.11.webp",
+        "horns/horns_Pattern.12": "images/webp/chr/horns/pattern/horns_Pattern.12.webp",
+        "horns/horns_Pattern.13": "images/webp/chr/horns/pattern/horns_Pattern.13.webp",
+        "horns/horns_Pattern.14": "images/webp/chr/horns/pattern/horns_Pattern.14.webp",
+        "horns/horns_Pattern.15": "images/webp/chr/horns/pattern/horns_Pattern.15.webp",
+        "horns/horns_Pattern.2": "images/webp/chr/horns/pattern/horns_Pattern.2.webp",
+        "horns/horns_Pattern.3": "images/webp/chr/horns/pattern/horns_Pattern.3.webp",
+        "horns/horns_Pattern.4": "images/webp/chr/horns/pattern/horns_Pattern.4.webp",
+        "horns/horns_Pattern.5": "images/webp/chr/horns/pattern/horns_Pattern.5.webp",
+        "horns/horns_Pattern.6": "images/webp/chr/horns/pattern/horns_Pattern.6.webp",
+        "horns/horns_Pattern.7": "images/webp/chr/horns/pattern/horns_Pattern.7.webp",
+        "horns/horns_Pattern.8": "images/webp/chr/horns/pattern/horns_Pattern.8.webp",
+        "horns/horns_Pattern.9": "images/webp/chr/horns/pattern/horns_Pattern.9.webp"
     },
     "autoConnect": {
         "body": {
             "displacementMap": [
                 {
                     "id": "body/body_DS",
-                    "path": "images/chr/body/body_DS.png",
+                    "path": "images/webp/chr/body/body_DS.webp",
                     "variant": null
                 }
             ],
             "diffuseWeightMap": [
                 {
                     "id": "body/body_DW",
-                    "path": "images/chr/body/body_DW.png",
+                    "path": "images/webp/chr/body/body_DW.webp",
                     "variant": null
                 }
             ],
             "rgbMask": [
                 {
                     "id": "body/body_ID",
-                    "path": "images/chr/body/body_ID.png",
+                    "path": "images/webp/chr/body/body_ID.webp",
                     "variant": null
                 }
             ],
             "normalMap": [
                 {
                     "id": "body/body_Normal",
-                    "path": "images/chr/body/body_Normal.png",
+                    "path": "images/webp/chr/body/body_Normal.webp",
                     "variant": null
                 }
             ],
             "aoMap": [
                 {
                     "id": "body/body_Occ",
-                    "path": "images/chr/body/body_Occ.png",
+                    "path": "images/webp/chr/body/body_Occ.webp",
                     "variant": null
                 }
             ],
             "blendMask": [
                 {
                     "id": "body/body_Ramp",
-                    "path": "images/chr/body/body_Ramp.png",
+                    "path": "images/webp/chr/body/body_Ramp.webp",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "body/body_Roughness",
-                    "path": "images/chr/body/body_Roughness.png",
+                    "path": "images/webp/chr/body/body_Roughness.webp",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "body/body_SSS",
-                    "path": "images/chr/body/body_SSS.png",
+                    "path": "images/webp/chr/body/body_SSS.webp",
                     "variant": null
                 }
             ],
             "variant": [
                 {
                     "id": "body/body_Femal",
-                    "path": "images/chr/body/diffuse/body_Femal.png",
+                    "path": "images/webp/chr/body/diffuse/body_Femal.webp",
                     "variant": null
                 }
             ],
             "pattern": [
                 {
                     "id": "body/body_Pattern.0",
-                    "path": "images/chr/body/pattern/body_Pattern.0.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.0.webp",
                     "variant": 0
                 },
                 {
                     "id": "body/body_Pattern.1",
-                    "path": "images/chr/body/pattern/body_Pattern.1.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.1.webp",
                     "variant": 1
                 },
                 {
                     "id": "body/body_Pattern.10",
-                    "path": "images/chr/body/pattern/body_Pattern.10.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.10.webp",
                     "variant": 10
                 },
                 {
                     "id": "body/body_Pattern.11",
-                    "path": "images/chr/body/pattern/body_Pattern.11.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.11.webp",
                     "variant": 11
                 },
                 {
                     "id": "body/body_Pattern.12",
-                    "path": "images/chr/body/pattern/body_Pattern.12.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.12.webp",
                     "variant": 12
                 },
                 {
                     "id": "body/body_Pattern.13",
-                    "path": "images/chr/body/pattern/body_Pattern.13.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.13.webp",
                     "variant": 13
                 },
                 {
                     "id": "body/body_Pattern.14",
-                    "path": "images/chr/body/pattern/body_Pattern.14.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.14.webp",
                     "variant": 14
                 },
                 {
                     "id": "body/body_Pattern.15",
-                    "path": "images/chr/body/pattern/body_Pattern.15.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.15.webp",
                     "variant": 15
                 },
                 {
                     "id": "body/body_Pattern.16",
-                    "path": "images/chr/body/pattern/body_Pattern.16.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.16.webp",
                     "variant": 16
                 },
                 {
                     "id": "body/body_Pattern.17",
-                    "path": "images/chr/body/pattern/body_Pattern.17.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.17.webp",
                     "variant": 17
                 },
                 {
                     "id": "body/body_Pattern.18",
-                    "path": "images/chr/body/pattern/body_Pattern.18.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.18.webp",
                     "variant": 18
                 },
                 {
                     "id": "body/body_Pattern.2",
-                    "path": "images/chr/body/pattern/body_Pattern.2.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.2.webp",
                     "variant": 2
                 },
                 {
                     "id": "body/body_Pattern.3",
-                    "path": "images/chr/body/pattern/body_Pattern.3.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.3.webp",
                     "variant": 3
                 },
                 {
                     "id": "body/body_Pattern.4",
-                    "path": "images/chr/body/pattern/body_Pattern.4.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.4.webp",
                     "variant": 4
                 },
                 {
                     "id": "body/body_Pattern.5",
-                    "path": "images/chr/body/pattern/body_Pattern.5.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.5.webp",
                     "variant": 5
                 },
                 {
                     "id": "body/body_Pattern.6",
-                    "path": "images/chr/body/pattern/body_Pattern.6.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.6.webp",
                     "variant": 6
                 },
                 {
                     "id": "body/body_Pattern.7",
-                    "path": "images/chr/body/pattern/body_Pattern.7.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.7.webp",
                     "variant": 7
                 },
                 {
                     "id": "body/body_Pattern.8",
-                    "path": "images/chr/body/pattern/body_Pattern.8.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.8.webp",
                     "variant": 8
                 },
                 {
                     "id": "body/body_Pattern.9",
-                    "path": "images/chr/body/pattern/body_Pattern.9.png",
+                    "path": "images/webp/chr/body/pattern/body_Pattern.9.webp",
                     "variant": 9
                 }
             ]
@@ -343,14 +403,14 @@
             "alphaMap": [
                 {
                     "id": "eyeGlass/eyeGlass_Alpha",
-                    "path": "images/chr/eyeGlass/eyeGlass_Alpha.png",
+                    "path": "images/webp/chr/eyeGlass/eyeGlass_Alpha.webp",
                     "variant": null
                 }
             ],
             "emissiveMap": [
                 {
                     "id": "eyeGlass/eyeGlass_Emit",
-                    "path": "images/chr/eyeGlass/eyeGlass_Emit.png",
+                    "path": "images/webp/chr/eyeGlass/eyeGlass_Emit.webp",
                     "variant": null
                 }
             ]
@@ -359,104 +419,104 @@
             "bumpMap": [
                 {
                     "id": "eyes/eyes_Bump",
-                    "path": "images/chr/eyes/eyes_Bump.png",
+                    "path": "images/webp/chr/eyes/eyes_Bump.webp",
                     "variant": null
                 }
             ],
             "displacementMap": [
                 {
                     "id": "eyes/eyes_DS",
-                    "path": "images/chr/eyes/eyes_DS.png",
+                    "path": "images/webp/chr/eyes/eyes_DS.webp",
                     "variant": null
                 }
             ],
             "emissiveMap": [
                 {
                     "id": "eyes/eyes_Emit",
-                    "path": "images/chr/eyes/eyes_Emit.png",
+                    "path": "images/webp/chr/eyes/eyes_Emit.webp",
                     "variant": null
                 }
             ],
             "metalnessMap": [
                 {
                     "id": "eyes/eyes_Metalness",
-                    "path": "images/chr/eyes/eyes_Metalness.png",
+                    "path": "images/webp/chr/eyes/eyes_Metalness.webp",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "eyes/eyes_Roughness",
-                    "path": "images/chr/eyes/eyes_Roughness.png",
+                    "path": "images/webp/chr/eyes/eyes_Roughness.webp",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "eyes/eyes_SSS",
-                    "path": "images/chr/eyes/eyes_SSS.png",
+                    "path": "images/webp/chr/eyes/eyes_SSS.webp",
                     "variant": null
                 }
             ],
             "diffuse": [
                 {
                     "id": "eyes/eyes_Diffuse.0",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.0.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.0.webp",
                     "variant": 0
                 },
                 {
                     "id": "eyes/eyes_Diffuse.1",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.1.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.1.webp",
                     "variant": 1
                 },
                 {
                     "id": "eyes/eyes_Diffuse.10",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.10.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.10.webp",
                     "variant": 10
                 },
                 {
                     "id": "eyes/eyes_Diffuse.11",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.11.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.11.webp",
                     "variant": 11
                 },
                 {
                     "id": "eyes/eyes_Diffuse.2",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.2.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.2.webp",
                     "variant": 2
                 },
                 {
                     "id": "eyes/eyes_Diffuse.3",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.3.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.3.webp",
                     "variant": 3
                 },
                 {
                     "id": "eyes/eyes_Diffuse.4",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.4.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.4.webp",
                     "variant": 4
                 },
                 {
                     "id": "eyes/eyes_Diffuse.5",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.5.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.5.webp",
                     "variant": 5
                 },
                 {
                     "id": "eyes/eyes_Diffuse.6",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.6.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.6.webp",
                     "variant": 6
                 },
                 {
                     "id": "eyes/eyes_Diffuse.7",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.7.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.7.webp",
                     "variant": 7
                 },
                 {
                     "id": "eyes/eyes_Diffuse.8",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.8.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.8.webp",
                     "variant": 8
                 },
                 {
                     "id": "eyes/eyes_Diffuse.9",
-                    "path": "images/chr/eyes/diffuse/eyes_Diffuse.9.png",
+                    "path": "images/webp/chr/eyes/diffuse/eyes_Diffuse.9.webp",
                     "variant": 9
                 }
             ]
@@ -465,131 +525,131 @@
             "displacementMap": [
                 {
                     "id": "horns/horns_DS",
-                    "path": "images/chr/horns/horns_DS.png",
+                    "path": "images/webp/chr/horns/horns_DS.webp",
                     "variant": null
                 }
             ],
             "rgbMask": [
                 {
                     "id": "horns/horns_ID",
-                    "path": "images/chr/horns/horns_ID.png",
+                    "path": "images/webp/chr/horns/horns_ID.webp",
                     "variant": null
                 }
             ],
             "normalMap": [
                 {
                     "id": "horns/horns_Normal",
-                    "path": "images/chr/horns/horns_Normal.png",
+                    "path": "images/webp/chr/horns/horns_Normal.webp",
                     "variant": null
                 }
             ],
             "aoMap": [
                 {
                     "id": "horns/horns_Occ",
-                    "path": "images/chr/horns/horns_Occ.png",
+                    "path": "images/webp/chr/horns/horns_Occ.webp",
                     "variant": null
                 }
             ],
             "blendMask": [
                 {
                     "id": "horns/horns_Ramp",
-                    "path": "images/chr/horns/horns_Ramp.png",
+                    "path": "images/webp/chr/horns/horns_Ramp.webp",
                     "variant": null
                 }
             ],
             "roughnessMap": [
                 {
                     "id": "horns/horns_Roughness",
-                    "path": "images/chr/horns/horns_Roughness.png",
+                    "path": "images/webp/chr/horns/horns_Roughness.webp",
                     "variant": null
                 }
             ],
             "sssMap": [
                 {
                     "id": "horns/horns_SSS",
-                    "path": "images/chr/horns/horns_SSS.png",
+                    "path": "images/webp/chr/horns/horns_SSS.webp",
                     "variant": null
                 }
             ],
             "pattern": [
                 {
                     "id": "horns/horns_Pattern.0",
-                    "path": "images/chr/horns/pattern/horns_Pattern.0.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.0.webp",
                     "variant": 0
                 },
                 {
                     "id": "horns/horns_Pattern.1",
-                    "path": "images/chr/horns/pattern/horns_Pattern.1.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.1.webp",
                     "variant": 1
                 },
                 {
                     "id": "horns/horns_Pattern.10",
-                    "path": "images/chr/horns/pattern/horns_Pattern.10.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.10.webp",
                     "variant": 10
                 },
                 {
                     "id": "horns/horns_Pattern.11",
-                    "path": "images/chr/horns/pattern/horns_Pattern.11.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.11.webp",
                     "variant": 11
                 },
                 {
                     "id": "horns/horns_Pattern.12",
-                    "path": "images/chr/horns/pattern/horns_Pattern.12.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.12.webp",
                     "variant": 12
                 },
                 {
                     "id": "horns/horns_Pattern.13",
-                    "path": "images/chr/horns/pattern/horns_Pattern.13.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.13.webp",
                     "variant": 13
                 },
                 {
                     "id": "horns/horns_Pattern.14",
-                    "path": "images/chr/horns/pattern/horns_Pattern.14.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.14.webp",
                     "variant": 14
                 },
                 {
                     "id": "horns/horns_Pattern.15",
-                    "path": "images/chr/horns/pattern/horns_Pattern.15.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.15.webp",
                     "variant": 15
                 },
                 {
                     "id": "horns/horns_Pattern.2",
-                    "path": "images/chr/horns/pattern/horns_Pattern.2.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.2.webp",
                     "variant": 2
                 },
                 {
                     "id": "horns/horns_Pattern.3",
-                    "path": "images/chr/horns/pattern/horns_Pattern.3.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.3.webp",
                     "variant": 3
                 },
                 {
                     "id": "horns/horns_Pattern.4",
-                    "path": "images/chr/horns/pattern/horns_Pattern.4.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.4.webp",
                     "variant": 4
                 },
                 {
                     "id": "horns/horns_Pattern.5",
-                    "path": "images/chr/horns/pattern/horns_Pattern.5.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.5.webp",
                     "variant": 5
                 },
                 {
                     "id": "horns/horns_Pattern.6",
-                    "path": "images/chr/horns/pattern/horns_Pattern.6.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.6.webp",
                     "variant": 6
                 },
                 {
                     "id": "horns/horns_Pattern.7",
-                    "path": "images/chr/horns/pattern/horns_Pattern.7.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.7.webp",
                     "variant": 7
                 },
                 {
                     "id": "horns/horns_Pattern.8",
-                    "path": "images/chr/horns/pattern/horns_Pattern.8.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.8.webp",
                     "variant": 8
                 },
                 {
                     "id": "horns/horns_Pattern.9",
-                    "path": "images/chr/horns/pattern/horns_Pattern.9.png",
+                    "path": "images/webp/chr/horns/pattern/horns_Pattern.9.webp",
                     "variant": 9
                 }
             ]

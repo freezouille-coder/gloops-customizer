@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — Scripts & Checklists</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>⚙️ Scripts & Checklists</h1>
+<p class="lede">Les 5 outils Maya/Python du projet + les workflows pas-a-pas.</p>
+
+<!-- =============================================================== -->
+<h2>1. 🧰 Les scripts</h2>
+
+<table>
+  <tr><th>Script</th><th>Ou le lancer</th><th>Ce qu'il fait</th></tr>
+  <tr>
+    <td><code>export_traits.py</code></td>
+    <td>Maya Script Editor</td>
+    <td>
+      <b>2 fonctions :</b><br>
+      • <b>EXPORT</b> — Boucle Studio Library → FBX (anim/pose, bake blendshape, clean bones, FPS convert, GLB auto-convert)<br>
+      • <b>BATCH EXPORT PROPS</b> — Selection de meshes → 1 FBX par mesh (skeleton + mesh, pas d'anim)
+    </td>
+  </tr>
+  <tr>
+    <td><code>build_props_manifest.py</code></td>
+    <td>Terminal Python</td>
+    <td>Scanne <code>fbx/ANIM/*/PROPS/*.fbx</code>, met a jour <code>pairedProps</code> dans <code>manifest.json</code>.<br>
+    ⚠️ <b>A relancer apres chaque ajout/suppression de prop FBX.</b></td>
+  </tr>
+  <tr>
+    <td><code>fbx_to_glb.py</code></td>
+    <td>Terminal Python (ou via Blender headless)</td>
+    <td>Batch convert FBX → GLB via Blender. Options : <code>--compress</code> (Draco), <code>--no-anim</code>, <code>--scale</code>.<br>
+    GUI Tkinter si lance directement en Python.</td>
+  </tr>
+  <tr>
+    <td><code>export_trees.py</code></td>
+    <td>Maya Script Editor</td>
+    <td>Export MASH/transforms selectionnes → JSON <code>{x, y, z, ry, s}</code> par instance.<br>
+    Pour le placement d'arbres via <code>game-tree-instancer.js</code>.</td>
+  </tr>
+  <tr>
+    <td><code>BindCleaner.py</code></td>
+    <td>Maya Script Editor</td>
+    <td>Nettoie les <code>bindPose</code> en double dans la scene. Fix les warnings d'export.</td>
+  </tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>2. ✅ Ajouter une nouvelle animation</h2>
+
+<div class="panel">
+  <ol>
+    <li>Creer le <code>.anim</code> ou <code>.pose</code> dans Studio Library</li>
+    <li>Lancer <code>export_traits.py → EXPORT</code>
+      <ul>
+        <li>Source = dossier Studio Library</li>
+        <li>Target = <code>fbx/ANIM/&lt;Category&gt;</code></li>
+        <li>Selectionner Skeleton Root + Geometries</li>
+      </ul>
+    </li>
+    <li>Le FBX apparait dans le dossier</li>
+    <li>Relancer <code>build_manifest.py</code> si le manifest n'est pas auto-updated</li>
+    <li>Refresh navigateur → la nouvelle anim apparait dans le dropdown</li>
+  </ol>
+</div>
+
+<!-- =============================================================== -->
+<h2>3. ✅ Ajouter un prop paire (lunettes, chapeau...)</h2>
+
+<div class="panel">
+  <ol>
+    <li>Dans Maya, nommer le mesh <b>exactement</b> comme le FBX d'animation correspondant (ex: <code>Hat_CowBoy</code>)</li>
+    <li>Selectionner le(s) mesh(es) dans le viewport</li>
+    <li>Dans <code>export_traits.py</code>, set Target = <code>fbx/ANIM/&lt;Category&gt;/PROPS/</code></li>
+    <li>Cliquer <b>BATCH EXPORT PROPS</b></li>
+    <li>Lancer <code>python scripts/build_props_manifest.py</code></li>
+    <li>Refresh → le prop se charge automatiquement quand on selectionne l'animation</li>
+    <li>Si offset necessaire → ajuster dans le panneau Props (sliders live) → bouton 📋 Copy JSON → coller dans <code>config/paired-offsets.json</code></li>
+  </ol>
+</div>
+
+<!-- =============================================================== -->
+<h2>4. ✅ Ajouter des textures pour un nouveau materiau</h2>
+
+<div class="panel">
+  <ol>
+    <li>Creer le dossier <code>images/chr/&lt;matName&gt;/</code></li>
+    <li>Nommer les textures avec la convention <code>&lt;matName&gt;_Suffixe.png</code> (voir doc Textures)</li>
+    <li>Pour les variantes : <code>&lt;matName&gt;_Pattern.N.png</code> (N = 0, 1, 2...)</li>
+    <li>Relancer <code>build_manifest.py</code></li>
+    <li>Refresh → les textures apparaissent dans le panneau MAT</li>
+  </ol>
+</div>
+
+<!-- =============================================================== -->
+<h2>5. ✅ Preparer les zones de la map (Maya)</h2>
+
+<div class="panel">
+  <ol>
+    <li>Creer des planes/polygones nommes <code>zone_&lt;type&gt;_&lt;nom&gt;</code> (voir doc Zones)</li>
+    <li>Les poser a meme le sol de l'ile</li>
+    <li>Les grouper sous un group <code>ZONES</code></li>
+    <li>(Optionnel) NURBS curves <code>path_drive_right</code>, <code>path_drive_left</code></li>
+    <li>Exporter en FBX separe → <code>fbx/WORLD/zones.fbx</code></li>
+    <li>Au runtime, le code les parse par nom et les rend invisibles</li>
+  </ol>
+</div>
+
+<!-- =============================================================== -->
+<h2>6. ✅ Batch convert FBX → GLB (optimisation)</h2>
+
+<div class="panel">
+  <p>GLB charge ~3x plus vite que FBX et pese ~70% de moins avec Draco compression.</p>
+  <ol>
+    <li>Option A : cocher <b>"Auto-convert FBX → GLB"</b> dans <code>export_traits.py</code> avant l'export
+      <ul><li>Les FBX sont convertis en GLB dans <code>fbx/glb/&lt;Category&gt;/</code> immediatement apres l'export</li></ul>
+    </li>
+    <li>Option B : lancer manuellement <code>python scripts/fbx_to_glb.py</code>
+      <ul>
+        <li>GUI Tkinter avec auto-detect Blender, input/output folders, options Draco</li>
+        <li>Ou en CLI : <code>python scripts/fbx_to_glb.py --input ... --output ... --compress</code></li>
+      </ul>
+    </li>
+  </ol>
+</div>
+
+<!-- =============================================================== -->
+<h2>7. 🐛 Troubleshooting</h2>
+
+<table>
+  <tr><th>Probleme</th><th>Cause probable</th><th>Fix</th></tr>
+  <tr>
+    <td>Paired props n'apparaissent pas</td>
+    <td><code>manifest.json</code> sans <code>pairedProps</code> (sync Google Drive l'a ecrase)</td>
+    <td><code>python scripts/build_props_manifest.py</code></td>
+  </tr>
+  <tr>
+    <td>Prop mal oriente</td>
+    <td>Type C exporte avec une pose different de la T-pose</td>
+    <td>Offset rotation dans <code>paired-offsets.json</code> — OU reset skeleton T-pose avant export Maya</td>
+  </tr>
+  <tr>
+    <td>NPC avec les memes lunettes que le player</td>
+    <td>Clone SkeletonUtils inclut les props attaches</td>
+    <td>Deja fixe — les paired props sont tagges et strip au clone</td>
+  </tr>
+  <tr>
+    <td>"No module named 'studiolibrarymaya'"</td>
+    <td>Module pas charge dans la session Maya</td>
+    <td>Ouvrir Studio Library une fois avant de lancer le script</td>
+  </tr>
+  <tr>
+    <td>BindCleaner fails</td>
+    <td>Syntax Python 2 vs 3</td>
+    <td>Deja fixe (utilise <code>print()</code>)</td>
+  </tr>
+  <tr>
+    <td>Shader d'un prop n'apparait pas dans MAT</td>
+    <td>Multi-material par face (array), mesh sans <code>.skinning</code> flag</td>
+    <td>Deja gere — chaque slot de l'array devient sa propre entry dans le pool</td>
+  </tr>
+</table>
+
+</body>
+</html>

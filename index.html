@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gloops - Character Customizer</title>
-    <link rel="stylesheet" href="css/style.css?v=20260414d">
+    <link rel="stylesheet" href="css/style.css?v=20260419u">
     <script type="importmap">
     {
         "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+            "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
         }
     }
     </script>
@@ -18,16 +19,130 @@
     <div id="app">
         <canvas id="viewport"></canvas>
 
-        <button id="btn-play" title="Play mode">▶ Play</button>
+        <!-- Shared animated background for the MAIN MENU + MUSIC overlays.
+             Lives OUTSIDE both overlays so switching between them doesn't
+             restart the video (the element persists through the DOM). -->
+        <div id="menu-bg" class="hidden">
+            <video class="menu-bg-video" autoplay muted loop playsinline preload="auto"
+                   poster="images/webp/ui/background.webp">
+                <source src="assets/ui/background.webm" type="video/webm">
+                <source src="assets/ui/background.mp4"  type="video/mp4">
+            </video>
+            <div class="menu-bg-vignette"></div>
+        </div>
+
+        <!-- LOADING SCREEN — plain dark background so the island reveal
+             only happens when the user reaches the main menu -->
+        <div id="loading-screen" class="screen-overlay loading-bg">
+            <div class="screen-content screen-center">
+                <div class="title-block">
+                    <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" class="gloops-logo-img gloops-logo-top">
+                    <div class="gloops-tagline">THE ADVENTURE</div>
+                </div>
+                <div id="loading-msg" class="loading-msg">
+                    <span class="spinner"></span>
+                    <span id="loading-text">Loading...</span>
+                </div>
+                <button id="btn-loading-start" class="big-btn hidden">LET'S GO</button>
+            </div>
+        </div>
+
+        <!-- MAIN MENU — 3 entry points (bg is the shared #menu-bg element) -->
+        <div id="main-menu" class="screen-overlay hidden">
+            <div class="screen-content screen-left">
+                <div class="menu-column">
+                    <div class="title-block">
+                        <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" class="gloops-logo-img gloops-logo-top">
+                        <div class="gloops-tagline">THE ADVENTURE</div>
+                    </div>
+                    <div class="menu-list">
+                        <!-- Continue is hidden until the player plays once -->
+                        <button class="big-btn" id="btn-menu-continue" hidden>Continue</button>
+                        <button class="big-btn" id="btn-menu-new">New Game</button>
+                        <button class="big-btn" id="btn-menu-music">Music Option</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME-LOADING SCREEN — covers the world assembly -->
+        <div id="game-loading" class="screen-overlay loading-bg hidden">
+            <div class="screen-content screen-center">
+                <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" class="gloops-logo-img gloops-logo-top">
+                <div class="gloops-tagline">ENTERING THE CITY</div>
+                <div class="loading-msg">
+                    <span class="spinner"></span>
+                    <span id="game-loading-text">Loading city...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAUSE MENU (ESC in-game). Dims the game scene, no label —
+             it's really just a quick-settings overlay. -->
+        <div id="pause-menu" class="screen-overlay pause-bg hidden">
+            <div class="screen-content screen-center">
+                <div class="menu-column">
+                    <div class="title-block">
+                        <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" class="gloops-logo-img gloops-logo-top">
+                        <div class="gloops-tagline">THE ADVENTURE</div>
+                    </div>
+                    <div class="menu-list">
+                        <button class="big-btn" id="btn-pause-resume">Resume</button>
+                        <button class="big-btn" id="btn-pause-exit">Exit to Menu</button>
+                    </div>
+
+                    <!-- In-game music control — cycle tracks + mute, all
+                         inline so the player stays in the session. -->
+                    <div class="music-switcher" id="pause-music-switcher">
+                        <button class="music-nav" id="btn-pause-music-prev"
+                                title="Previous track">◀</button>
+                        <span class="music-switcher-name" id="pause-track-name">—</span>
+                        <button class="music-nav" id="btn-pause-music-next"
+                                title="Next track">▶</button>
+                    </div>
+                    <button class="icon-btn" id="btn-pause-mute"
+                            title="Mute / unmute music">🔊</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MUSIC PICKER — switcher + volume slider (bg is shared #menu-bg) -->
+        <div id="music-picker" class="screen-overlay hidden">
+            <div class="screen-content screen-center">
+                <h2 class="screen-title screen-title-bracketed">MUSIC</h2>
+
+                <!-- Cycle tracks ◀ / ▶ — same widget as the pause menu -->
+                <div class="music-switcher music-switcher-large">
+                    <button class="music-nav" id="btn-music-picker-prev"
+                            title="Previous track">◀</button>
+                    <span class="music-switcher-name" id="music-picker-name">—</span>
+                    <button class="music-nav" id="btn-music-picker-next"
+                            title="Next track">▶</button>
+                </div>
+
+                <div class="music-volume-row">
+                    <span class="music-volume-label">Volume</span>
+                    <input type="range" id="music-volume" class="music-volume" min="0" max="100" value="55">
+                    <span class="music-volume-value" id="music-volume-value">55</span>
+                </div>
+
+                <button id="btn-music-back" class="big-btn">Back</button>
+            </div>
+        </div>
+
         <div id="panel">
+            <div id="panel-topbar">
+                <button id="btn-back-menu" class="panel-back-btn" title="Back to main menu">Menu</button>
+                <button id="btn-start-game" class="panel-start-btn" title="Start the game">Start Game</button>
+            </div>
             <div id="panel-logo">
-                <img src="images/ui/LogoGLOOPS.png" alt="Gloops" id="logo-img">
+                <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" id="logo-img">
             </div>
             <button id="mobile-generate-btn" style="display:none">
                 <span id="mobile-btn-dice">🎲</span>
                 <span id="mobile-btn-text">
                     <span id="mobile-btn-lets">Let's</span>
-                    <img src="images/ui/LogoGLOOPS.png" alt="Gloops" id="mobile-btn-logo">
+                    <img src="images/webp/ui/LogoGLOOPS.webp" alt="Gloops" id="mobile-btn-logo">
                 </span>
             </button>
             <div id="panel-tabs">
@@ -48,7 +163,7 @@
             <!-- Animations tab -->
             <div id="tab-anim" class="tab-content">
                 <div id="panel-header">
-                    <button id="btn-random-all" title="Randomize All">🎲 Random All</button>
+                    <button id="btn-random-all" title="Randomize All">Random All</button>
                     <button id="btn-reset" title="Reset All">↺ Reset</button>
                 </div>
                 <div id="controls-container"></div>
@@ -79,6 +194,6 @@
         </div>
     </div>
 
-    <script type="module" src="js/app.js?v=20260414f"></script>
+    <script type="module" src="js/app.js?v=20260419u"></script>
 </body>
 </html>

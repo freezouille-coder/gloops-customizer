@@ -1,0 +1,19 @@
+{
+  "_comment": "Generated from scripts/gloops-city.html — consumed by the in-game CityGenerator.",
+  "grid": {
+    "width": 10,
+    "height": 10
+  },
+  "avenue": false,
+  "preset": "random",
+  "types": {
+    "S": 13,
+    "M": 58,
+    "L": 0,
+    "XL": 0,
+    "1x2": 0,
+    "2x3": 1,
+    "2x4": 0
+  },
+  "files": {}
+}

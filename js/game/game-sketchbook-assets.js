@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { makeGLTFLoader } from '../gltf-loader.js';
 
 /**
  * One-shot loader for Sketchbook's world.glb. Parses the scene, finds
@@ -12,7 +12,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  */
 
 const WORLD_URL = 'assets/sketchbook/world.glb';
-const loader = new GLTFLoader();
+const loader = makeGLTFLoader();
 
 let _cache = null;
 

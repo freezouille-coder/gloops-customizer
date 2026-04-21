@@ -204,9 +204,11 @@ export class GamePlayer {
         // ----- Vertical (gravity + jump) -----
         this._velY += this.gravity * dt;
         this.model.position.y += this._velY * dt;
-        const groundH = world && world.heightAt
-            ? world.heightAt(this.model.position.x, this.model.position.z)
-            : 0;
+        // Prefer a real raycast so we can walk up ramps/stairs — only
+        // costs one ray per frame.
+        const groundH = (world && world.raycastGroundAt)
+            ? world.raycastGroundAt(this.model.position.x, this.model.position.z)
+            : (world && world.heightAt ? world.heightAt(this.model.position.x, this.model.position.z) : 0);
         // Vehicles as standable surfaces — if player is above one, land on top
         let standY = groundH;
         if (world && world._vehicles) {
@@ -234,7 +236,7 @@ export class GamePlayer {
         // ----- World bounds: soft island edge EXCEPT for the open beach
         // sector, where the player can walk straight into the sea. -----
         const r = Math.hypot(this.model.position.x, this.model.position.z);
-        const MAX_R = 52;
+        const MAX_R = (world && world.RADIUS) ? world.RADIUS + 2 : 82;
         const inBeach = world && world.isInBeachSector
             && world.isInBeachSector(this.model.position.x, this.model.position.z);
         if (r > MAX_R && !inBeach) {
@@ -242,10 +244,7 @@ export class GamePlayer {
             this.model.position.x *= k;
             this.model.position.z *= k;
         }
-        // Beach fall → respawn near the fountain when we walk off the edge
-        if (inBeach && r > 56) {
-            this._respawnNearFountain();
-        }
+        // (removed auto-respawn — WastedManager handles drowning now)
         if (world && world.collidePlayer) {
             world.collidePlayer(this.model.position, 0.55);
         }

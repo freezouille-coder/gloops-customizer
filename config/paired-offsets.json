@@ -1,0 +1,18 @@
+{
+    "_doc": "Per-prop transform offsets applied at attach time. Keys are 'Category/filename.fbx' (exact) or 'Category/*' (category-wide default). Exact matches override wildcards. Rotations are in DEGREES (XYZ Euler). Position is in world units. Scale can be a number or [x,y,z]. This file is NOT touched by build_props_manifest.py — edit it freely.",
+
+    "Eyes/*": {
+        "rotation": [0, 0, -90]
+    },
+
+    "_examples": {
+        "Horns/Hat_CowBoy.fbx": {
+            "position": [0, 0.05, 0],
+            "rotation": [0, 0, 0],
+            "scale": 1.0
+        },
+        "Horns/*": {
+            "rotation": [0, 0, 0]
+        }
+    }
+}

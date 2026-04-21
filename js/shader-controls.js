@@ -55,6 +55,9 @@ export class ShaderControls {
         detail.appendChild(this._buildSection('Shading Mode', [
             this._buildCheckbox('Flat / Unlit', entry._isFlat || false,
                 (v) => this.sm.setFlat(name, v)),
+            this._buildCheckbox('Double Sided',
+                entry.material.side === THREE.DoubleSide,
+                (v) => this.sm.setDoubleSided(name, v)),
         ], false));
 
         // === DIFFUSE ===

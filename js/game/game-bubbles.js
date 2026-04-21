@@ -86,4 +86,7 @@ export const BUBBLE_EMOJIS = {
     CARROT: '💀',
     PANIC: '😱',
     DEPRESSED: '😵',
+    QUESTION: '❓',        // Mission: client waiting for pickup
+    HAPPY:    '😊',        // Mission: successful drop-off
+    ALERT:    '❗',        // Guard aggro / event
 };

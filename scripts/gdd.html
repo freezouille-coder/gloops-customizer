@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDD — Gloops World</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap');
+  :root {
+    --green:#3B6D11;--green-light:#EAF3DE;--green-mid:#639922;
+    --amber:#BA7517;--amber-light:#FAEEDA;--amber-mid:#EF9F27;
+    --purple:#534AB7;--purple-light:#EEEDFE;
+    --coral:#993C1D;--coral-light:#FAECE7;
+    --gray:#2C2C2A;--gray-mid:#888780;--gray-light:#F1EFE8;
+    --teal:#0F6E56;--teal-light:#E1F5EE;
+    --text:#1a1a18;--text-muted:#5F5E5A;--border:#D3D1C7;--bg:#FAF9F6;--white:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg);}
+  .page{max-width:860px;margin:0 auto;padding:3rem 2rem 6rem;}
+  .doc-header{border-bottom:1px solid var(--border);padding-bottom:2rem;margin-bottom:3rem;}
+  .doc-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:.75rem;}
+  .doc-title{font-family:'DM Serif Display',serif;font-size:42px;line-height:1.1;color:var(--text);margin-bottom:.5rem;}
+  .doc-subtitle{font-size:16px;color:var(--text-muted);margin-bottom:1.5rem;}
+  .doc-meta{display:flex;gap:1.5rem;flex-wrap:wrap;}
+  .meta-item{font-size:13px;color:var(--text-muted);}
+  .meta-item strong{color:var(--text);font-weight:600;}
+  .section{margin-bottom:3.5rem;}
+  .section-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+  .section-number{font-family:'DM Mono',monospace;font-size:12px;color:var(--gray-mid);min-width:24px;}
+  .section-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);}
+  h3{font-size:14px;font-weight:600;color:var(--text);letter-spacing:.04em;text-transform:uppercase;margin:1.5rem 0 .75rem;}
+  p{margin-bottom:.75rem;color:var(--text);}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1rem 0;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem;}
+  .card-icon{font-size:24px;margin-bottom:.5rem;}
+  .card-title{font-weight:600;font-size:14px;margin-bottom:.25rem;color:var(--text);}
+  .card-desc{font-size:13px;color:var(--text-muted);line-height:1.5;margin:0;}
+  .faction-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;}
+  .faction-card{border-radius:12px;padding:1.25rem;}
+  .faction-card.bio{background:var(--green-light);border:1px solid #C0DD97;}
+  .faction-card.sugar{background:var(--amber-light);border:1px solid #FAC775;}
+  .faction-name{font-weight:600;font-size:15px;margin-bottom:.5rem;}
+  .faction-card.bio .faction-name{color:var(--green);}
+  .faction-card.sugar .faction-name{color:var(--amber);}
+  .faction-card ul{padding-left:1.1rem;font-size:13px;line-height:1.8;}
+  .faction-card.bio ul{color:#3B6D11;}
+  .faction-card.sugar ul{color:#633806;}
+  .tag-list{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0;}
+  .tag{font-size:12px;font-weight:500;padding:4px 10px;border-radius:20px;}
+  .tag.green{background:var(--green-light);color:var(--green);}
+  .tag.amber{background:var(--amber-light);color:var(--amber);}
+  .tag.purple{background:var(--purple-light);color:var(--purple);}
+  .tag.gray{background:var(--gray-light);color:var(--gray);}
+  .tag.teal{background:var(--teal-light);color:var(--teal);}
+  .tag.coral{background:var(--coral-light);color:var(--coral);}
+  .building-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0;}
+  .building-table th{text-align:left;padding:8px 12px;background:var(--gray-light);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--gray-mid);border-bottom:1px solid var(--border);}
+  .building-table td{padding:10px 12px;border-bottom:1px solid var(--gray-light);vertical-align:top;color:var(--text);}
+  .building-table tr:last-child td{border-bottom:none;}
+  .req-tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:4px;margin:1px;font-weight:500;}
+  .rarity-list{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem;margin:1rem 0;}
+  .rarity-item{border-radius:8px;padding:.75rem;text-align:center;}
+  .rarity-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+  .rarity-pct{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;}
+  .callout{border-radius:10px;padding:1rem 1.25rem;margin:1rem 0;font-size:14px;}
+  .callout.green{background:var(--green-light);border-left:3px solid var(--green-mid);color:#3B6D11;}
+  .callout.amber{background:var(--amber-light);border-left:3px solid var(--amber-mid);color:#633806;}
+  .callout.purple{background:var(--purple-light);border-left:3px solid var(--purple);color:var(--purple);}
+  .callout.teal{background:var(--teal-light);border-left:3px solid var(--teal);color:var(--teal);}
+  .callout.coral{background:var(--coral-light);border-left:3px solid var(--coral);color:var(--coral);}
+  .callout strong{font-weight:600;}
+  .merge-chain{display:flex;align-items:center;flex-wrap:wrap;margin:1rem 0;gap:0;}
+  .merge-node{display:flex;flex-direction:column;align-items:center;padding:.75rem 1rem;border-radius:10px;min-width:95px;text-align:center;}
+  .merge-count{font-family:'DM Mono',monospace;font-size:20px;font-weight:600;line-height:1;margin-bottom:4px;}
+  .merge-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+  .merge-arrow{font-size:18px;color:var(--gray-mid);padding:0 6px;flex-shrink:0;}
+  .timeline{position:relative;padding-left:2rem;margin:1rem 0;}
+  .timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:1px;background:var(--border);}
+  .timeline-item{position:relative;margin-bottom:1.25rem;}
+  .timeline-item::before{content:'';position:absolute;left:-1.7rem;top:6px;width:8px;height:8px;border-radius:50%;background:var(--green-mid);border:1px solid var(--green);}
+  .timeline-phase{font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gray-mid);margin-bottom:2px;}
+  .timeline-title{font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;}
+  .timeline-desc{font-size:13px;color:var(--text-muted);margin:0;}
+  .questions-list{list-style:none;margin:.75rem 0;}
+  .questions-list li{display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--gray-light);font-size:14px;align-items:flex-start;}
+  .questions-list li:last-child{border-bottom:none;}
+  .q-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-mid);padding-top:2px;min-width:24px;}
+  .q-cat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap;align-self:flex-start;margin-top:2px;}
+  @media(max-width:600px){.faction-grid{grid-template-columns:1fr;}.rarity-list{grid-template-columns:repeat(3,1fr);}.doc-title{font-size:30px;}.merge-chain{flex-direction:column;align-items:flex-start;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <div class="doc-label">Game Design Document — v0.2 Draft</div>
+    <div class="doc-title">Gloops World</div>
+    <div class="doc-subtitle">Browser-based monster collection & idle management game</div>
+    <div class="doc-meta">
+      <span class="meta-item"><strong>Platform</strong> Web (browser)</span>
+      <span class="meta-item"><strong>Audience</strong> Casual, ages 12–35</span>
+      <span class="meta-item"><strong>Genre</strong> Idle / Collection / Breeding</span>
+      <span class="meta-item"><strong>Status</strong> Pre-production</span>
+    </div>
+  </div>
+
+  <!-- 01 VISION -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">01</span><span class="section-title">Vision & concept</span></div>
+    <p>Gloops World is a casual browser game where players collect, hatch and breed small monsters called Gloops — each carrying heritable traits and belonging to one of two factions: the <strong>Aveggies</strong> (nature lovers, gardeners, whole-food advocates) and the <strong>Sugar Demons</strong> (junk food addicts, industrial chemists, candy manufacturers).</p>
+    <p>Once assembled, Gloops are assigned to buildings that generate currency continuously — provided the player fields the right team. The core challenge: finding which Gloop goes where to maximize production, complete the collection, and win faction wars.</p>
+    <div class="callout green"><strong>One-sentence pitch:</strong> Tamagotchi meets idle factory — breed genetically unique monsters, put them to work in a village, and come back to watch them produce.</div>
+    <h3>Gameplay pillars</h3>
+    <div class="card-grid">
+      <div class="card"><div class="card-icon">🥚</div><div class="card-title">Collection</div><div class="card-desc">Discover, unlock and collect rare Gloops — from eggs, breeding, merging, or special events.</div></div>
+      <div class="card"><div class="card-icon">🧬</div><div class="card-title">Breeding</div><div class="card-desc">Breed Gloops to produce offspring with new trait combos via dominant/recessive inheritance. Each Gloop can only have 3 children total.</div></div>
+      <div class="card"><div class="card-icon">🏗️</div><div class="card-title">Management</div><div class="card-desc">Assign the right Gloops to the right buildings to maximize coin production. Wrong match = underperforming building.</div></div>
+      <div class="card"><div class="card-icon">🔀</div><div class="card-title">Merging</div><div class="card-desc">Combine 3 Gloops of the same rarity into one of the next tier. Shared traits are guaranteed in the result.</div></div>
+      <div class="card"><div class="card-icon">⚔️</div><div class="card-title">Faction wars</div><div class="card-desc">Timed collective events — players pick a side and contribute to a shared production goal.</div></div>
+    </div>
+  </div>
+
+  <!-- 02 FACTIONS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">02</span><span class="section-title">Factions</span></div>
+    <p>Every Gloop belongs to one of two factions. Faction determines which buildings they can power efficiently and which side they fight for during events.</p>
+    <div class="faction-grid">
+      <div class="faction-card bio">
+        <div class="faction-name">🌿 Aveggies</div>
+        <ul>
+          <li>Gardeners, herbalists, farmers</li>
+          <li>Produce vegetables, juices, organic goods</li>
+          <li>Efficient in nature-based buildings</li>
+          <li>Ineffective in sugar factories</li>
+          <li>Visual: green tones, round eyes, soft shapes</li>
+        </ul>
+      </div>
+      <div class="faction-card sugar">
+        <div class="faction-name">🍬 Sugar Demons</div>
+        <ul>
+          <li>Chemists, confectioners, industrial cooks</li>
+          <li>Produce sodas, candy, chips</li>
+          <li>Efficient in sugar-based factories</li>
+          <li>Ineffective in gardens and farms</li>
+          <li>Visual: yellow/orange tones, slit eyes, spikes</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout amber"><strong>Design note:</strong> a Gloop assigned to an incompatible building doesn't produce zero — it produces less. The game stays readable while rewarding optimization.</div>
+  </div>
+
+  <!-- 03 GLOOPS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">03</span><span class="section-title">Gloops — traits & tools</span></div>
+    <p>Each Gloop is defined by its <strong>faction</strong>, <strong>rarity tier</strong>, and <strong>tools</strong>. Tools are functional tags that determine which buildings a Gloop can unlock or power at full efficiency.</p>
+    <h3>Available tools (tags)</h3>
+    <div class="tag-list">
+      <span class="tag green">🌱 Gardening</span>
+      <span class="tag green">🌾 Farming</span>
+      <span class="tag green">🍄 Herbalism</span>
+      <span class="tag teal">🍳 Healthy cooking</span>
+      <span class="tag amber">🧪 Chemistry</span>
+      <span class="tag amber">🍬 Confectionery</span>
+      <span class="tag amber">🏭 Industry</span>
+      <span class="tag coral">🔥 Heavy cooking</span>
+      <span class="tag purple">⚙️ Mechanics</span>
+      <span class="tag gray">📦 Logistics</span>
+    </div>
+    <h3>Rarity tiers</h3>
+    <div class="rarity-list">
+      <div class="rarity-item" style="background:#F1EFE8;border:1px solid #D3D1C7;"><div class="rarity-label" style="color:#5F5E5A;">Common</div><div class="rarity-pct" style="color:#2C2C2A;">60%</div></div>
+      <div class="rarity-item" style="background:#E1F5EE;border:1px solid #9FE1CB;"><div class="rarity-label" style="color:#0F6E56;">Uncommon</div><div class="rarity-pct" style="color:#085041;">25%</div></div>
+      <div class="rarity-item" style="background:#E6F1FB;border:1px solid #B5D4F4;"><div class="rarity-label" style="color:#185FA5;">Rare</div><div class="rarity-pct" style="color:#0C447C;">10%</div></div>
+      <div class="rarity-item" style="background:#EEEDFE;border:1px solid #CECBF6;"><div class="rarity-label" style="color:#534AB7;">Epic</div><div class="rarity-pct" style="color:#3C3489;">4%</div></div>
+      <div class="rarity-item" style="background:#FAEEDA;border:1px solid #FAC775;"><div class="rarity-label" style="color:#BA7517;">Legendary</div><div class="rarity-pct" style="color:#633806;">1%</div></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);">Legendary and epic Gloops correspond to characters from the animated series. They use fixed assets — unlike commons which are procedurally generated.</p>
+    <h3>Genetics (breeding)</h3>
+    <p>Each Gloop has two tool slots: one <strong>dominant</strong> (passed to ~75% of offspring) and one <strong>recessive</strong> (passed to ~25%). A ~5% mutation chance can introduce a trait absent from both parents.</p>
+    <div class="callout purple"><strong>Breeding constraint:</strong> each Gloop can only produce 3 children total across all pairings. This creates real strategic weight on rare Gloops — they are non-renewable.</div>
+  </div>
+
+  <!-- 04 MERGING -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">04</span><span class="section-title">Merging — end-game progression</span></div>
+    <p>When a player has exhausted breeding potential or filled all building slots, merging provides a long-term progression layer. Combine 3 Gloops of the same rarity to produce 1 Gloop of the next tier.</p>
+    <canvas id="merge-pyramid" style="width:100%;max-width:600px;display:block;margin:1rem 0"></canvas>
+    <script>
+    (function(){
+      var canvas = document.getElementById('merge-pyramid');
+      var dpr = window.devicePixelRatio || 1;
+      var W = 600;
+      var tiers = [
+        {count:1,  label:'Legendary', fill:'#FAC775', stroke:'#BA7517', text:'#633806'},
+        {count:3,  label:'Epic',      fill:'#CECBF6', stroke:'#534AB7', text:'#3C3489'},
+        {count:9,  label:'Rare',      fill:'#B5D4F4', stroke:'#185FA5', text:'#0C447C'},
+        {count:27, label:'Uncommon',  fill:'#9FE1CB', stroke:'#0F6E56', text:'#085041'},
+        {count:81, label:'Common',    fill:'#D3D1C7', stroke:'#888780', text:'#444441'},
+      ];
+      var rowH = [68,50,34,21,12];
+      var gap = 18;
+      var padTop = 16, padBot = 32, lblW = 70, cntW = 32;
+      var innerW = W - lblW - cntW - 20;
+      var totalH = padTop + rowH.reduce(function(a,b){return a+b;},0) + gap*(tiers.length-1) + padBot;
+      canvas.width  = W*dpr; canvas.height = totalH*dpr;
+      canvas.style.height = totalH+'px';
+      var ctx = canvas.getContext('2d');
+      ctx.scale(dpr,dpr);
+      function rr(x,y,w,h,r){
+        r=Math.min(r,w/2,h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+        ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+        ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+        ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+        ctx.closePath();
+      }
+      var y=padTop, x0=lblW+6;
+      tiers.forEach(function(tier,i){
+        var h=rowH[i], n=tier.count;
+        var bg=Math.max(0.5,Math.min(2,(innerW-n*4)/(n>1?n-1:1)));
+        var bw=(innerW-bg*(n-1))/n;
+        for(var j=0;j<n;j++){
+          var bx=x0+j*(bw+bg);
+          ctx.fillStyle=tier.fill; ctx.strokeStyle=tier.stroke; ctx.lineWidth=0.5;
+          rr(bx,y,bw,h,Math.min(3,bw/3,h/3)); ctx.fill(); ctx.stroke();
+        }
+        ctx.fillStyle=tier.text; ctx.font='500 11px system-ui,sans-serif';
+        ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillText(tier.label,x0-8,y+h/2);
+        ctx.textAlign='left'; ctx.font='11px monospace';
+        ctx.fillText('×'+n,x0+innerW+8,y+h/2);
+        y+=h;
+        if(i<tiers.length-1){
+          var mx=W/2;
+          ctx.strokeStyle='#C4C2B8'; ctx.lineWidth=0.8;
+          ctx.beginPath(); ctx.moveTo(mx,y+3); ctx.lineTo(mx,y+gap-5); ctx.stroke();
+          ctx.fillStyle='#C4C2B8';
+          ctx.beginPath(); ctx.moveTo(mx,y+gap-3); ctx.lineTo(mx-3,y+gap-9); ctx.lineTo(mx+3,y+gap-9); ctx.fill();
+          ctx.fillStyle='#999892'; ctx.font='10px system-ui,sans-serif';
+          ctx.textAlign='left'; ctx.textBaseline='middle';
+          ctx.fillText('3→1',mx+5,y+gap/2);
+          y+=gap;
+        }
+      });
+      ctx.fillStyle='#999892'; ctx.font='11px system-ui,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('81 commons required to reach 1 legendary',W/2,y+8);
+    })();
+    </script>
+    <p style="font-size:13px;color:var(--text-muted);">Full chain from Common to Legendary requires 81 commons (3⁴). Each step consumes 3 Gloops of one tier to produce 1 of the next. This keeps dedicated players engaged for months without forcing a content reset.</p>
+    <h3>Trait inheritance on merge</h3>
+    <p>If all 3 Gloops being merged share a common tool tag, that tag is <strong>guaranteed</strong> in the resulting Gloop. All other traits follow the standard dominant/recessive rules.</p>
+    <div class="callout teal"><strong>Strategic implication:</strong> players consciously select which 3 Gloops to merge based on the trait they want to lock in. A common Gloop with a desirable rare trait becomes a resource in itself — and creates implicit trade value if a player exchange system is added later.</div>
+    <div class="callout coral"><strong>Design tension:</strong> merging consumes Gloops permanently. A rare Gloop with good traits that gets merged is gone. This gives weight to every merge decision and prevents inventory from becoming meaningless.</div>
+  </div>
+
+  <!-- 05 EGGS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">05</span><span class="section-title">Eggs & hatching</span></div>
+    <p>Players start with <strong>3 eggs</strong>. Each egg contains a Gloop whose traits are determined at acquisition but revealed only at hatching.</p>
+    <h3>Egg sources</h3>
+    <div class="card-grid">
+      <div class="card"><div class="card-title">Shop (GC)</div><div class="card-desc">Basic eggs in the store. Standard rarity odds.</div></div>
+      <div class="card"><div class="card-title">Breeding</div><div class="card-desc">Pairing two Gloops produces an egg. Child rarity influenced by parents.</div></div>
+      <div class="card"><div class="card-title">Merging</div><div class="card-desc">3 Gloops of the same tier merge into an egg of the next tier.</div></div>
+      <div class="card"><div class="card-title">Quests & events</div><div class="card-desc">Faction or event eggs with boosted rarity odds.</div></div>
+      <div class="card"><div class="card-title">Premium (GG)</div><div class="card-desc">Instant hatching, or eggs with boosted rarity odds.</div></div>
+    </div>
+  </div>
+
+  <!-- 06 BUILDINGS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">06</span><span class="section-title">Buildings & production</span></div>
+    <p>All buildings are placed on the island — a fixed plot with a limited number of slots. The village grows organically as the player purchases new buildings.</p>
+    <figure style="margin:1rem 0;border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+      <img src="data:image/png;base64,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k/E1LKMOc8Mbn3jgoxjnu0sGT+CnU8LYhxy48StW3t5VXnoem7Qcft+GUnDOaj5Lw8G/BL59Daq6pcXVDz0OApk07Ijj4ndByUB51PLsYySVs39WLSgmea7D8Nr06s7qrBpNYTfXLy/w5niIi5p9JCm0cJY0vd8TuHcFEi3yMH8wVmV0LCkpNzfQ8B264lVo0oWkNlPLfksbGuaFkuNRIxwIWqWlaWtEZDccc78qSi350Kc85XM8FacavrRQjSqNKOcLpvz2+JDbRu+1KPJq3R08TN+C44xly3IsYW1KDykbF32l4ndx0VKrx7sL8MM0GlgznSfDUcLeiK2MIw+6sHNub65usd/UcscstvHqERFkaoREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREB4RkEdQqrgdJ3EbiOitl44NIOoAjC1bm377G+MHp+zfaD/SZTjKGpTx1w1j8eZpoQBBqA+JxXstRHG4t3lw6cl5TZZQsdzEer5ZUakjMkwJGWje4nmq5VJQhCnDmzpUbC2vbq8v7x/wAOnJ7Zxnd4Xokl45MI2PkdhoyTv/3UltGMe9Ic9wUnAyDgZAxnuQkDeSB4rKnZU47y3KOIdsr65lGNr/DXgsN+uPwSIc8MUQGXvJPABR/Bbq1zXTDS4EBvJaVzrjTraitkfQ+z8biVlCrcTcpyWXnp8MI3U74Y3anMeXDgeK3iri5tePJQkU07qpTWIlN92Zsb+q6tfU5P/ue3kWjHB7Q5pyDwXqj2/wDyXH+b8gpC7FKbnBSfU+P8Vs42V5Ut4PKi8BERWGgEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBFvEDcbyUMA5OPotX7ZRzzO6+zfEVHOj5r6mhFsdC4cN61q+FSM1mLycu5s69q8VoOPmERFmawREQBDuBJ3AcSqy/3qks8IM37SZwyyIHBPeegXJyHafaUa4oZBSu+FrPcjx4n4vFade9jSloinKXgjsWPBqlzDvqklTp/3S29PE6usv8AZ6R+iWtYXcxGC8/JV8u2lpacMhrJB1DAPxKqYthLw5mXS0kZ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gkh1a2iWMO0u6haK2411YNNTVSSNG8N3Bo8huU04Si2Y161OrFY54X75/kRURFaaYREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAFMtdBJXSSaToihZ2kshGdLfzKhqwslfXW+aSSjYZGubiVhYXNI71jPONuZZS0a1r5GFwjtbaWKWhqZ3yEkSRyswQOuRuW++0EFuhoWNLu3lgEs2TuGeGPmpzfqqoppKmvtZt4BBY+NxxIc8Aw/+ybYxU9XVOuNNcaSWIxtaIw/3xgcgqlN6ktzbnRXdyksZ25fjh+RUNt1Y6sgpDCWzVABja44yDwPcrSyWhmmtqK2HtvZJGxCIO3OcXAHh4qU67W5kVFde0ElwhpexEGk7n4xqJ6cfVRrBfmW621zJAZamV4fGHNyHE8c9FEpVJR2X7yZU6dvTqLU8838tvjnoYwW2hqtrJaCFxFM1ztIDuJA+HPisb0aKO1sgfQ01Pce0ORB9ln8/eei0RXOnjvVNcIKNtK2NwMjGOyHdSM8Nyg3GWKe4VE0LS2OSVz2g8QCcrJRk5LJVOpBQlpxlt+hoREVxphERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAFvpKuqpC4008kJcMO0HGVoRGs8yU2nlGc0ss0hkmkfI8/acclYIiEN5CIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiID//2Q==" alt="Gloops World island map" style="width:100%;display:block;">
+
+    </figure>
+    <p>Buildings are the core of the economic loop. Each has <strong>assignment slots</strong>, <strong>trait requirements</strong>, and a <strong>production cap</strong> that forces the player to return and collect.</p>
+    <div class="callout teal"><strong>Key retention mechanic:</strong> each building has a maximum storage. Once full, it stops producing. Players must return to collect — but no punishment for coming back late (they lose nothing, they just stagnate).</div>
+    <h3>Buildings at launch (~10)</h3>
+    <table class="building-table">
+      <thead><tr><th>Building</th><th>Faction</th><th>Slots</th><th>Required traits</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Community garden</strong></td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Aveggies</span></td><td>2</td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Gardening</span></td><td>Low, stable</td></tr>
+        <tr><td><strong>Organic farm</strong></td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Aveggies</span></td><td>3</td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Farming</span> <span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Gardening</span></td><td>Medium</td></tr>
+        <tr><td><strong>Herbalist workshop</strong></td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Aveggies</span></td><td>2</td><td><span class="req-tag" style="background:#EAF3DE;color:#3B6D11;">Herbalism</span> <span class="req-tag" style="background:#E1F5EE;color:#0F6E56;">Healthy cooking</span></td><td>High</td></tr>
+        <tr><td><strong>Candy factory</strong></td><td><span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Sugar Demons</span></td><td>3</td><td><span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Confectionery</span> <span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Chemistry</span></td><td>High</td></tr>
+        <tr><td><strong>Sugar refinery</strong></td><td><span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Sugar Demons</span></td><td>4</td><td><span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Industry</span> <span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Chemistry</span> <span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Confectionery</span></td><td>Very high</td></tr>
+        <tr><td><strong>Canteen</strong></td><td><span class="req-tag" style="background:#F1EFE8;color:#5F5E5A;">Neutral</span></td><td>2</td><td><span class="req-tag" style="background:#E1F5EE;color:#0F6E56;">Healthy cooking</span> <em>or</em> <span class="req-tag" style="background:#FAECE7;color:#993C1D;">Heavy cooking</span></td><td>Medium</td></tr>
+        <tr><td><strong>Logistics warehouse</strong></td><td><span class="req-tag" style="background:#F1EFE8;color:#5F5E5A;">Neutral</span></td><td>2</td><td><span class="req-tag" style="background:#F1EFE8;color:#5F5E5A;">Logistics</span></td><td>Multiplier</td></tr>
+        <tr><td><strong>Laboratory</strong></td><td><span class="req-tag" style="background:#EEEDFE;color:#534AB7;">Rare</span></td><td>3</td><td><span class="req-tag" style="background:#FAEEDA;color:#BA7517;">Chemistry</span> <span class="req-tag" style="background:#EEEDFE;color:#534AB7;">Mechanics</span></td><td>Very high + bonus</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;color:var(--text-muted);">Starting plot is fixed with a limited number of slots. Buildings can be upgraded (at least 2 levels) to increase slots or cap — scope to confirm per roadmap.</p>
+  </div>
+
+  <!-- 07 ECONOMY -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">07</span><span class="section-title">Economy & monetization</span></div>
+    <h3>Standard currency (Gloops Coins — GC)</h3>
+    <p>Earned through building production. Spent on:</p>
+    <div class="tag-list">
+      <span class="tag gray">Buy eggs</span>
+      <span class="tag gray">Breed Gloops</span>
+      <span class="tag gray">Buy buildings</span>
+      <span class="tag gray">Upgrade buildings</span>
+    </div>
+    <h3>Premium currency (Gloops Gems — GG)</h3>
+    <p>Purchased with real money. Not exchangeable for GC. Spent on:</p>
+    <div class="tag-list">
+      <span class="tag amber">Cosmetics (skins, accessories)</span>
+      <span class="tag amber">Instant hatching</span>
+      <span class="tag amber">Boosted rarity eggs</span>
+      <span class="tag amber">Extra slots</span>
+    </div>
+    <div class="callout amber"><strong>Core principle:</strong> Gems cannot buy raw power — they buy speed or aesthetics. A non-paying player can unlock everything, just more slowly.</div>
+    <h3>Leaderboard</h3>
+    <p>Global ranking by total GC earned lifetime. The score cannot be purchased — it reflects playtime and optimization only.</p>
+  </div>
+
+  <!-- 08 RETENTION -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">08</span><span class="section-title">Retention loops</span></div>
+    <h3>Short loop (daily)</h3>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-phase">Arrival</div><div class="timeline-title">Collect production</div><div class="timeline-desc">Buildings hit their cap — collect coins and move on.</div></div>
+      <div class="timeline-item"><div class="timeline-phase">Action</div><div class="timeline-title">Spend GC</div><div class="timeline-desc">Buy an egg, trigger a breeding, upgrade a building.</div></div>
+      <div class="timeline-item"><div class="timeline-phase">Discovery</div><div class="timeline-title">Hatch / merge</div><div class="timeline-desc">Reveal the new Gloop's traits. Is it useful? Is it rare? Does it unlock a merge?</div></div>
+      <div class="timeline-item"><div class="timeline-phase">Optimization</div><div class="timeline-title">Reassign buildings</div><div class="timeline-desc">The new Gloop might change the optimal team for certain buildings.</div></div>
+    </div>
+    <h3>Long loop (weekly / events)</h3>
+    <p><strong>Faction wars</strong> are time-limited events where players choose a side and collectively contribute: produce as many faction resources as possible through their buildings. Rewards include event eggs and exclusive cosmetics.</p>
+    <h3>Collection loop (long-term)</h3>
+    <p>Complete the Gloopédex — track down all rare and legendary Gloops, including characters from the animated series. This requires strategic breeding over weeks and merging chains over months. Legendary Gloops have a dedicated showcase slot in the UI.</p>
+  </div>
+
+  <!-- 09 PLAYER PROFILES -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">09</span><span class="section-title">Target player profiles</span></div>
+    <div class="card-grid">
+      <div class="card"><div class="card-icon">📦</div><div class="card-title">The Collector</div><div class="card-desc">Wants them all. Aims for legendaries. Returns often to see what eggs hatch. Monetization: premium eggs.</div></div>
+      <div class="card"><div class="card-icon">⚙️</div><div class="card-title">The Optimizer</div><div class="card-desc">Wants the best Gloop × building combo. Reads traits, plans breeds, engineers merges. Monetization: light, but very active.</div></div>
+      <div class="card"><div class="card-icon">🌿</div><div class="card-title">The Casual</div><div class="card-desc">Checks in once a day, collects, does one or two things. No pressure. Monetization: cosmetics.</div></div>
+      <div class="card"><div class="card-icon">⚔️</div><div class="card-title">The Faction Fighter</div><div class="card-desc">Highly active during events. Committed to Team Aveggies or Team Sugar Demons. Monetization: event-specific items.</div></div>
+    </div>
+  </div>
+
+  <!-- 10 DESIGN DECISIONS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">10</span><span class="section-title">Design decisions</span></div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.25rem;">Settled questions — these inform the current design.</p>
+    <ul class="questions-list">
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag green">Onboarding</span><span>The first breeding takes 30–60 seconds. The first building is purchased immediately after, and the player can assign their first Gloop right away — even suboptimally. Speed of first feedback loop is the priority.</span></li>
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag amber">Breeding</span><span>The 3-children limit applies to all Gloops including starters. No exceptions.</span></li>
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag purple">Collection</span><span>Legendary Gloops (series characters) are obtainable only through rare breeding chains or merging. No event-exclusive legendaries.</span></li>
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag teal">Buildings</span><span>Building upgrades are Phase 2. MVP ships with fixed building levels.</span></li>
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag amber">Monetization</span><span>No battle pass. Players purchase Gloops Gems directly and spend them in-game (instant hatching, cosmetics, boosted eggs).</span></li>
+      <li><span class="q-num" style="color:var(--green-mid);">✓</span><span class="q-cat tag gray">Distribution</span><span>Standalone URL shared via social media. No integration with an existing account system at launch.</span></li>
+    </ul>
+  </div>
+
+  <!-- 11 OPEN DESIGN QUESTIONS -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">11</span><span class="section-title">Open design questions</span></div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.25rem;">Two unresolved questions with significant impact on the core design — to be discussed.</p>
+
+    <h3>How are Gloops differentiated beyond faction?</h3>
+    <p>The existing generated assets need a trait system that maps to gameplay. Two main directions:</p>
+    <div class="card-grid" style="margin-top:.75rem;">
+      <div class="card">
+        <div class="card-title">Option A — Tool tags (current direction)</div>
+        <div class="card-desc">Each Gloop carries functional tags (Gardening, Chemistry, etc.) that determine building compatibility. Simple, visual, immediately readable for casual players. The downside: less numerical depth for optimizers.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option B — Stats (Strength, Endurance…)</div>
+        <div class="card-desc">Each Gloop has numerical attributes that affect production rate or efficiency. More granular optimization, familiar to RPG players. Risk: harder to read at a glance, higher design complexity.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option C — Hybrid</div>
+        <div class="card-desc">Tool tags determine building compatibility (gating), stats determine efficiency within a compatible slot. Best of both — but also most complex to design and communicate to a casual audience.</div>
+      </div>
+    </div>
+    <div class="callout amber" style="margin-top:1rem;"><strong>Current lean:</strong> tool tags alone (Option A). Simpler to build, simpler to read, better fit for a casual web audience. Stats can be layered in Phase 2 if depth is needed.</div>
+
+    <h3>How does faction work for the player?</h3>
+    <p>A player will inevitably accumulate Gloops from both factions through breeding and merging. Several ways to handle this:</p>
+    <div class="card-grid" style="margin-top:.75rem;">
+      <div class="card">
+        <div class="card-title">Option A — Two separate trees</div>
+        <div class="card-desc">Aveggies Gloops and Sugar Demons Gloops evolve in parallel, independently. Clean narrative, but the player may feel stuck with useless Gloops from the "wrong" side.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option B — Conversion mechanic</div>
+        <div class="card-desc">Spend GC (or GG) to convert an Aveggie to Sugar Demon and vice versa. Solves the useless-Gloop problem, adds a spending sink, but risks diluting faction identity.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option C — Neutral buildings</div>
+        <div class="card-desc">Expand the neutral building category so off-faction Gloops always have somewhere to go. No conversion needed, lower friction — but weakens the strategic weight of faction.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option D — Cross-faction buildings</div>
+        <div class="card-desc">High-tier buildings require one Aveggie + one Sugar Demon in the same team. Forces players to maintain both factions, turns the "problem" into a design feature.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Option E — Faction fluidity via events</div>
+        <div class="card-desc">During faction war events, players temporarily align with one side. Between events, all Gloops can work all buildings at reduced efficiency. Faction is a choice, not a permanent identity.</div>
+      </div>
+    </div>
+    <div class="callout teal" style="margin-top:1rem;"><strong>Note:</strong> Option D (cross-faction buildings) pairs well with the tool tag system and creates the most interesting assignment puzzles — worth exploring first.</div>
+  </div>
+
+  <!-- 12 MVP -->
+  <div class="section">
+    <div class="section-header"><span class="section-number">12</span><span class="section-title">Suggested MVP scope</span></div>
+    <div class="callout green"><strong>Principle:</strong> the MVP must validate the core loop — collect, assign, produce, return. Everything else can follow.</div>
+    <h3>In MVP</h3>
+    <div class="tag-list">
+      <span class="tag green">3 starter eggs</span>
+      <span class="tag green">Hatching with timer</span>
+      <span class="tag green">5 buildings (2 Aveggies, 2 Sugar Demons, 1 neutral)</span>
+      <span class="tag green">Gloop → building assignment</span>
+      <span class="tag green">Production + cap + collection</span>
+      <span class="tag green">Egg shop (GC)</span>
+      <span class="tag green">Basic breeding (dominant/recessive)</span>
+      <span class="tag green">Basic merging (3-to-1, guaranteed trait rule)</span>
+      <span class="tag green">Leaderboard</span>
+      <span class="tag green">2 rarity tiers (common, rare)</span>
+    </div>
+    <h3>Phase 2</h3>
+    <div class="tag-list">
+      <span class="tag amber">Faction wars (events)</span>
+      <span class="tag amber">Premium currency + Gems shop</span>
+      <span class="tag amber">Cosmetics</span>
+      <span class="tag amber">Legendary Gloops (series characters)</span>
+      <span class="tag amber">Building upgrades</span>
+      <span class="tag amber">Quests</span>
+      <span class="tag amber">Full merge chain (all 5 tiers)</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
+

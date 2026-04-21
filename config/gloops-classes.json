@@ -1,0 +1,558 @@
+{
+    "_doc": "Gloops World — breeds, factions, legendaries, merging recipes and meta corruption axis. Aligned with the GDD.",
+
+    "meta": {
+        "_doc": "Global meta score: the player is a god whose alignment is not fixed. Every assignment/merge shifts the corruption score. Two win states.",
+        "corruption_axis": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+                "saint":     { "max": 20,  "ending": "saint_gloop_unlock",  "label": "Blessed Island" },
+                "balanced":  { "min": 20, "max": 60, "ending": "neutral",   "label": "Free Market" },
+                "corrupted": { "min": 60, "max": 99, "ending": "demon_rise","label": "Industrial Hell" },
+                "meta_boss": { "min": 100, "ending": "final_demon_deal",    "label": "The Last Deal" }
+            }
+        }
+    },
+
+    "factions": {
+        "aveggies": {
+            "label": "Aveggies",
+            "icon": "🌿",
+            "color": "#4a8a3a",
+            "description": "Gardeners, herbalists, farmers. Produce vegetables, juices, organic goods.",
+            "healfy": true,
+            "corruption_delta": -1,
+            "mood_bias": [1, 8],
+            "weight": 0.40
+        },
+        "sugarheads": {
+            "label": "SugarHeads",
+            "icon": "🍬",
+            "color": "#ff8c3b",
+            "description": "Chemists, confectioners, industrial cooks. Produce sodas, candy, chips.",
+            "healfy": false,
+            "corruption_delta": 1,
+            "mood_bias": [9, 16],
+            "weight": 0.40
+        },
+        "neutral": {
+            "label": "Neutral",
+            "icon": "⚪",
+            "color": "#999999",
+            "description": "In-between folks who work wherever they're paid.",
+            "corruption_delta": 0,
+            "mood_bias": [5, 12],
+            "weight": 0.15
+        },
+        "rebels": {
+            "label": "Rebels",
+            "icon": "🏴‍☠️",
+            "color": "#6b2a8a",
+            "description": "Ex-SugarHeads who deserted the system. Anti-corporate, Aveggies-friendly but use violent methods. Unlock the raid loop.",
+            "healfy": true,
+            "corruption_delta": -2,
+            "mood_bias": [3, 10],
+            "weight": 0.05,
+            "special": "raid_enabled"
+        }
+    },
+
+    "tools": {
+        "gardening":       { "faction": "aveggies",     "icon": "🌱" },
+        "farming":         { "faction": "aveggies",     "icon": "🌾" },
+        "herbalism":       { "faction": "aveggies",     "icon": "🍄" },
+        "healthy_cooking": { "faction": "aveggies",     "icon": "🍳" },
+        "chemistry":       { "faction": "sugarheads", "icon": "🧪" },
+        "confectionery":   { "faction": "sugarheads", "icon": "🍬" },
+        "industry":        { "faction": "sugarheads", "icon": "🏭" },
+        "heavy_cooking":   { "faction": "sugarheads", "icon": "🔥" },
+        "mechanics":       { "faction": "neutral",      "icon": "⚙️" },
+        "logistics":       { "faction": "neutral",      "icon": "📦" },
+        "raiding":         { "faction": "rebels",       "icon": "⚔️" },
+        "smuggling":       { "faction": "rebels",       "icon": "🗝️" }
+    },
+
+    "rarity_tiers": {
+        "common":    { "weight": 0.60, "color": "#D3D1C7", "label": "Common" },
+        "uncommon":  { "weight": 0.25, "color": "#9FE1CB", "label": "Uncommon" },
+        "rare":      { "weight": 0.10, "color": "#B5D4F4", "label": "Rare" },
+        "epic":      { "weight": 0.04, "color": "#CECBF6", "label": "Epic" },
+        "legendary": { "weight": 0.01, "color": "#FAC775", "label": "Legendary" }
+    },
+
+    "breeds": {
+        "bobo": {
+            "label": "Healfy Bobo",
+            "faction": "aveggies",
+            "rarity": "common",
+            "tools": ["gardening", "farming"],
+            "color_palette": {
+                "body_root_A":  ["#78d030", "#4ea830", "#8fa850"],
+                "body_root_B":  ["#c8e820", "#a8c840", "#90b030"],
+                "tongue_root_A":["#d8a860", "#c89850"],
+                "eyelid_A":     ["#7a5a3a", "#6a4a2a"]
+            },
+            "horns_variants": ["bald", "crest", "smalltwo", "Hat_AngelRing"],
+            "teeth_variants": ["Baby", "DefaultSmall", "Rabbit"],
+            "scale_range": [0.95, 1.05],
+            "lore": "Nature colors, smooth horns. Cultivates and eats their own food.",
+            "dialogue_themes": ["garden", "harvest", "peace", "zen"]
+        },
+
+        "mush": {
+            "label": "Mush",
+            "faction": "aveggies",
+            "rarity": "uncommon",
+            "tools": ["herbalism", "healthy_cooking"],
+            "color_palette": {
+                "body_root_A": ["#d8c0a0", "#c0a880", "#a08060"],
+                "body_root_B": ["#e8d0a8", "#c8b088"],
+                "eyelid_A":    ["#553322"]
+            },
+            "horns_variants": ["conch", "ananas", "corona", "pulpo"],
+            "teeth_variants": ["DefaultSmall"],
+            "eye_style_override": 8,
+            "scale_range": [0.9, 1.1],
+            "lore": "Mushrooms on the head, no visible eyes. Forest, magic, hallucinogens.",
+            "dialogue_themes": ["mushroom", "magic", "forest", "dream"]
+        },
+
+        "nionnion": {
+            "label": "NionNion",
+            "faction": "aveggies",
+            "rarity": "uncommon",
+            "tools": ["mechanics", "logistics"],
+            "color_palette": {
+                "body_root_A": ["#ffb0d0", "#e8a0c0", "#f0a8c8"],
+                "body_root_B": ["#ffc0e0", "#d890b0"]
+            },
+            "horns_variants": ["bald", "smalltwo"],
+            "teeth_variants": ["Baby", "DefaultSmall"],
+            "eye_style_override": 0,
+            "scale_range": [0.7, 0.85],
+            "lore": "Pink, black eyes, small, hornless. Cave dwellers with precious-stone mines.",
+            "dialogue_themes": ["gem", "dark", "cave", "shy"]
+        },
+
+        "salaryman": {
+            "label": "Salary Man",
+            "faction": "neutral",
+            "rarity": "common",
+            "tools": ["logistics", "chemistry"],
+            "color_palette": {
+                "body_root_A": ["#909090", "#a0a0a0", "#b0a898"],
+                "body_root_B": ["#707070", "#808080"]
+            },
+            "horns_variants": ["Hat_Bob", "Hat_Worker", "Hat_Indiana", "Hat_Ceasar"],
+            "teeth_variants": ["DefaultSmall", "DefaultBig"],
+            "scale_range": [0.95, 1.05],
+            "lore": "Sad, hat. Metro-boulot-dodo, city building worker.",
+            "dialogue_themes": ["work", "tired", "metro", "coffee"]
+        },
+
+        "sugarhead": {
+            "label": "Sugar Head",
+            "faction": "sugarheads",
+            "rarity": "common",
+            "tools": ["confectionery", "chemistry"],
+            "color_palette": {
+                "body_root_A":   ["#ff5a5a", "#f08040", "#ffa0a0"],
+                "body_root_B":   ["#ffd24a", "#ff9060", "#ffb080"],
+                "tongue_root_A": ["#ff00a0", "#ff60c0"]
+            },
+            "horns_variants": ["horns02", "horns03", "horns04", "kakarot"],
+            "teeth_variants": ["Sharp", "Canine", "Demon", "Vampire"],
+            "scale_range": [1.0, 1.15],
+            "lore": "Warm colors, spiky horns, yellow eyes. Addicted to sugar and ultra-processed food.",
+            "dialogue_themes": ["sugar", "craving", "junk", "consume"]
+        },
+
+        "blingbling": {
+            "label": "BlingBling",
+            "faction": "sugarheads",
+            "rarity": "rare",
+            "tools": ["heavy_cooking", "chemistry"],
+            "color_palette": {
+                "body_root_A": ["#ffd24a", "#f0a020", "#e8c040"],
+                "body_root_B": ["#ff6b9a", "#d040a0"]
+            },
+            "horns_variants": ["Hat_CowBoy", "Hat_AngelRing", "Hat_Fakir"],
+            "teeth_variants": ["Big", "Sharp"],
+            "scale_range": [1.0, 1.1],
+            "lore": "Vegas hat, sheriff glasses, gold rings. Works in casinos.",
+            "dialogue_themes": ["money", "bet", "luck", "gold"]
+        },
+
+        "cryptobro": {
+            "label": "Crypto Bro",
+            "faction": "sugarheads",
+            "rarity": "uncommon",
+            "tools": ["mechanics", "industry"],
+            "color_palette": {
+                "body_root_A": ["#20c8e8", "#5060ff", "#3070a0"],
+                "body_root_B": ["#c8e820", "#90b030"]
+            },
+            "horns_variants": ["Hat_Sport", "Hat_Tennis", "Hat_MushHat"],
+            "teeth_variants": ["DefaultSmall", "Big"],
+            "scale_range": [0.95, 1.05],
+            "lore": "Ski/geek glasses, cap. Home trader, metaverse fortune hunter.",
+            "dialogue_themes": ["crypto", "moon", "hodl", "trade"]
+        },
+
+        "zogzog": {
+            "label": "Zog Zog",
+            "faction": "sugarheads",
+            "rarity": "uncommon",
+            "tools": ["industry", "heavy_cooking"],
+            "color_palette": {
+                "body_root_A": ["#4a8a3a", "#3a6a2a", "#2a5a2a"],
+                "body_root_B": ["#78d030", "#90a030"]
+            },
+            "horns_variants": ["horn01", "horns02", "horns03", "horns05", "horns06"],
+            "teeth_variants": ["Demon", "Sharp", "Canine", "Vampire"],
+            "scale_range": [1.05, 1.2],
+            "lore": "Green, protruding jaw, club. Only violence speaks to them.",
+            "dialogue_themes": ["smash", "fight", "rage", "territory"]
+        },
+
+        "shaman": {
+            "label": "Shaman",
+            "faction": "aveggies",
+            "rarity": "epic",
+            "evolved_from": "mush",
+            "tools": ["herbalism", "healthy_cooking", "gardening"],
+            "color_palette": {
+                "body_root_A": ["#7a4a2a", "#5a3a1a"],
+                "body_root_B": ["#c89850", "#9a6a30"],
+                "tongue_root_A":["#e0c080"],
+                "eyelid_A":    ["#3a1a0a"]
+            },
+            "horns_variants": ["corona", "ananas", "pulpo"],
+            "teeth_variants": ["DefaultSmall"],
+            "eye_style_override": 8,
+            "scale_range": [1.05, 1.2],
+            "lore": "Evolved Mush. Mystical herbalist, heals the corruption of the island. Sees dreams in plants.",
+            "dialogue_themes": ["ritual", "heal", "spirit", "vision"],
+            "special": "heals_corruption"
+        },
+
+        "green_warden": {
+            "label": "Green Warden",
+            "faction": "aveggies",
+            "rarity": "epic",
+            "evolved_from": "bobo",
+            "tools": ["gardening", "farming", "herbalism"],
+            "color_palette": {
+                "body_root_A": ["#2a5a1a", "#1a4a0a"],
+                "body_root_B": ["#78d030", "#4a8a2a"],
+                "eyelid_A":    ["#3a2a1a"]
+            },
+            "horns_variants": ["crest", "Hat_AngelRing"],
+            "teeth_variants": ["DefaultBig", "DefaultSmall"],
+            "scale_range": [1.2, 1.35],
+            "lore": "Evolved Bobo. Druid giant. Aura buffs all Aveggies around him in the same building.",
+            "dialogue_themes": ["forest", "elder", "protect", "roots"],
+            "special": "aura_aveggies_buff"
+        },
+
+        "corpo_suit": {
+            "label": "Corpo Suit",
+            "faction": "sugarheads",
+            "rarity": "epic",
+            "evolved_from": "salaryman",
+            "tools": ["industry", "logistics", "chemistry"],
+            "color_palette": {
+                "body_root_A": ["#1a1a1a", "#2a2a2a"],
+                "body_root_B": ["#5a0a0a", "#8a1a1a"]
+            },
+            "horns_variants": ["Hat_Ceasar", "Hat_Indiana"],
+            "teeth_variants": ["Sharp", "DefaultBig"],
+            "scale_range": [1.0, 1.1],
+            "lore": "Evolved SalaryMan. The sad worker became the CEO. Runs a demon chain from a corner office.",
+            "dialogue_themes": ["profit", "quarter", "synergy", "growth"],
+            "special": "demon_chain_leader"
+        },
+
+        "street_pirate": {
+            "label": "Street Pirate",
+            "faction": "rebels",
+            "rarity": "epic",
+            "tools": ["raiding", "smuggling", "logistics"],
+            "color_palette": {
+                "body_root_A": ["#3a1a4a", "#5a2a6a"],
+                "body_root_B": ["#c0a020", "#e0c040"],
+                "tongue_root_A":["#8a0a0a"]
+            },
+            "horns_variants": ["Hat_CowBoy", "Hat_Bob"],
+            "teeth_variants": ["Sharp", "Big", "Canine"],
+            "scale_range": [1.0, 1.15],
+            "lore": "Ex-Sugar Demon who deserted. Leads raids on demon buildings — breaks their production, steals their loot.",
+            "dialogue_themes": ["raid", "free", "steal", "resist"],
+            "special": "raid_demon_building"
+        },
+
+        "golden_mule": {
+            "label": "Golden Mule",
+            "faction": "neutral",
+            "rarity": "epic",
+            "evolved_from": "salaryman",
+            "tools": ["logistics", "mechanics"],
+            "color_palette": {
+                "body_root_A": ["#d0a020", "#f0c040"],
+                "body_root_B": ["#e0d080", "#c8a860"]
+            },
+            "horns_variants": ["Hat_Worker", "Hat_Bob"],
+            "teeth_variants": ["DefaultBig", "Big"],
+            "scale_range": [1.0, 1.15],
+            "lore": "Evolved SalaryMan on the bright path. Transports goods 2× faster between any two buildings.",
+            "dialogue_themes": ["road", "deliver", "honest", "proud"],
+            "special": "transport_x2"
+        }
+    },
+
+    "legendaries": {
+        "_doc": "Legendary Demons — 1% rarity, obtained ONLY via pyramidal merging (3 Epic → 1 Legendary). Never hatched directly.",
+
+        "demon_sugar": {
+            "label": "Demon Sugar",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "sugar / junk food",
+            "tools": ["confectionery", "chemistry", "industry"],
+            "synergies": ["demon_toxitamol", "demon_alcolard"],
+            "color_palette": { "body_root_A": ["#ff0080"], "body_root_B": ["#ffff00"] },
+            "lore": "The first demon of modern addiction. Master of ultra-processed food and the sugar rush. Feeds the sickness that sells medicine."
+        },
+        "demon_nicotic": {
+            "label": "Demon Nicotic",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "cigarette / coffee",
+            "tools": ["chemistry", "industry"],
+            "synergies": ["demon_alcolard", "demon_twitix"],
+            "color_palette": { "body_root_A": ["#3a2a1a"], "body_root_B": ["#c09060"] },
+            "lore": "Smoker patriarch. Holds both cigarette and coffee empires — the morning breath of the working world."
+        },
+        "demon_gamblingbling": {
+            "label": "Demon GamBlingBling",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "gambling / casinos",
+            "tools": ["chemistry", "heavy_cooking", "logistics"],
+            "synergies": ["demon_alcolard", "demon_sugar"],
+            "color_palette": { "body_root_A": ["#d40080"], "body_root_B": ["#ffd24a"] },
+            "lore": "Glitter, mirrors, free drinks. The demon of chance — where the house always wins."
+        },
+        "demon_toxitamol": {
+            "label": "Demon Toxitamol",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "addictive medicine",
+            "tools": ["chemistry", "industry"],
+            "synergies": ["demon_sugar", "demon_nicotic"],
+            "color_palette": { "body_root_A": ["#d0e0ff"], "body_root_B": ["#ff4080"] },
+            "lore": "Sells the cure that keeps you sick. The loop closes: addiction → illness → pill → addiction."
+        },
+        "demon_netflux": {
+            "label": "Demon NetFlux",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "streaming / hypnosis",
+            "tools": ["industry", "mechanics"],
+            "synergies": ["demon_twitix", "demon_sugar"],
+            "color_palette": { "body_root_A": ["#e50914"], "body_root_B": ["#111111"] },
+            "lore": "The eternal next episode. Feeds you content until you forget who you are — one autoplay at a time."
+        },
+        "demon_twitix": {
+            "label": "Demon Twitix",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "social media",
+            "tools": ["industry", "mechanics", "logistics"],
+            "synergies": ["demon_netflux", "demon_nicotic"],
+            "color_palette": { "body_root_A": ["#1da1f2"], "body_root_B": ["#000000"] },
+            "lore": "Infinite scroll. Harvests attention the way coal mines harvested workers."
+        },
+        "demon_alcolard": {
+            "label": "Demon Alcolard",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "alcohol",
+            "tools": ["heavy_cooking", "chemistry"],
+            "synergies": ["demon_gamblingbling", "demon_nicotic"],
+            "color_palette": { "body_root_A": ["#c09010"], "body_root_B": ["#5a1a0a"] },
+            "lore": "Bar stool theology. Best friend at 9pm, worst enemy at 7am."
+        },
+        "only_demon": {
+            "label": "Only Demon",
+            "faction": "sugarheads",
+            "rarity": "legendary",
+            "industry": "adult content / lust",
+            "tools": ["industry", "mechanics"],
+            "synergies": ["demon_netflux", "demon_twitix"],
+            "color_palette": { "body_root_A": ["#ff0066"], "body_root_B": ["#3a003a"] },
+            "lore": "Paywall intimacy. Sells a feeling that evaporates the moment money leaves your pocket."
+        },
+        "saint_gloop": {
+            "label": "Saint Gloop",
+            "faction": "aveggies",
+            "rarity": "legendary",
+            "industry": "blessing / healing",
+            "tools": ["herbalism", "healthy_cooking", "gardening"],
+            "synergies": [],
+            "unlock_condition": "ending_saint_gloop_unlock",
+            "color_palette": { "body_root_A": ["#ffffe0"], "body_root_B": ["#ffd24a"] },
+            "lore": "The secret legendary. Only unlocked if the player reaches the end of a cycle with corruption below 20. Heals the entire island passively."
+        }
+    },
+
+    "merging": {
+        "_doc": "Pyramidal merging: 3 same-tier → 1 upper-tier. For Epic→Legendary the recipe determines WHICH demon is summoned. Mixed recipes fall back to random.",
+        "rules": {
+            "common_to_uncommon":   { "input": 3, "tier_in": "common",    "tier_out": "uncommon" },
+            "uncommon_to_rare":     { "input": 3, "tier_in": "uncommon",  "tier_out": "rare" },
+            "rare_to_epic":         { "input": 3, "tier_in": "rare",      "tier_out": "epic" },
+            "epic_to_legendary":    { "input": 3, "tier_in": "epic",      "tier_out": "legendary" }
+        },
+        "epic_to_legendary_recipes": [
+            {
+                "name": "Sickness Loop Summon",
+                "input": ["corpo_suit", "corpo_suit", "corpo_suit"],
+                "output": "demon_toxitamol",
+                "corruption": 15
+            },
+            {
+                "name": "Content Machine",
+                "input": ["corpo_suit", "corpo_suit", "golden_mule"],
+                "output": "demon_netflux",
+                "corruption": 12
+            },
+            {
+                "name": "Feed Algorithm",
+                "input": ["corpo_suit", "golden_mule", "golden_mule"],
+                "output": "demon_twitix",
+                "corruption": 12
+            },
+            {
+                "name": "Vegas Pact",
+                "input": ["corpo_suit", "corpo_suit", "street_pirate"],
+                "output": "demon_gamblingbling",
+                "corruption": 14,
+                "note": "The pirate sells his soul to the corpo side."
+            },
+            {
+                "name": "Fermentation Deal",
+                "input": ["corpo_suit", "street_pirate", "street_pirate"],
+                "output": "demon_alcolard",
+                "corruption": 10
+            },
+            {
+                "name": "Smoke Ritual",
+                "input": ["street_pirate", "street_pirate", "street_pirate"],
+                "output": "demon_nicotic",
+                "corruption": 8,
+                "note": "Three pirates share a pipe. Something answers."
+            },
+            {
+                "name": "Candy Factory Overload",
+                "input": ["green_warden", "corpo_suit", "corpo_suit"],
+                "output": "demon_sugar",
+                "corruption": 18,
+                "note": "The druid's crops are sold to the factory. Irreversible."
+            },
+            {
+                "name": "Paywall Intimacy",
+                "input": ["corpo_suit", "corpo_suit", "only_option"],
+                "output": "only_demon",
+                "corruption": 16,
+                "note": "Wildcard: any third Epic works."
+            },
+            {
+                "name": "Blessed Ascension",
+                "input": ["shaman", "shaman", "shaman"],
+                "output": "saint_gloop",
+                "corruption": -40,
+                "note": "Three shamans in perfect harmony. Requires corruption < 20 to trigger. The secret Healfy legendary."
+            },
+            {
+                "name": "Warden Coven",
+                "input": ["green_warden", "green_warden", "shaman"],
+                "output": "saint_gloop",
+                "corruption": -30,
+                "note": "Alternative Saint Gloop recipe."
+            }
+        ]
+    },
+
+    "demon_network": {
+        "_doc": "Synergy chains between demons. When two demons of the same chain work in the same building, production doubles + a corruption wave spreads (+10 corruption, red fog, Aveggies flee).",
+        "chains": [
+            {
+                "name": "The Sickness Loop",
+                "demons": ["demon_sugar", "demon_toxitamol"],
+                "theme": "Sugar makes you sick, Toxitamol sells the cure.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            },
+            {
+                "name": "The Liver Pact",
+                "demons": ["demon_alcolard", "demon_gamblingbling"],
+                "theme": "Drink until you gamble. Gamble until you drink.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            },
+            {
+                "name": "Morning Stimulants",
+                "demons": ["demon_nicotic", "demon_alcolard"],
+                "theme": "Coffee/cigarette in the morning, alcohol at night. The full-day addiction circle.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            },
+            {
+                "name": "The Attention Trap",
+                "demons": ["demon_netflux", "demon_twitix"],
+                "theme": "Scroll then stream, stream then scroll. The infinite dopamine drip.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            },
+            {
+                "name": "Dopamine Bundle",
+                "demons": ["only_demon", "demon_netflux"],
+                "theme": "Content consumption at its most intimate and loneliest.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            },
+            {
+                "name": "The Food Court",
+                "demons": ["demon_sugar", "demon_alcolard"],
+                "theme": "Fast food washed down with soda, then cheap beer. Malbouffe totale.",
+                "bonus": { "production_mul": 2.0, "corruption": 10 }
+            }
+        ]
+    },
+
+    "birthing": {
+        "_doc": "Gloops are NOT hatched from eggs. They GROW from the soil in the Birthing Ground. The health of the island biases which breed germinates.",
+        "building": "birthing_ground",
+        "base_interval_sec": 120,
+        "rarity_weights_by_corruption": {
+            "_doc": "At corruption 0 → pure Aveggies bias. At corruption 100 → pure SugarHeads bias. Interpolated linearly.",
+            "blessed":    { "aveggies": 0.75, "sugarheads": 0.10, "neutral": 0.13, "rebels": 0.02 },
+            "balanced":   { "aveggies": 0.40, "sugarheads": 0.40, "neutral": 0.15, "rebels": 0.05 },
+            "corrupted":  { "aveggies": 0.10, "sugarheads": 0.75, "neutral": 0.13, "rebels": 0.02 }
+        },
+        "sacred_grove": {
+            "unlock": "requires_shaman_epic",
+            "rarity_bonus": "+1 tier shift chance",
+            "breeding_enabled": true
+        }
+    },
+
+    "rebel_raids": {
+        "_doc": "Raid mechanic unlocked by Rebels faction. A Street Pirate assigned to a raid can attack a demon building.",
+        "cost": { "rebels": 2, "duration_sec": 30 },
+        "effects": {
+            "target_production_mul": 0.0,
+            "loot_steal_pct": 0.4,
+            "corruption": -5,
+            "demon_anger": 1
+        },
+        "note": "Raids reduce corruption but anger the demons — chained raids can trigger a demonic counter-attack on the village."
+    }
+}

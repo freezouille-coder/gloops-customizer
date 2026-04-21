@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — Textures</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>🖼️ Textures & Nomenclature</h1>
+<p class="lede">Convention de nommage des fichiers textures — le nom determine le slot three.js auto-connecte.</p>
+
+<!-- =============================================================== -->
+<h2>1. 📋 Suffixes → Slots three.js</h2>
+
+<p>Les textures vivent dans <code>images/chr/&lt;material&gt;/</code>. Le <b>suffixe du fichier</b> determine automatiquement le slot three.js dans lequel la texture est branchee.</p>
+
+<table>
+  <tr><th>Suffixe</th><th>Slot three.js</th><th>Usage</th></tr>
+  <tr><td><code>_ID.png</code></td><td><code>rgbMask</code></td><td>Mask RGB — 3 zones de couleur (R, G, B)</td></tr>
+  <tr><td><code>_Normal.png</code></td><td><code>normalMap</code></td><td>Normal map</td></tr>
+  <tr><td><code>_Roughness.png</code></td><td><code>roughnessMap</code></td><td>Roughness</td></tr>
+  <tr><td><code>_Occ.png</code></td><td><code>aoMap</code></td><td>Ambient Occlusion</td></tr>
+  <tr><td><code>_DS.png</code></td><td><code>displacementMap</code></td><td>Displacement Scale</td></tr>
+  <tr><td><code>_DW.png</code></td><td><code>diffuseWeightMap</code></td><td>Diffuse Weight (body uniquement)</td></tr>
+  <tr><td><code>_Ramp.png</code></td><td><code>blendMask</code></td><td>Gradient A ↔ B blend</td></tr>
+  <tr><td><code>_SSS.png</code></td><td><code>sssMap</code></td><td>Subsurface Scattering</td></tr>
+  <tr><td><code>_Bump.png</code></td><td><code>bumpMap</code></td><td>Bump (eyes)</td></tr>
+  <tr><td><code>_Metalness.png</code></td><td><code>metalnessMap</code></td><td>Metalness (eyes)</td></tr>
+  <tr><td><code>_Emit.png</code></td><td><code>emissiveMap</code></td><td>Emissive</td></tr>
+  <tr><td><code>_Alpha.png</code></td><td><code>alphaMap</code></td><td>Transparence</td></tr>
+  <tr><td><code>_Pattern.N.png</code></td><td><code>pattern</code></td><td>Pattern overlay (variante N, 0..18)</td></tr>
+  <tr><td><code>_Diffuse.N.png</code></td><td><code>diffuse</code></td><td>Iris variant (eyes, 0..11)</td></tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>2. 📁 Structure par materiau</h2>
+
+<pre>
+images/chr/<b>&lt;material&gt;</b>/
+├── &lt;material&gt;_ID.png          ← RGB Mask
+├── &lt;material&gt;_Normal.png
+├── &lt;material&gt;_Roughness.png
+├── &lt;material&gt;_Occ.png
+├── &lt;material&gt;_DS.png
+├── &lt;material&gt;_Ramp.png
+├── &lt;material&gt;_SSS.png
+├── diffuse/                    ← Variantes diffuse (optionnel)
+│   └── &lt;material&gt;_Diffuse.N.png
+└── pattern/                    ← Patterns overlay (optionnel)
+    └── &lt;material&gt;_Pattern.N.png
+</pre>
+
+<p>Remplacer <code>&lt;material&gt;</code> par <code>body</code>, <code>horns</code>, <code>eyes</code>, <code>eyeGlass</code>, etc.</p>
+
+<!-- =============================================================== -->
+<h2>3. 🎨 Materiaux existants</h2>
+
+<table>
+  <tr><th>Materiau</th><th>Slots connectes</th><th>Variantes</th></tr>
+  <tr>
+    <td><b>body</b></td>
+    <td>rgbMask (ID), Normal, Roughness, Occ, DS, DW, Ramp, SSS, pattern</td>
+    <td>19 patterns + 1 diffuse variant (<code>body_Femal</code>)</td>
+  </tr>
+  <tr>
+    <td><b>horns</b></td>
+    <td>rgbMask (ID), Normal, Roughness, Occ, DS, Ramp, SSS, pattern</td>
+    <td>16 patterns (0..15)</td>
+  </tr>
+  <tr>
+    <td><b>eyes</b></td>
+    <td>Bump, Roughness, Metalness, SSS, DS, Emit, diffuse</td>
+    <td>12 iris variants (0..11)</td>
+  </tr>
+  <tr>
+    <td><b>eyeGlass</b></td>
+    <td>alphaMap, emissiveMap</td>
+    <td>—</td>
+  </tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>4. 🔌 Auto-connect au chargement</h2>
+
+<p>Au boot, <code>autoConnectTextures()</code> lit la section <code>autoConnect</code> de <code>manifest.json</code> et branche chaque texture detectee dans le bon slot du materiau correspondant.</p>
+
+<pre>
+"autoConnect": {
+    "body": {
+        "rgbMask":       [{ "id": "body/body_ID",   "path": "..." }],
+        "normalMap":     [{ "id": "body/body_Normal", "path": "..." }],
+        "pattern":       [
+            { "id": "body/body_Pattern.0",  "path": "...", "variant": 0 },
+            { "id": "body/body_Pattern.1",  "path": "...", "variant": 1 },
+            ...
+        ]
+    }
+}
+</pre>
+
+<p>Le systeme est genere par <code>build_manifest.py</code> (a lancer apres chaque ajout de texture).</p>
+
+<!-- =============================================================== -->
+<h2>5. ✅ Ajouter un nouveau materiau</h2>
+
+<div class="panel">
+  <ol>
+    <li>Creer le dossier <code>images/chr/&lt;matName&gt;/</code></li>
+    <li>Nommer les textures avec la convention <code>&lt;matName&gt;_Suffixe.png</code> (voir table section 1)</li>
+    <li>Pour les variantes : <code>&lt;matName&gt;_Pattern.0.png</code>, <code>_Pattern.1.png</code>...</li>
+    <li>Relancer <code>build_manifest.py</code></li>
+    <li>Refresh le navigateur → les textures apparaissent dans le panneau MAT</li>
+  </ol>
+</div>
+
+</body>
+</html>

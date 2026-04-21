@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops World — Système de classes & démons</title>
+<style>
+  :root {
+    --bg: #12141a;
+    --panel: #1b1e27;
+    --panel-2: #242836;
+    --text: #e8e6df;
+    --muted: #8a8a8a;
+    --accent: #ffc75a;
+    --healfy: #4a8a3a;
+    --demon: #ff8c3b;
+    --neutral: #999;
+    --rebel: #6b2a8a;
+    --saint: #ffe680;
+    --danger: #ff4455;
+    --common:    #D3D1C7;
+    --uncommon:  #9FE1CB;
+    --rare:      #B5D4F4;
+    --epic:      #CECBF6;
+    --legendary: #FAC775;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 24px; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.55; max-width: 1100px; margin-inline: auto;
+  }
+  h1 { font-size: 38px; margin: 0 0 8px; color: var(--accent); }
+  h2 {
+    font-size: 24px; margin: 48px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--panel-2); color: var(--accent);
+  }
+  h3 { font-size: 18px; margin: 24px 0 8px; color: #fff; }
+  p, li { color: var(--text); }
+  .lede { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
+  .panel {
+    background: var(--panel); border-radius: 10px; padding: 20px 24px;
+    margin: 16px 0; border-left: 4px solid var(--accent);
+  }
+  .panel.healfy { border-left-color: var(--healfy); }
+  .panel.demon  { border-left-color: var(--demon); }
+  .panel.neutral{ border-left-color: var(--neutral); }
+  .panel.rebel  { border-left-color: var(--rebel); }
+  .panel.danger { border-left-color: var(--danger); }
+
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 800px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .chip {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; background: var(--panel-2);
+    margin: 2px; border: 1px solid #0004;
+  }
+  .chip.common    { background: var(--common);    color: #222; }
+  .chip.uncommon  { background: var(--uncommon);  color: #222; }
+  .chip.rare      { background: var(--rare);      color: #222; }
+  .chip.epic      { background: var(--epic);      color: #222; }
+  .chip.legendary { background: var(--legendary); color: #222; }
+  .chip.aveggies  { background: var(--healfy); color: #fff; }
+  .chip.demons    { background: var(--demon); color: #fff; }
+  .chip.neutral   { background: var(--neutral); color: #fff; }
+  .chip.rebel     { background: var(--rebel); color: #fff; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 12px 0;
+    background: var(--panel); border-radius: 8px; overflow: hidden;
+  }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--panel-2); }
+  th { background: var(--panel-2); color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+
+  .bar {
+    display: flex; width: 100%; height: 26px; border-radius: 13px;
+    overflow: hidden; margin: 8px 0 20px; font-size: 11px; font-weight: 700;
+  }
+  .bar > div {
+    display: flex; align-items: center; justify-content: center;
+    color: #111; white-space: nowrap;
+  }
+
+  .axis {
+    position: relative; height: 60px; margin: 30px 0 10px;
+    background: linear-gradient(90deg, #4a8a3a 0%, #ffe680 20%, #999 40%, #ff8c3b 80%, #8a0030 100%);
+    border-radius: 8px;
+  }
+  .axis-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .axis-tick { position: absolute; top: -6px; width: 2px; height: 72px; background: #fff6; }
+  .axis-tick::after {
+    content: attr(data-label); position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; color: #fff; white-space: nowrap;
+  }
+
+  .demon-card {
+    background: var(--panel-2); padding: 12px 14px; border-radius: 6px;
+    border-left: 3px solid var(--demon);
+  }
+  .demon-card.saint { border-left-color: var(--saint); }
+  .demon-card b { color: var(--accent); }
+  .demon-card .lore { color: var(--muted); font-size: 13px; font-style: italic; }
+
+  .recipe {
+    background: var(--panel-2); padding: 10px 14px; border-radius: 6px; margin: 6px 0;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .recipe .arrow { color: var(--accent); font-weight: 700; }
+  .recipe .corr-plus  { color: var(--danger); font-weight: 700; }
+  .recipe .corr-minus { color: var(--healfy); font-weight: 700; }
+
+  .chain {
+    background: var(--panel-2); padding: 12px 14px; border-radius: 6px;
+    margin: 8px 0; border-top: 2px solid var(--demon);
+  }
+  .chain .theme { color: var(--muted); font-style: italic; font-size: 13px; }
+
+  code, .mono { font-family: 'SF Mono', Menlo, monospace; font-size: 13px;
+    background: #0006; padding: 1px 6px; border-radius: 3px; color: #ffd; }
+
+  .tldr {
+    background: linear-gradient(135deg, #2a1a3a 0%, #1a2a3a 100%);
+    border: 1px solid var(--accent); padding: 20px 24px; border-radius: 10px;
+    margin: 24px 0;
+  }
+  .tldr h3 { margin-top: 0; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🌍 Gloops World</h1>
+<p class="lede">Système complet : factions, breeds, démons, merging et voie morale. <br>Document de référence — explique tout ce qu'il y a dans <code>config/gloops-classes.json</code>.</p>
+
+<!-- =============================================================== -->
+<div class="tldr">
+  <h3>⚡ TL;DR — En 30 secondes</h3>
+  <p><b>Tu es un dieu</b> au-dessus d'une île de Gloops. Tu n'as pas de but imposé : tu peux <b>sauver</b> l'île (voie Healfy) ou <b>la livrer aux industries de l'addiction</b> (voie Junky). Chaque action shift un <b>score de corruption 0–100</b>.</p>
+  <p>Les Gloops <b>naissent de la terre</b> dans le Birthing Ground central — comme des légumes qui poussent. Plus ton île est saine, plus ils naissent bons. Tu les assignes ensuite à des <b>bâtiments</b> qui produisent de l'argent. Quand tu accumules 3 Gloops d'un même tier, tu peux les <b>fusionner</b> pour en obtenir un rare. La pyramide ultime : <b>81 Common → 27 Uncommon → 9 Rare → 3 Epic → 1 Légendaire (Démon)</b>.</p>
+  <p>Les <b>8 Démons</b> sont les boss des grandes industries d'addiction (sucre, alcool, cigarettes, casino, réseaux sociaux, streaming, pharma, porno). Quand 2 démons d'une même <b>chaîne de synergie</b> bossent dans le même bâtiment, la production double — mais la corruption explose.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>1. ⚖️ L'axe moral — Corruption 0 à 100</h2>
+
+<p>Un seul chiffre, tracké en permanence, qui détermine la fin du cycle. Chaque action (assignation, merging, raid) l'ajuste de quelques points.</p>
+
+<div class="axis">
+  <div class="axis-tick" data-label="Saint · 20" style="left: 20%;"></div>
+  <div class="axis-tick" data-label="Balanced · 60" style="left: 60%;"></div>
+  <div class="axis-tick" data-label="Corrupted · 99" style="left: 99%;"></div>
+</div>
+<div class="axis-labels">
+  <span>0 — Île bénie</span>
+  <span>20 — Libre</span>
+  <span>60 — Tension</span>
+  <span>100 — Meta Boss</span>
+</div>
+
+<table>
+  <tr><th>Palier</th><th>Corruption</th><th>Ce que ça déclenche</th></tr>
+  <tr><td><span class="chip" style="background:#ffe680;color:#222">Saint</span></td><td>0 – 20</td><td>Île luxuriante. Fin "Blessed Island". Unlock <b>Saint Gloop</b> (légendaire secret).</td></tr>
+  <tr><td><span class="chip neutral">Balanced</span></td><td>20 – 60</td><td>Libre marché. Fin neutre. Rien d'extrême.</td></tr>
+  <tr><td><span class="chip demons">Corrupted</span></td><td>60 – 99</td><td>Ciel rouge, brume permanente, les Aveggies fuient. Fin "Industrial Hell".</td></tr>
+  <tr><td><span class="chip" style="background:#8a0030;color:#fff">Meta Boss</span></td><td>100</td><td>Un <b>méta-démon</b> apparaît et te propose <i>The Last Deal</i>. Fin ultime.</td></tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>2. 🏛️ Les 4 factions</h2>
+
+<div class="bar">
+  <div style="width:40%; background: var(--healfy);">Aveggies 40%</div>
+  <div style="width:40%; background: var(--demon);">SugarHeads 40%</div>
+  <div style="width:15%; background: var(--neutral);">Neutral 15%</div>
+  <div style="width:5%; background: var(--rebel);">Rebels 5%</div>
+</div>
+
+<div class="grid grid-2">
+  <div class="panel healfy">
+    <h3>🌿 Aveggies <span class="chip healfy">Healfy</span></h3>
+    <p>Jardiniers, herboristes, fermiers. Produisent légumes, jus, remèdes.</p>
+    <p><b>Tools :</b> <span class="chip">🌱 Gardening</span> <span class="chip">🌾 Farming</span> <span class="chip">🍄 Herbalism</span> <span class="chip">🍳 Healthy cooking</span></p>
+    <p><b>Impact corruption :</b> <span class="corr-minus">−1 / assignation</span></p>
+  </div>
+
+  <div class="panel demon">
+    <h3>🍬 SugarHeads <span class="chip demons">Junky</span></h3>
+    <p>Chimistes, confiseurs, industriels. Produisent sodas, bonbons, chips, drogues de masse. <b>Leurs boss sont les 8 "Sugar Demons" légendaires.</b></p>
+    <p><b>Tools :</b> <span class="chip">🧪 Chemistry</span> <span class="chip">🍬 Confectionery</span> <span class="chip">🏭 Industry</span> <span class="chip">🔥 Heavy cooking</span></p>
+    <p><b>Impact corruption :</b> <span style="color:var(--danger)">+1 / assignation</span></p>
+  </div>
+
+  <div class="panel neutral">
+    <h3>⚪ Neutral</h3>
+    <p>Ceux qui bossent où on les paie. Ni bons ni mauvais.</p>
+    <p><b>Tools :</b> <span class="chip">⚙️ Mechanics</span> <span class="chip">📦 Logistics</span></p>
+    <p><b>Impact corruption :</b> 0</p>
+  </div>
+
+  <div class="panel rebel">
+    <h3>🏴‍☠️ Rebels <span class="chip rebel">Anti-système</span></h3>
+    <p>Ex-SugarHeads qui ont déserté. Alliés des Aveggies mais méthodes violentes. Débloquent le <b>raid</b>.</p>
+    <p><b>Tools :</b> <span class="chip">⚔️ Raiding</span> <span class="chip">🗝️ Smuggling</span> <span class="chip">📦 Logistics</span></p>
+    <p><b>Impact corruption :</b> <span style="color:var(--healfy)">−2 / assignation</span></p>
+  </div>
+</div>
+
+<!-- =============================================================== -->
+<h2>3. 💎 Les tiers de rareté</h2>
+
+<div class="bar">
+  <div style="width:60%; background: var(--common);">Common 60%</div>
+  <div style="width:25%; background: var(--uncommon);">Uncommon 25%</div>
+  <div style="width:10%; background: var(--rare);">Rare 10%</div>
+  <div style="width:4%;  background: var(--epic);">Epic 4%</div>
+  <div style="width:1%;  background: var(--legendary);">Leg 1%</div>
+</div>
+
+<p>Chaque œuf/hatch tire d'abord une rareté puis un breed dans ce tier. Les <b>Légendaires ne peuvent PAS être hatched</b> — uniquement obtenus par merging.</p>
+
+<!-- =============================================================== -->
+<h2>4. 🧬 Les breeds (13 total)</h2>
+
+<h3>🌿 Aveggies (4 breeds)</h3>
+<table>
+  <tr><th>Rareté</th><th>Nom</th><th>Tools</th><th>Lore court</th></tr>
+  <tr><td><span class="chip common">Common</span></td>   <td><b>Healfy Bobo</b></td>     <td>Gardening, Farming</td><td>Jardinier zen, cultive et mange sa prod.</td></tr>
+  <tr><td><span class="chip uncommon">Uncommon</span></td><td><b>Mush</b></td>            <td>Herbalism, Healthy cooking</td><td>Champignons sur la tête, magie de forêt.</td></tr>
+  <tr><td><span class="chip uncommon">Uncommon</span></td><td><b>NionNion</b></td>        <td>Mechanics, Logistics</td><td>Rose, petit, sans cornes. Mineur de gemmes.</td></tr>
+  <tr><td><span class="chip epic">Epic</span></td>        <td><b>Shaman</b> ✨</td>        <td>Herbalism ×3</td><td>Mush évolué. <b>Soigne la corruption.</b></td></tr>
+  <tr><td><span class="chip epic">Epic</span></td>        <td><b>Green Warden</b> 🌳</td> <td>Gardening, Farming, Herbalism</td><td>Bobo druide géant. <b>Aura buff aux Aveggies.</b></td></tr>
+</table>
+
+<h3>🍬 SugarHeads (5 breeds)</h3>
+<table>
+  <tr><th>Rareté</th><th>Nom</th><th>Tools</th><th>Lore court</th></tr>
+  <tr><td><span class="chip common">Common</span></td>   <td><b>Sugar Head</b></td> <td>Confectionery, Chemistry</td><td>Rouge/jaune, accro au sucre.</td></tr>
+  <tr><td><span class="chip uncommon">Uncommon</span></td><td><b>Crypto Bro</b></td><td>Mechanics, Industry</td><td>Home trader en quête de moon.</td></tr>
+  <tr><td><span class="chip uncommon">Uncommon</span></td><td><b>Zog Zog</b></td>   <td>Industry, Heavy cooking</td><td>Grosse mâchoire, violence primaire.</td></tr>
+  <tr><td><span class="chip rare">Rare</span></td>        <td><b>BlingBling</b></td><td>Heavy cooking, Chemistry</td><td>Vegas, sheriff, casinos.</td></tr>
+  <tr><td><span class="chip epic">Epic</span></td>        <td><b>Corpo Suit</b> 💼</td><td>Industry, Logistics, Chemistry</td><td>SalaryMan passé CEO. <b>Chef de chaîne démoniaque.</b></td></tr>
+</table>
+
+<h3>⚪ Neutral (2 breeds)</h3>
+<table>
+  <tr><th>Rareté</th><th>Nom</th><th>Tools</th><th>Lore court</th></tr>
+  <tr><td><span class="chip common">Common</span></td><td><b>Salary Man</b></td>  <td>Logistics, Chemistry</td><td>Métro-boulot-dodo.</td></tr>
+  <tr><td><span class="chip epic">Epic</span></td>    <td><b>Golden Mule</b> 🐴</td><td>Logistics, Mechanics</td><td>SalaryMan côté lumière. <b>Transport ×2.</b></td></tr>
+</table>
+
+<h3>🏴‍☠️ Rebels (1 breed)</h3>
+<table>
+  <tr><th>Rareté</th><th>Nom</th><th>Tools</th><th>Lore court</th></tr>
+  <tr><td><span class="chip epic">Epic</span></td><td><b>Street Pirate</b> ⚔️</td><td>Raiding, Smuggling, Logistics</td><td>Ex-démon déserteur. <b>Raid les bâtiments ennemis.</b></td></tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>5. 👹 Les 9 Légendaires</h2>
+
+<p>Assets pré-rendus, 1% de rareté, obtenables <b>uniquement par merging</b>. Chaque démon représente une industrie d'addiction.</p>
+
+<div class="grid grid-2">
+  <div class="demon-card"><b>🍭 Demon Sugar</b> — sucre / junk food<br><span class="lore">Le premier démon. Maître du rush sucré. Nourrit la maladie qui vend le médicament.</span></div>
+  <div class="demon-card"><b>🚬 Demon Nicotic</b> — cigarette / café<br><span class="lore">Patriarche fumeur. Deux empires : la clope et le café — l'haleine du matin.</span></div>
+  <div class="demon-card"><b>🎰 Demon GamBlingBling</b> — casino<br><span class="lore">Paillettes, miroirs, verres offerts. La maison gagne toujours.</span></div>
+  <div class="demon-card"><b>💊 Demon Toxitamol</b> — médicament addictif<br><span class="lore">Vend le remède qui entretient la maladie. La boucle se referme.</span></div>
+  <div class="demon-card"><b>📺 Demon NetFlux</b> — streaming<br><span class="lore">L'épisode suivant infini. T'oublie qui tu es, un autoplay à la fois.</span></div>
+  <div class="demon-card"><b>🐦 Demon Twitix</b> — réseaux sociaux<br><span class="lore">Scroll infini. Récolte l'attention comme les mines récoltaient les ouvriers.</span></div>
+  <div class="demon-card"><b>🍺 Demon Alcolard</b> — alcool<br><span class="lore">Théologie de comptoir. Meilleur ami à 21h, pire ennemi à 7h.</span></div>
+  <div class="demon-card"><b>💔 Only Demon</b> — contenu adulte<br><span class="lore">Intimité à péage. Sentiment qui s'évapore dès que l'argent quitte la poche.</span></div>
+  <div class="demon-card saint"><b>😇 Saint Gloop</b> — bénédiction (SECRET)<br><span class="lore">Légendaire caché. Débloqué seulement si tu finis un cycle sous 20 de corruption.</span></div>
+</div>
+
+<!-- =============================================================== -->
+<h2>6. 🏗️ Les bâtiments de l'île</h2>
+
+<p>Tous les bâtiments sont posés sur une île avec un nombre fixe d'emplacements. Chaque bâtiment a des <b>slots d'assignation</b>, des <b>tools requis</b> et une <b>capacité de stockage</b>. Quand le stockage est plein, la prod s'arrête — tu dois revenir collecter (c'est le hook idle).</p>
+
+<h3>🌱 Bâtiment central — d'où viennent les Gloops</h3>
+<div class="panel healfy">
+  <p><b>Les Gloops ne viennent PAS d'œufs. Ils <u>naissent de la terre</u>.</b></p>
+  <p>Chaque nouveau Gloop germe dans un bâtiment dédié, à même le sol. On les voit pousser comme des légumes — d'abord une bosse dans la terre, puis une petite pousse, puis un Gloop qui émerge lentement.</p>
+</div>
+<table>
+  <tr><th>Bâtiment</th><th>Slots</th><th>Tools requis</th><th>Output</th><th>Corruption</th></tr>
+  <tr><td><b>🌱 Birthing Ground</b> <span class="chip">Central</span></td><td>3 parcelles de terre</td><td>Gardening (pour accélérer la pousse)</td><td><b>1 nouveau Gloop toutes les N minutes</b>, rareté rollée à la germination</td><td>0</td></tr>
+  <tr><td><b>🌳 Sacred Grove</b> <span class="chip epic">Epic unlock</span></td><td>2 parcelles rituelles</td><td>Herbalism + Shaman présent</td><td>Chance augmentée de rareté supérieure. Breeding parental possible.</td><td><span style="color:var(--healfy)">−1/naissance</span></td></tr>
+</table>
+
+<p style="color:var(--muted); font-style:italic; margin: 8px 0 20px;">
+  💡 <b>Conséquence gameplay :</b> plus la terre de ton île est saine (corruption basse), plus les Gloops qui germent sont sains. Dans une île corrompue, la terre crache surtout des SugarHeads et des Zog Zogs. Dans une île bénie, elle donne naturellement des Bobos et des Mushes.
+</p>
+
+<h3>🌿 Bâtiments Aveggies (voie Healfy)</h3>
+<table>
+  <tr><th>Bâtiment</th><th>Slots</th><th>Tools requis</th><th>Output</th><th>Corruption</th></tr>
+  <tr><td><b>🌱 Community Garden</b></td><td>2</td><td>Gardening</td><td>Faible, stable</td><td><span style="color:var(--healfy)">−1/tick</span></td></tr>
+  <tr><td><b>🌾 Organic Farm</b></td><td>3</td><td>Farming + Gardening</td><td>Moyen</td><td><span style="color:var(--healfy)">−1/tick</span></td></tr>
+  <tr><td><b>🍄 Herbalist Workshop</b></td><td>2</td><td>Herbalism + Healthy Cooking</td><td>Élevé</td><td><span style="color:var(--healfy)">−2/tick</span></td></tr>
+  <tr><td><b>🧘 Shaman Temple</b> <span class="chip epic">Epic unlock</span></td><td>2</td><td>Herbalism × Shaman requis</td><td>Soigne activement la corruption</td><td><span style="color:var(--healfy)">−5/tick</span></td></tr>
+</table>
+
+<h3>🍬 Bâtiments SugarHeads (voie Junky)</h3>
+<table>
+  <tr><th>Bâtiment</th><th>Slots</th><th>Tools requis</th><th>Output</th><th>Corruption</th></tr>
+  <tr><td><b>🍬 Candy Factory</b></td><td>3</td><td>Confectionery + Chemistry</td><td>Élevé</td><td><span style="color:var(--danger)">+1/tick</span></td></tr>
+  <tr><td><b>🏭 Sugar Refinery</b></td><td>4</td><td>Industry + Chemistry + Confectionery</td><td>Très élevé</td><td><span style="color:var(--danger)">+2/tick</span></td></tr>
+  <tr><td><b>🧪 Laboratory</b></td><td>3</td><td>Chemistry + Mechanics</td><td>Très élevé + bonus RNG</td><td><span style="color:var(--danger)">+2/tick</span></td></tr>
+  <tr><td><b>🎰 Casino</b> <span class="chip rare">Rare unlock</span></td><td>3</td><td>Heavy Cooking + Chemistry (BlingBling boost)</td><td>Variable, high risk/reward</td><td><span style="color:var(--danger)">+3/tick</span></td></tr>
+</table>
+
+<h3>⚪ Bâtiments Neutraux</h3>
+<table>
+  <tr><th>Bâtiment</th><th>Slots</th><th>Tools requis</th><th>Output</th><th>Corruption</th></tr>
+  <tr><td><b>🍳 Canteen</b></td><td>2</td><td>Healthy Cooking <i>ou</i> Heavy Cooking</td><td>Moyen</td><td>0</td></tr>
+  <tr><td><b>📦 Logistics Warehouse</b></td><td>2</td><td>Logistics</td><td>Multiplicateur global (+%)</td><td>0</td></tr>
+</table>
+
+<h3>🏴‍☠️ Bâtiments Rebels (spéciaux)</h3>
+<table>
+  <tr><th>Bâtiment</th><th>Slots</th><th>Tools requis</th><th>Output</th><th>Corruption</th></tr>
+  <tr><td><b>⚔️ Pirate Hideout</b> <span class="chip rebel">Rebel unlock</span></td><td>2</td><td>Raiding + Smuggling</td><td>Débloque les raids sur bâtiments démoniaques</td><td><span style="color:var(--healfy)">−3/raid</span></td></tr>
+  <tr><td><b>🗝️ Black Market</b> <span class="chip rebel">Rebel unlock</span></td><td>2</td><td>Smuggling + Logistics</td><td>Vend le loot volé à prix fort</td><td><span style="color:var(--healfy)">−1/tick</span></td></tr>
+</table>
+
+<div class="panel danger">
+  <h3>👹 Cas spécial : bâtiment contaminé par un Démon</h3>
+  <p>N'importe quel bâtiment <b>SugarHeads</b> peut accueillir un Légendaire. Dès qu'un démon est posé dans un bâtiment, celui-ci devient <b>contaminé</b> :</p>
+  <ul>
+    <li>Production ×1.5 solo, <b>×2 si 2 démons compatibles</b> (synergie)</li>
+    <li>Corruption doublée pendant toute la durée</li>
+    <li>Les Aveggies refusent d'y travailler</li>
+    <li>Visuellement : brume rouge permanente autour du bâtiment</li>
+  </ul>
+</div>
+
+<div class="panel">
+  <h3>📊 Récap : 12 bâtiments au total</h3>
+  <p><b>Central :</b> 2 (Birthing Ground + Sacred Grove) · <b>Aveggies :</b> 4 · <b>SugarHeads :</b> 4 · <b>Neutraux :</b> 2 · <b>Rebels :</b> 2</p>
+  <p><b>MVP (GDD) :</b> 6 bâtiments seulement — <span class="chip">🌱 Birthing Ground</span> <span class="chip">Community Garden</span> <span class="chip">Organic Farm</span> <span class="chip">Candy Factory</span> <span class="chip">Sugar Refinery</span> <span class="chip">Canteen</span>. Les 8 autres arrivent en post-launch.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>7. 🔗 Les chaînes de synergie démoniaque</h2>
+
+<p>Quand tu places <b>2 démons d'une même chaîne dans le même bâtiment</b>, la production <b>double (×2)</b> mais une vague de corruption se propage : <b>+10 corruption</b>, brume rouge, les Aveggies du village fuient.</p>
+
+<div class="chain"><b>🍭💊 The Sickness Loop</b> — Sugar + Toxitamol<br><span class="theme">"Le sucre te rend malade, Toxitamol vend le remède."</span></div>
+<div class="chain"><b>🍺🎰 The Liver Pact</b> — Alcolard + GamBlingBling<br><span class="theme">"Bois pour parier. Parie pour boire."</span></div>
+<div class="chain"><b>🚬🍺 Morning Stimulants</b> — Nicotic + Alcolard<br><span class="theme">"Café-clope le matin, bière le soir. Le cercle complet."</span></div>
+<div class="chain"><b>📺🐦 The Attention Trap</b> — NetFlux + Twitix<br><span class="theme">"Scroll puis stream, stream puis scroll. Le goutte-à-goutte dopamine."</span></div>
+<div class="chain"><b>💔📺 Dopamine Bundle</b> — Only Demon + NetFlux<br><span class="theme">"Consommation de contenu à son plus intime et plus solitaire."</span></div>
+<div class="chain"><b>🍭🍺 The Food Court</b> — Sugar + Alcolard<br><span class="theme">"Fast-food, soda, puis bière cheap. Malbouffe totale."</span></div>
+
+<!-- =============================================================== -->
+<h2>8. ⚗️ Merging — la pyramide</h2>
+
+<p>3 Gloops d'un même tier → 1 Gloop du tier supérieur. Pour passer Epic → Legendary, la <b>recette</b> (quel trio exact) détermine QUEL démon est invoqué.</p>
+
+<div class="panel">
+  <h3>La pyramide complète</h3>
+  <p class="mono" style="font-size:15px;">
+    81 Common → 27 Uncommon → 9 Rare → 3 Epic → <b style="color: var(--legendary)">1 Legendary</b>
+  </p>
+</div>
+
+<h3>Les recettes Epic → Legendary</h3>
+
+<div class="recipe"><span>3× Corpo Suit</span><span class="arrow">→</span><b>Demon Toxitamol</b><span class="corr-plus">+15</span><span class="lore">Sickness Loop Summon</span></div>
+<div class="recipe"><span>2× Corpo Suit + 1× Golden Mule</span><span class="arrow">→</span><b>Demon NetFlux</b><span class="corr-plus">+12</span></div>
+<div class="recipe"><span>1× Corpo Suit + 2× Golden Mule</span><span class="arrow">→</span><b>Demon Twitix</b><span class="corr-plus">+12</span></div>
+<div class="recipe"><span>2× Corpo Suit + 1× Street Pirate</span><span class="arrow">→</span><b>Demon GamBlingBling</b><span class="corr-plus">+14</span><span class="lore">Le pirate vend son âme</span></div>
+<div class="recipe"><span>1× Corpo Suit + 2× Street Pirate</span><span class="arrow">→</span><b>Demon Alcolard</b><span class="corr-plus">+10</span></div>
+<div class="recipe"><span>3× Street Pirate</span><span class="arrow">→</span><b>Demon Nicotic</b><span class="corr-plus">+8</span><span class="lore">Trois pirates partagent une pipe</span></div>
+<div class="recipe"><span>1× Green Warden + 2× Corpo Suit</span><span class="arrow">→</span><b>Demon Sugar</b><span class="corr-plus">+18</span><span class="lore">Le druide vend ses cultures à la factory</span></div>
+
+<div class="recipe" style="border-left: 3px solid var(--saint);">
+  <span>3× Shaman</span><span class="arrow">→</span><b style="color: var(--saint)">✨ Saint Gloop ✨</b><span class="corr-minus">−40</span><span class="lore">Blessed Ascension (requiert corruption &lt; 20)</span>
+</div>
+<div class="recipe" style="border-left: 3px solid var(--saint);">
+  <span>2× Green Warden + 1× Shaman</span><span class="arrow">→</span><b style="color: var(--saint)">✨ Saint Gloop ✨</b><span class="corr-minus">−30</span><span class="lore">Warden Coven</span>
+</div>
+
+<!-- =============================================================== -->
+<h2>9. ⚔️ Le raid (débloqué par les Rebels)</h2>
+
+<div class="panel rebel">
+  <p>Un Street Pirate peut être assigné à un <b>raid</b> contre un bâtiment démoniaque.</p>
+  <ul>
+    <li><b>Coût :</b> 2 Rebels × 30 secondes</li>
+    <li><b>Effet sur la cible :</b> production bloquée à 0 pendant le raid</li>
+    <li><b>Loot volé :</b> 40% du stock du bâtiment</li>
+    <li><b>Corruption :</b> <span class="corr-minus">−5</span></li>
+    <li><b>Effet secondaire :</b> <span style="color: var(--danger)">+1 demon_anger</span>. Si tu enchaînes les raids, les démons lancent une contre-attaque sur le village.</li>
+  </ul>
+</div>
+
+<!-- =============================================================== -->
+<h2>10. 🎮 Comment ça se joue</h2>
+
+<div class="panel">
+  <h3>Boucle principale</h3>
+  <ol>
+    <li>🌱 Tu <b>sèmes la terre</b> dans le Birthing Ground → des Gloops poussent (60% common, rarement mieux, biaisé par la santé de l'île)</li>
+    <li>🏗️ Tu les <b>assignes</b> à des bâtiments — ils produisent des Gloops Coins (GC)</li>
+    <li>👶 Tu peux en <b>breed</b> (3 enfants max, 5% mutation)</li>
+    <li>⚗️ Tu <b>fusionnes</b> 3 Gloops de même tier pour monter la pyramide</li>
+    <li>👹 À Epic, la recette que tu choisis invoque un <b>Démon spécifique</b> OU un Saint Gloop</li>
+    <li>🔗 Tu places 2 démons compatibles dans le même bâtiment → <b>synergie ×2</b></li>
+    <li>⚖️ Ta corruption monte ou descend → tu orientes ta fin de cycle</li>
+  </ol>
+</div>
+
+<div class="panel healfy">
+  <h3>Voie Healfy (Sauveur)</h3>
+  <p>Assigner aux bâtiments Aveggies. Utiliser les Shamans pour soigner. Raider les bâtiments démoniaques. Fusionner 3 Shamans pour invoquer <b>Saint Gloop</b>. Fin : <i>Blessed Island</i>.</p>
+</div>
+
+<div class="panel demon">
+  <h3>Voie Junky (Corrupteur)</h3>
+  <p>Empiler les SugarHeads dans tous les bâtiments. Chercher les synergies démoniaques pour doubler la prod. Accumuler les fortunes sales. Fin : <i>Industrial Hell</i>, ou même <i>The Last Deal</i> à 100% corruption.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>11. 📁 Où vit tout ça dans le code ?</h2>
+
+<table>
+  <tr><th>Fichier</th><th>Rôle</th></tr>
+  <tr><td><code>config/gloops-classes.json</code></td><td>Toutes les données (factions, breeds, démons, recettes, chaînes, corruption). <b>Source de vérité.</b></td></tr>
+  <tr><td><code>js/gloops-classes.js</code></td><td>Helpers JS : load, rollIdentity, applyIdentityToShading, findSynergy…</td></tr>
+  <tr><td><code>scripts/gdd.html</code></td><td>GDD original (breeding, merging, leaderboard, economy).</td></tr>
+  <tr><td><code>scripts/gloops-system.html</code></td><td>↩ ce document — vue d'ensemble du système classes/démons/corruption.</td></tr>
+</table>
+
+<p class="lede" style="margin-top:40px; text-align:center;">
+  🌱 🍬 ⚗️ 👹 😇 <br>
+  <i>"Feed the sickness that sells the medicine."</i>
+</p>
+<p style="text-align:center; margin-top:20px;">
+  <a href="gloops-index.html" style="color:var(--accent);">← Retour à l'index de la doc</a>
+</p>
+
+
+</body>
+</html>

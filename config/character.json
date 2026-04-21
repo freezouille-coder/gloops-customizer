@@ -86,6 +86,11 @@
             "enabled": true,
             "category": "Horns"
         },
+        "eyes": {
+            "label": "Eyes",
+            "enabled": true,
+            "category": "Eyes"
+        },
         "bodyRootColor": {
             "label": "Body Root Color",
             "enabled": true,
@@ -152,26 +157,26 @@
         },
         "bodyPattern": {
             "label": "Body Pattern",
-            "enabled": true,
+            "enabled": false,
             "material": "body",
             "type": "pattern"
         },
         "hornsPattern": {
             "label": "Horns Pattern",
-            "enabled": true,
+            "enabled": false,
             "material": "horns",
             "type": "pattern"
         },
         "bodyPatternMode": {
             "label": "Body Pattern Mode",
-            "enabled": true,
+            "enabled": false,
             "material": "body",
             "type": "mode",
             "options": ["casual", "luxury"]
         },
         "hornsPatternMode": {
             "label": "Horns Pattern Mode",
-            "enabled": true,
+            "enabled": false,
             "material": "horns",
             "type": "mode",
             "options": ["casual", "luxury"]

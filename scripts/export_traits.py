@@ -279,9 +279,241 @@ def set_scene_fps(fps):
     return prev
 
 
+# ============================================================
+# BATCH PROP EXPORT (skeleton + single mesh -> one FBX per mesh)
+# ============================================================
+
+def do_export_prop(output_path, skeleton_root, mesh):
+    """Export a STATIC prop FBX: skeleton root + a single mesh, no animation.
+    Used to batch-build paired props (one FBX per mesh, named after the mesh)
+    that the customizer attaches via Type C (skeleton rebind)."""
+    all_nodes = [skeleton_root, mesh]
+
+    # Unparent both to world for a clean export hierarchy
+    for node in all_nodes:
+        if cmds.objExists(node):
+            parent = cmds.listRelatives(node, parent=True)
+            if parent:
+                try:
+                    cmds.parent(node, world=True)
+                except:
+                    pass
+
+    mel.eval("FBXResetExport;")
+    mel.eval("FBXExportSmoothingGroups -v true;")
+    mel.eval("FBXExportSmoothMesh -v true;")
+    mel.eval("FBXExportTriangulate -v false;")
+    mel.eval("FBXExportFileVersion -v FBX201800;")
+    mel.eval("FBXExportShapes -v true;")             # blendshapes (BS_*)
+    mel.eval("FBXExportSkins -v true;")              # skin weights
+    mel.eval("FBXExportBakeComplexAnimation -v false;")  # static, no anim
+    mel.eval("FBXExportInputConnections -v false;")
+    mel.eval("FBXExportConstraints -v false;")
+    mel.eval("FBXExportCameras -v false;")
+    mel.eval("FBXExportLights -v false;")
+    mel.eval("FBXExportEmbeddedTextures -v false;")
+
+    cmds.select(all_nodes, replace=True)
+    export_path_clean = output_path.replace("\\", "/")
+    mel.eval('FBXExport -f "{}" -s;'.format(export_path_clean))
+    print("  >> Exported prop: {}".format(export_path_clean))
+
+
+def batch_export_props(target_folder, skeleton_root, meshes):
+    """For each mesh in `meshes`, export an FBX named `<mesh>.fbx` containing
+    (skeleton + that single mesh). Saves and reopens the scene between
+    exports to keep a clean state."""
+    if not skeleton_root or not cmds.objExists(skeleton_root):
+        cmds.confirmDialog(title="Error",
+                           message="Skeleton root not found: {}".format(skeleton_root))
+        return
+
+    valid_meshes = [m for m in meshes if cmds.objExists(m)]
+    if not valid_meshes:
+        cmds.confirmDialog(title="Error", message="No valid meshes selected.")
+        return
+
+    if not os.path.exists(target_folder):
+        os.makedirs(target_folder)
+
+    scene_path = cmds.file(q=True, sceneName=True)
+    if not scene_path:
+        result = cmds.confirmDialog(
+            title="Scene not saved",
+            message="The scene must be saved before batch export.\nSave now?",
+            button=["Save", "Cancel"], defaultButton="Save", cancelButton="Cancel")
+        if result == "Save":
+            cmds.file(save=True)
+            scene_path = cmds.file(q=True, sceneName=True)
+        else:
+            return
+
+    if not scene_path:
+        cmds.error("Scene must be saved first.")
+        return
+
+    cmds.file(save=True, type="mayaAscii")
+
+    if not cmds.pluginInfo("fbxmaya", q=True, loaded=True):
+        cmds.loadPlugin("fbxmaya", quiet=True)
+
+    print("\n========== BATCH PROP EXPORT ==========")
+    print("Skeleton:  {}".format(skeleton_root))
+    print("Meshes:    {}".format(valid_meshes))
+    print("Target:    {}".format(target_folder))
+    print("=======================================\n")
+
+    exported = 0
+    total = len(valid_meshes)
+    cmds.progressWindow(title="Batch Prop Export", progress=0, maxValue=total,
+                        status="Starting...", isInterruptable=True)
+
+    for i, mesh in enumerate(valid_meshes):
+        if cmds.progressWindow(q=True, isCancelled=True):
+            print("Batch cancelled by user.")
+            break
+
+        # Filename = mesh short name (strip namespace + path)
+        short = mesh.split("|")[-1].split(":")[-1]
+        fbx_name = "{}.fbx".format(short)
+        output_path = os.path.join(target_folder, fbx_name)
+
+        cmds.progressWindow(edit=True, progress=i,
+                            status="[{}/{}] {}".format(i + 1, total, short))
+        print("[{}/{}] {}".format(i + 1, total, short))
+
+        try:
+            do_export_prop(output_path, skeleton_root, mesh)
+            exported += 1
+        except Exception as e:
+            cmds.warning("Export failed for {}: {}".format(mesh, e))
+
+        # Reopen the scene so the next iteration starts clean
+        cmds.file(scene_path, open=True, force=True)
+
+    cmds.progressWindow(endProgress=True)
+
+    print("\n========== DONE ==========")
+    print("Exported {}/{} props".format(exported, total))
+    print("==========================")
+
+    cmds.confirmDialog(
+        title="Done",
+        message="Batch prop export finished!\n{}/{} exported to:\n{}".format(
+            exported, total, target_folder))
+
+
+def find_blender_exe():
+    """Locate a Blender executable for the auto-convert-to-GLB option."""
+    env = os.environ.get("BLENDER_EXE")
+    if env and os.path.exists(env):
+        return env
+    candidates = [
+        r"C:\Program Files\Blender Foundation\Blender 4.3\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 4.2\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 4.1\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 4.0\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender 3.6\blender.exe",
+        r"C:\Program Files\Blender Foundation\Blender\blender.exe",
+        "/Applications/Blender.app/Contents/MacOS/Blender",
+        "/usr/bin/blender",
+        "/usr/local/bin/blender",
+    ]
+    for p in candidates:
+        if os.path.exists(p):
+            return p
+    # Glob any Blender version on Windows
+    try:
+        import glob
+        for base in [r"C:\Program Files\Blender Foundation",
+                     r"C:\Program Files (x86)\Blender Foundation"]:
+            if os.path.isdir(base):
+                for match in sorted(glob.glob(os.path.join(base, "Blender*", "blender.exe")), reverse=True):
+                    return match
+    except Exception:
+        pass
+    return None
+
+
+def convert_folder_to_glb(fbx_folder, glb_folder, compress=True, blender_path=None, scale=100.0):
+    """Launch the fbx_to_glb.py script against the freshly-exported FBX
+    folder. Runs synchronously so the Maya UI can report success/failure.
+
+    Args:
+        scale: uniform scale factor passed to Blender (default 100 —
+               Maya exports in cm, Blender interprets as meters, so we
+               multiply by 100 to restore the authored size).
+    """
+    blender = blender_path or find_blender_exe()
+    if not blender:
+        cmds.warning("[convert_glb] Blender not found — skipping GLB conversion. "
+                     "Set BLENDER_EXE env var or install Blender.")
+        return False
+
+    # Locate fbx_to_glb.py next to this script. `__file__` isn't defined
+    # when Maya runs the script via exec(open(...).read()), so we fall
+    # back to well-known paths relative to the project root.
+    here = None
+    try:
+        here = os.path.dirname(os.path.abspath(__file__))  # normal path
+    except NameError:
+        # Running under Maya's exec() — try the scene's path, then hunt
+        scene = cmds.file(q=True, sceneName=True)
+        candidates = []
+        if scene:
+            candidates.append(os.path.join(os.path.dirname(scene), "..", "scripts"))
+        candidates += [
+            "H:/Shared drives/GLOOPS/09_GAME/WEB/scripts",
+            r"H:\Shared drives\GLOOPS\09_GAME\WEB\scripts",
+            os.path.join(os.path.expanduser("~"), "maya", "scripts"),
+        ]
+        for c in candidates:
+            if os.path.isdir(c) and os.path.exists(os.path.join(c, "fbx_to_glb.py")):
+                here = c
+                break
+    if here is None:
+        cmds.warning("[convert_glb] cannot locate fbx_to_glb.py — set it manually")
+        return False
+    script = os.path.join(here, "fbx_to_glb.py")
+    if not os.path.exists(script):
+        cmds.warning("[convert_glb] fbx_to_glb.py not found next to export_traits.py")
+        return False
+
+    cmd = [
+        blender, "--background",
+        "--python", script,
+        "--",
+        "--input", fbx_folder,
+        "--output", glb_folder,
+    ]
+    if compress:
+        cmd.append("--compress")
+    if scale and abs(scale - 1.0) > 0.001:
+        cmd += ["--scale", str(scale)]
+
+    print("[convert_glb] launching Blender: {}".format(blender))
+    print("[convert_glb] cmd: {}".format(" ".join(cmd)))
+    try:
+        # creationflags avoids spawning a visible cmd window on Windows
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = subprocess.CREATE_NO_WINDOW
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, bufsize=1, creationflags=creationflags)
+        for line in iter(proc.stdout.readline, ""):
+            if not line:
+                break
+            print(line.rstrip())
+        proc.wait()
+        return proc.returncode == 0
+    except Exception as e:
+        cmds.warning("[convert_glb] failed: {}".format(e))
+        return False
+
+
 def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
                export_mode, update_manifest, clean_bones=True, clean_threshold=0.001,
-               target_fps=None):
+               target_fps=None, convert_glb=False, glb_compress=True, glb_scale=100.0):
     """Main export loop."""
     items = get_items(source_folder)
     if not items:
@@ -451,9 +683,26 @@ def export_all(source_folder, target_folder, skeleton_root, geo_nodes,
     print("Exported {}/{} items".format(len(exported), total))
     print("==========================")
 
+    # --- Optional: auto-convert the freshly-exported FBX folder to GLB ---
+    glb_msg = ""
+    if convert_glb and exported:
+        print("\n[convert_glb] starting Blender batch on {}".format(target_folder))
+        glb_folder = os.path.join(
+            os.path.dirname(target_folder),
+            "glb",
+            os.path.basename(target_folder)
+        ).replace("\\", "/")
+        success = convert_folder_to_glb(target_folder, glb_folder,
+                                         compress=glb_compress, scale=glb_scale)
+        if success:
+            glb_msg = "\n\nGLB conversion: ✓ → {}".format(glb_folder)
+            print("[convert_glb] done → {}".format(glb_folder))
+        else:
+            glb_msg = "\n\nGLB conversion FAILED (see Script Editor)."
+
     cmds.confirmDialog(title="Done",
-                       message="Export finished!\n{}/{} items exported.\n\nCheck Script Editor for details.".format(
-                           len(exported), total))
+                       message="Export finished!\n{}/{} items exported.{}\n\nCheck Script Editor for details.".format(
+                           len(exported), total, glb_msg))
 
 
 # ============================================================
@@ -505,6 +754,121 @@ def pick_geos(*args):
         cmds.warning("Select one or more geometry groups/meshes.")
         return
     cmds.textFieldButtonGrp("gloops_geos", edit=True, text=", ".join(sel))
+
+
+def run_batch_glb_convert(*args):
+    """Recursively convert every FBX under the input folder to GLB,
+    mirroring the folder structure in the output folder.
+
+    The heavy lifting is done by fbx_to_glb.py running Blender headless
+    (which already walks os.walk + relpath, so subfolder layout is
+    preserved automatically). The FBX sources are NEVER modified or
+    deleted — just copied/converted."""
+    input_folder  = cmds.textFieldButtonGrp("glb_input",  q=True, text=True).strip()
+    output_folder = cmds.textFieldButtonGrp("glb_output", q=True, text=True).strip()
+    compress      = cmds.checkBox("glb_batch_compress", q=True, value=True)
+    scale         = cmds.floatSliderGrp("glb_batch_scale", q=True, value=True)
+
+    if not input_folder or not os.path.isdir(input_folder):
+        cmds.confirmDialog(title="Error",
+                           message="Input folder not found:\n{}".format(input_folder))
+        return
+    if not output_folder:
+        cmds.confirmDialog(title="Error", message="Set an output folder.")
+        return
+
+    # Pre-count FBX files so the user knows what they're signing up for
+    total = 0
+    for dirpath, _, filenames in os.walk(input_folder):
+        for fn in filenames:
+            if fn.lower().endswith(".fbx"):
+                total += 1
+
+    if total == 0:
+        cmds.confirmDialog(title="Nothing to do",
+                           message="No .fbx file found under:\n{}".format(input_folder))
+        return
+
+    result = cmds.confirmDialog(
+        title="Confirm Batch GLB Convert",
+        message="This will convert {} FBX file(s) to GLB.\n\n"
+                "Input:   {}\n"
+                "Output:  {}\n"
+                "Draco:   {}\n"
+                "Scale:   {}\n\n"
+                "Folder structure is preserved. Source FBX are untouched.\n"
+                "Launches Blender in background — can take a few minutes.".format(
+                    total, input_folder, output_folder,
+                    "ON" if compress else "OFF", scale),
+        button=["Convert", "Cancel"], defaultButton="Convert", cancelButton="Cancel")
+    if result != "Convert":
+        return
+
+    print("\n========== BATCH FBX → GLB ==========")
+    print("Input:    {}".format(input_folder))
+    print("Output:   {}".format(output_folder))
+    print("Compress: {}".format(compress))
+    print("Scale:    {}".format(scale))
+    print("Files:    {}".format(total))
+    print("=====================================\n")
+
+    ok = convert_folder_to_glb(input_folder, output_folder,
+                                compress=compress, scale=scale)
+
+    if ok:
+        cmds.confirmDialog(
+            title="Done",
+            message="Batch conversion finished!\n{} file(s) → {}".format(total, output_folder))
+    else:
+        cmds.confirmDialog(
+            title="Failed",
+            message="GLB conversion FAILED.\nCheck Script Editor for details.")
+
+
+def run_batch_props(*args):
+    """Read the current Maya selection (mesh transforms), use the
+    Skeleton Root + Target fields, and batch export one FBX per mesh
+    (skeleton + that mesh, no animation). Filename = mesh name."""
+    target = cmds.textFieldButtonGrp("gloops_target", q=True, text=True).strip()
+    skeleton_root = cmds.textFieldButtonGrp("gloops_skeleton", q=True, text=True).strip()
+
+    sel = cmds.ls(selection=True, long=False, type="transform") or []
+    # Keep only transforms that have a mesh shape
+    meshes = []
+    for s in sel:
+        shapes = cmds.listRelatives(s, shapes=True, type="mesh") or []
+        if shapes:
+            meshes.append(s)
+
+    if not meshes:
+        cmds.confirmDialog(
+            title="Error",
+            message="Select one or more MESH transforms in the viewport,\n"
+                    "then click 'Batch Export Props' again.")
+        return
+    if not skeleton_root:
+        cmds.confirmDialog(title="Error", message="Pick a Skeleton Root above.")
+        return
+    if not target:
+        cmds.confirmDialog(title="Error",
+                           message="Set a Target folder above.\n"
+                                   "Tip: point it at fbx/ANIM/<Category>/PROPS/")
+        return
+
+    result = cmds.confirmDialog(
+        title="Confirm Batch Prop Export",
+        message="Export {} mesh(es) as separate FBX files?\n\n"
+                "Each file: skeleton + ONE mesh, no animation.\n"
+                "Filename = mesh name.\n\n"
+                "Target: {}\n"
+                "Skeleton: {}\n\n"
+                "Scene will be SAVED and reopened between each export.".format(
+                    len(meshes), target, skeleton_root),
+        button=["Export", "Cancel"], defaultButton="Export", cancelButton="Cancel")
+    if result != "Export":
+        return
+
+    batch_export_props(target, skeleton_root, meshes)
 
 
 def run_export(*args):
@@ -561,8 +925,13 @@ def run_export(*args):
     if result != "Export":
         return
 
+    convert_glb  = cmds.checkBox("gloops_convert_glb", q=True, value=True)
+    glb_compress = cmds.checkBox("gloops_glb_compress", q=True, value=True)
+    glb_scale    = cmds.floatSliderGrp("gloops_glb_scale", q=True, value=True)
+
     export_all(source, target, skeleton_root, geo_nodes, export_mode, update_manifest,
-               clean_bones, clean_threshold, target_fps=target_fps)
+               clean_bones, clean_threshold, target_fps=target_fps,
+               convert_glb=convert_glb, glb_compress=glb_compress, glb_scale=glb_scale)
 
 
 def show_ui():
@@ -667,6 +1036,35 @@ def show_ui():
                          columnWidth3=[100, 60, 200], adjustableColumn=3,
                          annotation="Max delta from T-pose to consider a bone unchanged")
 
+    cmds.separator(height=4, style="in")
+
+    # Auto-convert to GLB via Blender after FBX export
+    cmds.checkBox("gloops_convert_glb",
+                   label="Auto-convert FBX → GLB (via headless Blender)",
+                   value=False,
+                   annotation="After exporting the FBX batch, launch Blender\n"
+                              "in background mode to convert each file to GLB.\n"
+                              "GLB loads ~3x faster in three.js and is smaller.")
+
+    cmds.checkBox("gloops_glb_compress",
+                   label="GLB Draco compression (smaller, slower load)",
+                   value=True,
+                   annotation="Applies Draco mesh compression to the GLB output.\n"
+                              "Massive file-size reduction (~70%) at the cost of\n"
+                              "a slightly longer browser-side decode.")
+
+    cmds.floatSliderGrp("gloops_glb_scale",
+                         label="GLB scale:", field=True,
+                         minValue=0.01, maxValue=200.0,
+                         fieldMinValue=0.001, fieldMaxValue=1000.0,
+                         value=100.0, step=1.0,
+                         columnWidth3=[90, 60, 200], adjustableColumn=3,
+                         annotation="Uniform scale factor applied in Blender\n"
+                                    "before GLB export. Maya FBX exports in cm\n"
+                                    "but Blender treats units as meters, so use\n"
+                                    "100 to restore the authored size. Use 1.0\n"
+                                    "if your FBX is already in meters.")
+
     cmds.separator(height=8, style="none")
 
     cmds.button(label="EXPORT", height=40, backgroundColor=[0.2, 0.6, 0.3],
@@ -675,6 +1073,72 @@ def show_ui():
     cmds.separator(height=4, style="none")
     cmds.text(label="Scene will be saved and reopened between each export.",
               font="smallPlainLabelFont", align="center")
+
+    # ------------------------------------------------------------
+    # Batch Prop Export — independent path (no Studio Library loop)
+    # ------------------------------------------------------------
+    cmds.separator(height=10, style="in")
+    cmds.text(label="Batch Prop Export (skeleton + mesh)",
+              font="boldLabelFont", align="left")
+    cmds.text(label="Select MESHES in the viewport, set the Target folder above\n"
+                    "to point at fbx/ANIM/<Category>/PROPS/, then click below.\n"
+                    "One static FBX per mesh, named after the mesh.",
+              font="smallPlainLabelFont", align="left")
+    cmds.button(label="BATCH EXPORT PROPS",
+                height=34, backgroundColor=[0.35, 0.45, 0.7],
+                command=run_batch_props,
+                annotation="For each selected mesh, export an FBX containing\n"
+                           "(skeleton root + that single mesh) with no animation.\n"
+                           "Filename = mesh name. Used by the customizer's\n"
+                           "Type C paired-prop autodetect (skeleton rebind).")
+
+    # ------------------------------------------------------------
+    # Batch FBX -> GLB (recursive folder convert)
+    # ------------------------------------------------------------
+    cmds.separator(height=10, style="in")
+    cmds.text(label="Batch FBX → GLB (recursive folder)",
+              font="boldLabelFont", align="left")
+    cmds.text(label="Pick a root folder of FBX files (with any subfolders).\n"
+                    "Each .fbx is converted to .glb in the output folder,\n"
+                    "preserving the exact sub-folder structure.\n"
+                    "Source FBX files are NEVER modified or deleted.",
+              font="smallPlainLabelFont", align="left")
+
+    cmds.textFieldButtonGrp(
+        "glb_input", label="Input FBX:", text=DEFAULT_TARGET,
+        buttonLabel="Browse...",
+        buttonCommand='browse_folder_os("glb_input")',
+        columnWidth3=[90, 390, 80], adjustableColumn=2,
+        annotation="Root folder containing .fbx files (recursive)")
+
+    cmds.textFieldButtonGrp(
+        "glb_output", label="Output GLB:", text=DEFAULT_TARGET.replace("/FBX/", "/GLB/").replace("/fbx/", "/glb/"),
+        buttonLabel="Browse...",
+        buttonCommand='browse_folder_os("glb_output")',
+        columnWidth3=[90, 390, 80], adjustableColumn=2,
+        annotation="Destination folder — sub-folder structure mirrors input")
+
+    cmds.checkBox("glb_batch_compress",
+                  label="Draco compression (smaller GLB, slower decode)",
+                  value=True,
+                  annotation="Applies Draco mesh compression. ~70% smaller files,\n"
+                             "slightly longer decode in the browser.")
+
+    cmds.floatSliderGrp("glb_batch_scale",
+                         label="Scale:", field=True,
+                         minValue=0.01, maxValue=200.0,
+                         fieldMinValue=0.001, fieldMaxValue=1000.0,
+                         value=100.0, step=1.0,
+                         columnWidth3=[90, 60, 200], adjustableColumn=3,
+                         annotation="Uniform scale passed to Blender before GLB\n"
+                                    "export. Maya-cm FBX → use 100.")
+
+    cmds.button(label="BATCH CONVERT FBX → GLB",
+                height=34, backgroundColor=[0.7, 0.45, 0.3],
+                command=run_batch_glb_convert,
+                annotation="Recursively scan the input folder and convert every .fbx\n"
+                           "to .glb in the output folder, preserving subfolder layout.\n"
+                           "Runs Blender in background. Original FBX files untouched.")
 
     cmds.setParent("..")
     cmds.showWindow(win)

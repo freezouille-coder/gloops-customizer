@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — City Blocks</title>
+<style>
+  :root {
+    --bg:#12141a; --panel:#1b1e27; --panel-2:#242836;
+    --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a;
+    --road:#3a3d42; --road-dark:#2a2d31; --road-line:#f0ddb8;
+    --sidewalk:#8e8876;
+    --b-S:#8e8dff;    /* small square */
+    --b-M:#ffa257;    /* medium square = 50x50 reference */
+    --b-L:#ff6e9c;    /* large square */
+    --b-XL:#ffd44c;   /* xl square */
+    --b-R1:#60c890;   /* rect 1x2 */
+    --b-R2:#4ea8e8;   /* rect 2x3 */
+    --b-R3:#c680ff;   /* rect 2x4 */
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    padding:40px 24px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    line-height:1.55;
+    max-width:1100px;
+    margin-inline:auto;
+  }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:40px 0 14px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:20px 0 8px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; font-size:15px; }
+  .panel { background:var(--panel); border-radius:10px; padding:18px 22px; margin:14px 0; border-left:4px solid var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.55; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:14px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+
+  /* SVG diagram containers */
+  .diagram {
+    background:#1a1c22;
+    border-radius:10px;
+    padding:20px;
+    margin:18px 0;
+    border:1px solid var(--panel-2);
+    text-align:center;
+  }
+  .diagram svg { max-width:100%; height:auto; display:block; margin:0 auto; }
+  .diagram-caption {
+    color:var(--muted);
+    font-size:13px;
+    margin-top:10px;
+    font-style:italic;
+  }
+  .two-col {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin:14px 0;
+  }
+  .three-col {
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+    margin:14px 0;
+  }
+  @media (max-width:800px) {
+    .two-col, .three-col { grid-template-columns:1fr; }
+  }
+
+  /* SVG default styles */
+  .svg-road  { fill:var(--road); }
+  .svg-road-dark { fill:var(--road-dark); }
+  .svg-sidewalk { fill:var(--sidewalk); }
+  .svg-dash  { stroke:var(--road-line); stroke-width:1.2; stroke-dasharray:4 3; fill:none; }
+  .svg-outline { fill:none; stroke:#fff; stroke-width:1; stroke-dasharray:2 2; opacity:.4; }
+  .svg-label { fill:#fff; font-size:10px; font-family:'SF Mono',Menlo,monospace; }
+  .svg-label-sm { fill:#fff; font-size:8px; font-family:'SF Mono',Menlo,monospace; }
+  .svg-dim   { fill:var(--accent); font-size:10px; font-family:-apple-system,sans-serif; font-weight:700; }
+  .svg-building-label { fill:#000; font-size:10px; font-family:-apple-system,sans-serif; font-weight:700; text-anchor:middle; dominant-baseline:middle; opacity:.7; }
+
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-right:6px; }
+  .badge-S  { background:var(--b-S);  color:#000; }
+  .badge-M  { background:var(--b-M);  color:#000; }
+  .badge-L  { background:var(--b-L);  color:#000; }
+  .badge-XL { background:var(--b-XL); color:#000; }
+  .badge-R  { background:var(--b-R1); color:#000; }
+
+  ul.rules { padding-left:20px; }
+  ul.rules li { margin:6px 0; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>🏙️ City Blocks — Théorie de la ville procédurale</h1>
+<p class="lede">La ville est composée de blocs modélisés à l'avance. Chaque bloc
+intègre déjà la moitié d'une route tout autour de lui. Deux blocs collés
+forment une route à 2 voies ; quatre blocs qui se rencontrent à un coin
+forment un carrefour.</p>
+
+<!-- =============================================================== -->
+<h2>1. 🧩 Principe de base</h2>
+
+<p>Un <b>bloc</b> contient :</p>
+<ul>
+  <li>Le <b>bâtiment</b> (et son trottoir intérieur) au centre</li>
+  <li>Une <b>demi-route de 5 m</b> sur chacun des 4 côtés</li>
+  <li>Un <b>quart de carrefour</b> à chaque coin</li>
+</ul>
+
+<div class="diagram">
+  <svg viewBox="0 0 360 360" width="360">
+    <!-- Bloc total : 240x240px représente un bloc M = 50x50 m -->
+    <!-- Chaque côté : 40px de demi-route, 160px de bâtiment, 40px demi-route -->
+    <g transform="translate(60,60)">
+      <!-- Route de fond -->
+      <rect x="0" y="0" width="240" height="240" class="svg-road"/>
+
+      <!-- Quarts de carrefour aux 4 coins (plus sombres) -->
+      <rect x="0"   y="0"   width="40" height="40" class="svg-road-dark"/>
+      <rect x="200" y="0"   width="40" height="40" class="svg-road-dark"/>
+      <rect x="0"   y="200" width="40" height="40" class="svg-road-dark"/>
+      <rect x="200" y="200" width="40" height="40" class="svg-road-dark"/>
+
+      <!-- Trottoir autour du bâtiment -->
+      <rect x="40" y="40" width="160" height="160" class="svg-sidewalk"/>
+
+      <!-- Bâtiment -->
+      <rect x="56" y="56" width="128" height="128" fill="var(--b-M)" rx="2"/>
+
+      <!-- Lignes de route (axe central des 2 voies simulées) -->
+      <line x1="120" y1="0"   x2="120" y2="40"  class="svg-dash"/>
+      <line x1="120" y1="200" x2="120" y2="240" class="svg-dash"/>
+      <line x1="0"   y1="120" x2="40"  y2="120" class="svg-dash"/>
+      <line x1="200" y1="120" x2="240" y2="120" class="svg-dash"/>
+
+      <!-- Labels -->
+      <text x="120" y="120" class="svg-building-label">BÂTIMENT</text>
+      <text x="48"  y="120" class="svg-label" text-anchor="middle" transform="rotate(-90 48 120)">trottoir</text>
+      <text x="20"  y="125" class="svg-label" text-anchor="middle">½ route</text>
+      <text x="220" y="125" class="svg-label" text-anchor="middle">½ route</text>
+      <text x="120" y="22"  class="svg-label" text-anchor="middle">½ route</text>
+      <text x="120" y="228" class="svg-label" text-anchor="middle">½ route</text>
+      <text x="20"  y="25"  class="svg-label-sm" text-anchor="middle" fill="#ffc75a">¼ inter.</text>
+      <text x="220" y="25"  class="svg-label-sm" text-anchor="middle" fill="#ffc75a">¼ inter.</text>
+      <text x="20"  y="220" class="svg-label-sm" text-anchor="middle" fill="#ffc75a">¼ inter.</text>
+      <text x="220" y="220" class="svg-label-sm" text-anchor="middle" fill="#ffc75a">¼ inter.</text>
+    </g>
+
+    <!-- Cotes externes -->
+    <line x1="60" y1="320" x2="300" y2="320" stroke="var(--accent)" stroke-width="1"/>
+    <line x1="60" y1="315" x2="60" y2="325" stroke="var(--accent)" stroke-width="1"/>
+    <line x1="300" y1="315" x2="300" y2="325" stroke="var(--accent)" stroke-width="1"/>
+    <text x="180" y="340" class="svg-dim" text-anchor="middle">50 m (bloc M = 2×2 cellules)</text>
+
+    <line x1="40" y1="60" x2="40" y2="300" stroke="var(--accent)" stroke-width="1"/>
+    <line x1="35" y1="60" x2="45" y2="60" stroke="var(--accent)" stroke-width="1"/>
+    <line x1="35" y1="300" x2="45" y2="300" stroke="var(--accent)" stroke-width="1"/>
+    <text x="30" y="180" class="svg-dim" text-anchor="middle" transform="rotate(-90 30 180)">50 m</text>
+
+    <!-- Cote demi-route -->
+    <line x1="60" y1="70" x2="100" y2="70" stroke="var(--b-M)" stroke-width="1"/>
+    <line x1="60" y1="65" x2="60" y2="75" stroke="var(--b-M)" stroke-width="1"/>
+    <line x1="100" y1="65" x2="100" y2="75" stroke="var(--b-M)" stroke-width="1"/>
+    <text x="80" y="62" class="svg-label" text-anchor="middle" fill="var(--b-M)">5 m</text>
+  </svg>
+  <div class="diagram-caption">Anatomie d'un bloc M (50×50 m). Bâtiment 40×40 m au centre, demi-route 5 m sur chaque côté, quart de carrefour à chaque coin.</div>
+</div>
+
+<!-- =============================================================== -->
+<h2>2. 📏 Grille & unités</h2>
+
+<div class="panel">
+  <p><b>Cellule de base :</b> <code>25 m</code>. Tout bloc mesure N × M cellules.</p>
+  <p><b>Demi-route :</b> <code>5 m</code> comprise dans le bloc, sur chaque côté.</p>
+  <p><b>Route complète (2 voies) :</b> <code>10 m</code> = la somme des demi-routes de 2 blocs adjacents.</p>
+  <p><b>Carrefour :</b> <code>10×10 m</code> = somme des 4 quarts de carrefour de 4 blocs qui se rencontrent au coin.</p>
+</div>
+
+<div class="two-col">
+  <div class="diagram">
+    <svg viewBox="0 0 480 240" width="480">
+      <!-- Deux blocs côte à côte -->
+      <g transform="translate(10,20)">
+        <!-- Bloc gauche (M) -->
+        <rect x="0" y="0" width="200" height="200" class="svg-road"/>
+        <rect x="40" y="40" width="120" height="120" class="svg-sidewalk"/>
+        <rect x="50" y="50" width="100" height="100" fill="var(--b-M)" rx="2"/>
+        <!-- Bloc droit (M) -->
+        <rect x="200" y="0" width="200" height="200" class="svg-road"/>
+        <rect x="240" y="40" width="120" height="120" class="svg-sidewalk"/>
+        <rect x="250" y="50" width="100" height="100" fill="var(--b-M)" rx="2"/>
+        <!-- Coins sombres de chaque bloc -->
+        <rect x="0"   y="0"   width="40" height="40" class="svg-road-dark"/>
+        <rect x="160" y="0"   width="40" height="40" class="svg-road-dark"/>
+        <rect x="0"   y="160" width="40" height="40" class="svg-road-dark"/>
+        <rect x="160" y="160" width="40" height="40" class="svg-road-dark"/>
+        <rect x="200" y="0"   width="40" height="40" class="svg-road-dark"/>
+        <rect x="360" y="0"   width="40" height="40" class="svg-road-dark"/>
+        <rect x="200" y="160" width="40" height="40" class="svg-road-dark"/>
+        <rect x="360" y="160" width="40" height="40" class="svg-road-dark"/>
+        <!-- Ligne discontinue centrale mettant en valeur la route résultante -->
+        <line x1="200" y1="42" x2="200" y2="158" class="svg-dash" stroke="#ffe"/>
+        <!-- Séparateur visuel entre les blocs -->
+        <line x1="200" y1="0" x2="200" y2="200" stroke="#ffc75a" stroke-width="0.6" stroke-dasharray="3 3" opacity=".6"/>
+
+        <!-- Flèche + label -->
+        <rect x="160" y="42" width="80" height="116" fill="none" stroke="#ffc75a" stroke-width="1.3" rx="3"/>
+        <text x="200" y="220" class="svg-dim" text-anchor="middle">Route complète 10 m (5+5)</text>
+      </g>
+    </svg>
+    <div class="diagram-caption">Deux blocs adjacents → les demi-routes se combinent en une route complète 10 m, 2 voies.</div>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 240 240" width="240">
+      <!-- 4 blocs en 2x2 -->
+      <g transform="translate(20,20)">
+        <!-- Bloc top-left -->
+        <rect x="0"   y="0"   width="100" height="100" class="svg-road"/>
+        <rect x="20"  y="20"  width="60"  height="60"  class="svg-sidewalk"/>
+        <rect x="25"  y="25"  width="50"  height="50"  fill="var(--b-S)" rx="2"/>
+        <rect x="80"  y="80"  width="20"  height="20"  class="svg-road-dark"/>
+        <!-- Bloc top-right -->
+        <rect x="100" y="0"   width="100" height="100" class="svg-road"/>
+        <rect x="120" y="20"  width="60"  height="60"  class="svg-sidewalk"/>
+        <rect x="125" y="25"  width="50"  height="50"  fill="var(--b-M)" rx="2"/>
+        <rect x="100" y="80"  width="20"  height="20"  class="svg-road-dark"/>
+        <!-- Bloc bottom-left -->
+        <rect x="0"   y="100" width="100" height="100" class="svg-road"/>
+        <rect x="20"  y="120" width="60"  height="60"  class="svg-sidewalk"/>
+        <rect x="25"  y="125" width="50"  height="50"  fill="var(--b-L)" rx="2"/>
+        <rect x="80"  y="100" width="20"  height="20"  class="svg-road-dark"/>
+        <!-- Bloc bottom-right -->
+        <rect x="100" y="100" width="100" height="100" class="svg-road"/>
+        <rect x="120" y="120" width="60"  height="60"  class="svg-sidewalk"/>
+        <rect x="125" y="125" width="50"  height="50"  fill="var(--b-R1)" rx="2"/>
+        <rect x="100" y="100" width="20"  height="20"  class="svg-road-dark"/>
+
+        <!-- Highlight du carrefour -->
+        <rect x="80" y="80" width="40" height="40" fill="none" stroke="#ffc75a" stroke-width="1.5" rx="2"/>
+
+        <!-- Lignes des voies -->
+        <line x1="100" y1="0"   x2="100" y2="80"  class="svg-dash"/>
+        <line x1="100" y1="120" x2="100" y2="200" class="svg-dash"/>
+        <line x1="0"   y1="100" x2="80"  y2="100" class="svg-dash"/>
+        <line x1="120" y1="100" x2="200" y2="100" class="svg-dash"/>
+
+        <text x="100" y="220" class="svg-dim" text-anchor="middle">Carrefour 10×10 m</text>
+      </g>
+    </svg>
+    <div class="diagram-caption">Quatre blocs qui se rencontrent en coin → les 4 quarts de carrefour s'assemblent en 1 intersection complète.</div>
+  </div>
+</div>
+
+<!-- =============================================================== -->
+<h2>3. 🧱 Palette de blocs à modéliser</h2>
+
+<p>Le tableau ci-dessous liste la palette complète. <b>Commencer avec les 3 premiers
+(<span class="badge badge-S">S</span>, <span class="badge badge-M">M</span>,
+<span class="badge badge-R">R1×2</span>)</b> suffit pour démarrer : l'algo
+place du 1×1 en fallback donc pas de trou possible.</p>
+
+<table>
+  <tr>
+    <th>Badge</th><th>Cellules</th><th>Taille totale</th>
+    <th>Zone bâtiment</th><th>Usage typique</th><th>Fichier</th>
+  </tr>
+  <tr>
+    <td><span class="badge badge-S">S</span></td>
+    <td>1×1</td><td>25×25 m</td><td>15×15 m</td>
+    <td>Maison, kiosque, station-service</td>
+    <td><code>block_1x1_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-M">M</span></td>
+    <td>2×2</td><td><b>50×50 m</b></td><td>40×40 m</td>
+    <td><b>Bloc standard</b> — commerces, résidentiel</td>
+    <td><code>block_2x2_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-L">L</span></td>
+    <td>3×3</td><td>75×75 m</td><td>65×65 m</td>
+    <td>Tour moyenne, bureau</td>
+    <td><code>block_3x3_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-XL">XL</span></td>
+    <td>4×4</td><td>100×100 m</td><td>90×90 m</td>
+    <td>Landmark (mall, stade, parc)</td>
+    <td><code>block_4x4_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-R">R1×2</span></td>
+    <td>1×2</td><td>25×50 m</td><td>15×40 m</td>
+    <td>Rangée de petites boutiques</td>
+    <td><code>block_1x2_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-R">R2×3</span></td>
+    <td>2×3</td><td>50×75 m</td><td>40×65 m</td>
+    <td>Immeuble d'appartements</td>
+    <td><code>block_2x3_01.glb</code></td>
+  </tr>
+  <tr>
+    <td><span class="badge badge-R">R2×4</span></td>
+    <td>2×4</td><td>50×100 m</td><td>40×90 m</td>
+    <td>Long bâtiment industriel</td>
+    <td><code>block_2x4_01.glb</code></td>
+  </tr>
+</table>
+
+<div class="diagram">
+  <svg viewBox="0 0 720 300" width="720">
+    <!-- Palette visualisation, chaque bloc à échelle proportionnelle (1 cellule = 20px) -->
+    <g transform="translate(20,20)">
+      <!-- S 1x1 -->
+      <g transform="translate(0,220)">
+        <rect width="20" height="20" class="svg-road"/>
+        <rect x="3" y="3" width="14" height="14" fill="var(--b-S)"/>
+        <text x="10" y="38" class="svg-label" text-anchor="middle">S 1×1</text>
+      </g>
+      <!-- M 2x2 -->
+      <g transform="translate(50,180)">
+        <rect width="40" height="40" class="svg-road"/>
+        <rect x="6" y="6" width="28" height="28" fill="var(--b-M)"/>
+        <text x="20" y="58" class="svg-label" text-anchor="middle">M 2×2</text>
+      </g>
+      <!-- L 3x3 -->
+      <g transform="translate(120,120)">
+        <rect width="60" height="60" class="svg-road"/>
+        <rect x="9" y="9" width="42" height="42" fill="var(--b-L)"/>
+        <text x="30" y="78" class="svg-label" text-anchor="middle">L 3×3</text>
+      </g>
+      <!-- XL 4x4 -->
+      <g transform="translate(220,40)">
+        <rect width="80" height="80" class="svg-road"/>
+        <rect x="12" y="12" width="56" height="56" fill="var(--b-XL)"/>
+        <text x="40" y="98" class="svg-label" text-anchor="middle">XL 4×4</text>
+      </g>
+      <!-- R 1x2 -->
+      <g transform="translate(340,220)">
+        <rect width="20" height="40" class="svg-road"/>
+        <rect x="3" y="6" width="14" height="28" fill="var(--b-R1)"/>
+        <text x="10" y="58" class="svg-label" text-anchor="middle">1×2</text>
+      </g>
+      <!-- R 2x3 -->
+      <g transform="translate(390,180)">
+        <rect width="40" height="60" class="svg-road"/>
+        <rect x="6" y="9" width="28" height="42" fill="var(--b-R2)"/>
+        <text x="20" y="78" class="svg-label" text-anchor="middle">2×3</text>
+      </g>
+      <!-- R 2x4 -->
+      <g transform="translate(470,140)">
+        <rect width="40" height="80" class="svg-road"/>
+        <rect x="6" y="12" width="28" height="56" fill="var(--b-R3)"/>
+        <text x="20" y="98" class="svg-label" text-anchor="middle">2×4</text>
+      </g>
+
+      <!-- Légende sur la droite -->
+      <g transform="translate(560,20)">
+        <text x="0" y="0" class="svg-dim">Échelle relative</text>
+        <text x="0" y="18" class="svg-label">1 cellule = 25 m</text>
+        <text x="0" y="36" class="svg-label">1 bloc M = 2×2 = 50 m</text>
+        <text x="0" y="54" class="svg-label">1 bloc XL = 4×4 = 100 m</text>
+
+        <text x="0" y="90" class="svg-dim">Commencer par :</text>
+        <text x="0" y="108" class="svg-label">• 1×1 (fallback garanti)</text>
+        <text x="0" y="126" class="svg-label">• 2×2 (standard)</text>
+        <text x="0" y="144" class="svg-label">• 2×3 (variété)</text>
+      </g>
+    </g>
+  </svg>
+  <div class="diagram-caption">La palette complète, à échelle proportionnelle (contours = route incluse).</div>
+</div>
+
+<!-- =============================================================== -->
+<h2>4. 📝 Convention de nommage</h2>
+
+<div class="panel">
+<pre><b>block_&lt;W&gt;x&lt;H&gt;_&lt;Name&gt;[_w&lt;weight&gt;].&lt;ext&gt;</b>
+
+W       = largeur en cellules (1..4)
+H       = profondeur en cellules (1..4)
+Name    = <b>label alphanumérique</b> — utilise un vrai nom descriptif.
+          Exemples : Stores, SuperMarket, House, Tower, Plaza, Parc,
+          Church, Office, Factory, Warehouse, etc.
+          (Les numériques type "01", "02" marchent aussi pour rétro-compat.)
+weight  = <b>OPTIONNEL</b> — poids de tirage (défaut 10).
+          Plus élevé = variante plus fréquente.
+ext     = fbx ou glb</pre>
+</div>
+
+<p>Exemples :</p>
+
+<table>
+  <tr><th>Fichier</th><th>Dims</th><th>Poids</th><th>Note</th></tr>
+  <tr><td><code>block_1x1_House.fbx</code></td><td>25×25 m</td><td>10 (défaut)</td><td>Petite maison</td></tr>
+  <tr><td><code>block_2x2_Stores.fbx</code></td><td>50×50 m</td><td>10 (défaut)</td><td>Rangée de commerces</td></tr>
+  <tr><td><code>block_2x2_SuperMarket_w30.fbx</code></td><td>50×50 m</td><td>30</td><td>Supermarché — 3× plus fréquent</td></tr>
+  <tr><td><code>block_3x3_Office_w3.fbx</code></td><td>75×75 m</td><td>3</td><td>Bureaux rare (0.3× le défaut)</td></tr>
+  <tr><td><code>block_1x2_Kiosk.fbx</code></td><td>25×50 m</td><td>10</td><td>Kiosque étroit — algo tourne à 90° pour remplir 2×1</td></tr>
+  <tr><td><code>block_4x4_Church_w2.fbx</code></td><td>100×100 m</td><td>2</td><td>Église landmark (une par ville)</td></tr>
+</table>
+
+<p>Le nom sémantique est le nom qui apparaît dans le générateur ci-dessous,
+ce qui rend le tuning beaucoup plus intuitif que <code>_01</code>,
+<code>_02</code>, etc.</p>
+
+<h3>Emplacement</h3>
+<pre>fbx/SET/block_&lt;W&gt;x&lt;H&gt;_&lt;NN&gt;[_w&lt;weight&gt;].fbx
+glb/SET/block_&lt;W&gt;x&lt;H&gt;_&lt;NN&gt;[_w&lt;weight&gt;].glb</pre>
+
+<h3>Deux niveaux de poids</h3>
+
+<p>Les poids se combinent de façon <b>hiérarchique</b> :</p>
+<ol>
+  <li><b>Niveau type</b> (S / M / L / XL / 1×2 / 2×3 / 2×4) — contrôlé par
+      les sliders du générateur ci-dessous. "Je veux 30 % de M dans la
+      ville" → slider M à 30.</li>
+  <li><b>Niveau variante</b> — le <code>_w&lt;weight&gt;</code> dans le
+      filename. Quand l'algo choisit "un M", il tire parmi
+      <code>block_2x2_01.fbx</code>, <code>_02_w30.fbx</code>,
+      <code>_03_w3.fbx</code> en proportion des poids individuels.</li>
+</ol>
+
+<p>L'algorithme parse le filename :</p>
+<pre>const m = filename.match(/^block_(\d+)x(\d+)_(\d+)(?:_w(\d+))?\.(fbx|glb)$/i);
+if (m) {
+    width   = +m[1];
+    height  = +m[2];
+    variant = +m[3];
+    weight  = m[4] ? +m[4] : 10;
+}</pre>
+
+<p>Le script <code>build_manifest.py</code> fait ce parsing automatiquement
+et remplit une section <code>cityBlocks</code> dans le manifest :</p>
+<pre>"cityBlocks": [
+    { "file": "SET/block_1x1_01.fbx",    "w": 1, "h": 1, "variant": 1, "weight": 10 },
+    { "file": "SET/block_2x2_01.fbx",    "w": 2, "h": 2, "variant": 1, "weight": 10 },
+    { "file": "SET/block_2x2_02_w30.fbx","w": 2, "h": 2, "variant": 2, "weight": 30 },
+    { "file": "SET/block_2x3_01.fbx",    "w": 2, "h": 3, "variant": 1, "weight": 10 }
+]</pre>
+
+<p>Relance <code>python scripts/build_manifest.py</code> quand tu ajoutes /
+renommes des blocs.</p>
+
+<!-- =============================================================== -->
+<h2>5. 🛠️ Règles de modeling</h2>
+
+<div class="panel">
+<ul class="rules">
+  <li><b>Unités :</b> le fichier est exporté à l'échelle <b>mètre</b>
+      (1 unité Blender = 1 m). Le script <code>export_traits.py</code> gère
+      déjà le scale global.</li>
+  <li><b>Pivot = coin inférieur-gauche</b> du bloc (X=0, Y=0, Z=0 au coin sud-ouest).
+      Pas centré, pas aligné au bâtiment — vraiment le <i>coin</i> extérieur.</li>
+  <li><b>Axe Y = haut.</b> Le bâtiment monte vers +Y.</li>
+  <li><b>Demi-route de 5 m</b> sur <b>chacun des 4 côtés</b>, collée au bord du bloc.</li>
+  <li><b>Coins :</b> inclure le quart de carrefour (revêtement + coin de trottoir arrondi).
+      Pas de feu de circulation ni de passage piéton — l'algo les ajoutera en instances.</li>
+  <li><b>Bord extérieur :</b> le trottoir s'arrête pile sur la ligne du bloc.
+      Si un morceau dépasse de 1 cm, il y aura z-fight avec le voisin.</li>
+  <li><b>Pas de flèches peintes</b> sur la route — le sens est géré en gameplay.</li>
+  <li><b>Export :</b> GLB via le script existant. Nommer le fichier selon la convention.</li>
+</ul>
+</div>
+
+<!-- =============================================================== -->
+<h2>6. 🎲 Algorithme de placement</h2>
+
+<p>Le placement est <b>glouton pondéré sur grille</b> : on remplit cellule
+par cellule, en tirant un bloc aléatoire parmi ceux qui rentrent. Garantit
+zéro trou car le 1×1 rentre toujours.</p>
+
+<pre>GRID = 20×20 cellules  = 500×500 m
+
+1. Marquer toutes les cellules comme vides.
+2. Générer la liste des cellules vides, dans un ordre aléatoire.
+3. POUR chaque cellule (x, y) vide :
+     Tirer un bloc pondéré selon [XL:5%, L:10%, 2×4:15%, 2×3:20%,
+                                   M:30%, 1×2:10%, S:10%]
+     SI rectangle, 50/50 pour tourner à 90°.
+     SI le footprint tient (bornes + cellules libres) :
+         PLACER le bloc, marquer les cellules occupées.
+     SINON :
+         Essayer la taille juste en dessous.
+         Fallback S (1×1) : rentre toujours si la cellule est vide.
+4. Toutes les cellules sont remplies → 0 trou garanti.</pre>
+
+<p>Variantes optionnelles pour donner du caractère :</p>
+
+<ul class="rules">
+  <li><b>Zones thématiques :</b> pondération change avec la distance au centre
+      (centre = L/XL, périphérie = S/M).</li>
+  <li><b>Avenues forcées :</b> aligner des rangées complètes de M pour créer
+      des rues rectilignes.</li>
+  <li><b>Spots landmark :</b> forcer un XL à position fixe (mairie, parc).</li>
+  <li><b>Seed persistante :</b> même seed = même ville (utile pour debug +
+      multiplayer futur).</li>
+</ul>
+
+<!-- =============================================================== -->
+<h2>7. 🗺️ Exemples de layouts possibles</h2>
+
+<p>Trois stratégies de placement sur la même grille 10×10, pour illustrer
+le type de ville qu'on peut obtenir en changeant juste les poids.</p>
+
+<div class="three-col">
+
+  <!-- Layout 1: Random -->
+  <div class="diagram">
+    <svg viewBox="0 0 260 260" width="260">
+      <!-- fond route -->
+      <rect x="0" y="0" width="260" height="260" class="svg-road"/>
+
+      <!-- Placement aléatoire typique : mix de S/M/L/rect -->
+      <!-- Chaque cellule = 25px, bâtiment remplit avec marge 3px -->
+
+      <!-- Ligne 1 (y=5..30) -->
+      <rect x="8"   y="8"   width="44" height="44" fill="var(--b-M)"/>  <!-- M 2x2 -->
+      <rect x="58"  y="8"   width="44" height="44" fill="var(--b-M)"/>
+      <rect x="108" y="8"   width="94" height="44" fill="var(--b-R3)"/> <!-- 4x2 tourné -->
+      <rect x="208" y="8"   width="44" height="44" fill="var(--b-S)"/>
+
+      <!-- Ligne 2 -->
+      <rect x="8"   y="58"  width="44" height="94" fill="var(--b-R2)"/> <!-- 2x3 -->
+      <rect x="58"  y="58"  width="94" height="94" fill="var(--b-L)"/>  <!-- L 3x3 -->
+      <rect x="158" y="58"  width="44" height="44" fill="var(--b-M)"/>
+      <rect x="208" y="58"  width="44" height="94" fill="var(--b-R2)"/>
+
+      <!-- Ligne 3 (continue L au-dessus) -->
+      <rect x="158" y="108" width="44" height="44" fill="var(--b-S)"/>
+
+      <!-- Ligne 4 -->
+      <rect x="8"   y="158" width="19" height="44" fill="var(--b-S)"/>
+      <rect x="33"  y="158" width="19" height="44" fill="var(--b-S)"/>
+      <rect x="58"  y="158" width="94" height="94" fill="var(--b-XL)"/> <!-- XL 4x4, inachevé ici -->
+      <rect x="158" y="158" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="208" y="158" width="44" height="44" fill="var(--b-M)"/>
+
+      <!-- Ligne 5 -->
+      <rect x="8"   y="208" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="158" y="208" width="94" height="44" fill="var(--b-R3)"/>
+
+      <!-- Grille de cellules (fine) -->
+      <g stroke="#fff2" stroke-width="0.3" fill="none">
+        <line x1="0"   y1="0"   x2="0"   y2="260"/>
+        <line x1="26"  y1="0"   x2="26"  y2="260"/>
+        <line x1="52"  y1="0"   x2="52"  y2="260"/>
+        <line x1="78"  y1="0"   x2="78"  y2="260"/>
+        <line x1="104" y1="0"   x2="104" y2="260"/>
+        <line x1="130" y1="0"   x2="130" y2="260"/>
+        <line x1="156" y1="0"   x2="156" y2="260"/>
+        <line x1="182" y1="0"   x2="182" y2="260"/>
+        <line x1="208" y1="0"   x2="208" y2="260"/>
+        <line x1="234" y1="0"   x2="234" y2="260"/>
+      </g>
+    </svg>
+    <div class="diagram-caption"><b>Aléatoire pondéré</b> — mix organique de tous les blocs. Mood Crazy Taxi / GTA VC.</div>
+  </div>
+
+  <!-- Layout 2: Downtown center -->
+  <div class="diagram">
+    <svg viewBox="0 0 260 260" width="260">
+      <rect x="0" y="0" width="260" height="260" class="svg-road"/>
+
+      <!-- Centre : un gros XL + un L -->
+      <rect x="83"  y="83"  width="94" height="94" fill="var(--b-XL)"/>
+
+      <!-- 2nd anneau : des M -->
+      <rect x="33"  y="33"  width="44" height="44" fill="var(--b-L)"/>
+      <rect x="83"  y="33"  width="94" height="44" fill="var(--b-R3)"/>
+      <rect x="183" y="33"  width="44" height="44" fill="var(--b-L)"/>
+      <rect x="33"  y="83"  width="44" height="94" fill="var(--b-R2)"/>
+      <rect x="183" y="83"  width="44" height="94" fill="var(--b-R2)"/>
+      <rect x="33"  y="183" width="44" height="44" fill="var(--b-L)"/>
+      <rect x="83"  y="183" width="94" height="44" fill="var(--b-R3)"/>
+      <rect x="183" y="183" width="44" height="44" fill="var(--b-L)"/>
+
+      <!-- Périphérie : des S -->
+      <rect x="8"   y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="33"  y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="58"  y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="83"  y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="108" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="133" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="158" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="183" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="208" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="8"   width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="33"  y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="58"  y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="83"  y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="108" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="133" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="158" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="183" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="208" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="233" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="33"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="58"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="83"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="108" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="133" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="158" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="183" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="8"   y="208" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="33"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="58"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="83"  width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="108" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="133" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="158" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="183" width="19" height="19" fill="var(--b-S)"/>
+      <rect x="233" y="208" width="19" height="19" fill="var(--b-S)"/>
+
+    </svg>
+    <div class="diagram-caption"><b>Downtown centré</b> — poids biaisé par distance au centre : XL au milieu, S en périphérie. Skyline classique.</div>
+  </div>
+
+  <!-- Layout 3: Grid with main avenue -->
+  <div class="diagram">
+    <svg viewBox="0 0 260 260" width="260">
+      <rect x="0" y="0" width="260" height="260" class="svg-road"/>
+
+      <!-- Avenue principale verticale -->
+      <rect x="116" y="0" width="28" height="260" fill="var(--road-dark)"/>
+      <line x1="130" y1="0" x2="130" y2="260" class="svg-dash" stroke="#ffe"/>
+
+      <!-- Avenue principale horizontale -->
+      <rect x="0" y="116" width="260" height="28" fill="var(--road-dark)"/>
+      <line x1="0" y1="130" x2="260" y2="130" class="svg-dash" stroke="#ffe"/>
+
+      <!-- 4 quartiers, chacun rempli de M 2x2 alignés -->
+      <!-- Top-left -->
+      <rect x="8"   y="8"   width="44" height="44" fill="var(--b-M)"/>
+      <rect x="58"  y="8"   width="44" height="44" fill="var(--b-M)"/>
+      <rect x="8"   y="58"  width="44" height="44" fill="var(--b-M)"/>
+      <rect x="58"  y="58"  width="44" height="44" fill="var(--b-M)"/>
+
+      <!-- Top-right -->
+      <rect x="158" y="8"   width="44" height="44" fill="var(--b-L)"/>
+      <rect x="208" y="8"   width="44" height="44" fill="var(--b-M)"/>
+      <rect x="158" y="58"  width="44" height="44" fill="var(--b-M)"/>
+      <rect x="208" y="58"  width="44" height="44" fill="var(--b-M)"/>
+
+      <!-- Bottom-left -->
+      <rect x="8"   y="158" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="58"  y="158" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="8"   y="208" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="58"  y="208" width="44" height="44" fill="var(--b-M)"/>
+
+      <!-- Bottom-right -->
+      <rect x="158" y="158" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="208" y="158" width="44" height="44" fill="var(--b-M)"/>
+      <rect x="158" y="208" width="44" height="94" fill="var(--b-R2)" transform="translate(0,-50)"/>
+      <rect x="208" y="158" width="44" height="94" fill="var(--b-R2)" transform="translate(0,-50)"/>
+
+    </svg>
+    <div class="diagram-caption"><b>Grid + avenue</b> — avenue forcée en croix (pas de bâtiments) + quartiers de M alignés. Feel Manhattan / Mirror's Edge.</div>
+  </div>
+
+</div>
+
+<!-- =============================================================== -->
+<h2>8. 🎲 Générateur de layout en direct</h2>
+
+<p>L'algorithme du §6 tourne ici dans le navigateur. Clique sur un bouton
+pour générer une ville 20×20 — chaque régénération donne une disposition
+différente grâce au seed aléatoire.</p>
+
+<div class="panel">
+  <div class="gen-topbar">
+    <div class="gen-presets">
+      Preset:
+      <button class="gen-preset" data-preset="random">🎲 Random</button>
+      <button class="gen-preset" data-preset="downtown">🏙️ Downtown</button>
+      <button class="gen-preset" data-preset="grid">🛣️ Grid</button>
+      <button class="gen-preset" data-preset="mosaic">🧩 Mosaïque</button>
+    </div>
+    <div class="gen-actions">
+      <button class="gen-btn-main" id="gen-reroll">🔄 Regenerate</button>
+      <button class="gen-btn-main" id="gen-export"
+              title="Download config/city.json for in-game use">💾 Export JSON</button>
+    </div>
+  </div>
+
+  <div class="gen-grid">
+    <div class="gen-side">
+      <div class="gen-label">Block types <span class="gen-hint">(cliquez pour enable/disable)</span></div>
+      <div class="gen-rows" id="gen-rows"><!-- rows filled by JS --></div>
+
+      <!-- Per-file weights — pulled from the actual manifest so the
+           values you tune here can be copied back into filenames
+           (or exported to config/city.json for in-game use). -->
+      <div class="gen-label" style="margin-top:14px;">
+        Files from manifest
+        <span class="gen-hint" id="gen-files-status">(loading…)</span>
+      </div>
+      <div class="gen-hint" style="margin-bottom:4px;">
+        Le <b>type slider</b> ci-dessus décide de la fréquence de la
+        <b>taille</b> (ex: 30 % de 2×2). Ces sliders-ci décident, quand une
+        2×2 est choisie, de la <b>variante</b> (Stores vs SuperMarket vs …).
+      </div>
+      <div class="gen-files" id="gen-files"><!-- filled by JS --></div>
+
+      <div class="gen-aux">
+        <label class="gen-avenue-label">
+          <input type="checkbox" id="gen-avenue"> Forcer une avenue en croix
+        </label>
+      </div>
+      <div class="gen-stats" id="gen-stats">—</div>
+    </div>
+
+    <div class="gen-canvas-wrap">
+      <canvas id="gen-canvas" width="520" height="520"
+              style="width:100%;max-width:520px;display:block;margin:0 auto;
+                     background:var(--road);border-radius:8px;"></canvas>
+      <div class="gen-legend">
+        <span><span class="sw" style="background:var(--b-S)"></span> S 1×1</span>
+        <span><span class="sw" style="background:var(--b-M)"></span> M 2×2</span>
+        <span><span class="sw" style="background:var(--b-L)"></span> L 3×3</span>
+        <span><span class="sw" style="background:var(--b-XL)"></span> XL 4×4</span>
+        <span><span class="sw" style="background:var(--b-R1)"></span> 1×2</span>
+        <span><span class="sw" style="background:var(--b-R2)"></span> 2×3</span>
+        <span><span class="sw" style="background:var(--b-R3)"></span> 2×4</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .gen-topbar {
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .gen-presets { display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); font-size:12px; }
+  .gen-preset {
+    padding: 5px 10px;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .gen-preset:hover { background: #2d3142; border-color: var(--accent); }
+  .gen-preset.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .gen-btn-main {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ff6bd6, #7a3cff);
+    color: #fff;
+    border: 1px solid #ff6bd6;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .gen-btn-main:hover { filter: brightness(1.1); }
+
+  .gen-grid {
+    display:grid;
+    grid-template-columns: 240px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .gen-grid { grid-template-columns: 1fr; }
+  }
+
+  .gen-side { display:flex; flex-direction:column; gap:10px; }
+  .gen-label { color:var(--accent); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  .gen-hint { color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; }
+
+  .gen-rows { display:flex; flex-direction:column; gap:6px; }
+  .gen-files {
+    display:flex; flex-direction:column; gap:4px;
+    max-height: 260px; overflow-y: auto;
+    padding: 4px 4px 4px 0;
+  }
+  .gen-file-row {
+    display:grid;
+    grid-template-columns: 36px 1fr 40px 30px;
+    align-items:center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: var(--panel);
+    border-radius: 4px;
+    font-size: 11px;
+    border-left: 3px solid transparent;
+  }
+  .gen-file-row .f-dims {
+    font-family:'SF Mono',monospace;
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+  }
+  .gen-file-row .f-name {
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gen-file-row input[type=range] {
+    -webkit-appearance:none; appearance:none;
+    height: 3px; width: 100%;
+    background: #2a2d35;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .gen-file-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:10px; height:10px; border-radius:50%;
+    background: var(--accent); cursor:pointer;
+  }
+  .gen-file-row .f-weight {
+    font-family:'SF Mono',monospace;
+    color: var(--accent);
+    font-size: 10px;
+    text-align: right;
+  }
+  .gen-row {
+    display:grid;
+    grid-template-columns: 20px 56px 1fr 36px;
+    align-items:center;
+    gap: 8px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    transition: opacity .12s, border-color .12s;
+  }
+  .gen-row.disabled { opacity: 0.4; }
+  .gen-row input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+  .gen-swatch {
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'SF Mono',monospace; font-size:12px; color:var(--text);
+  }
+  .gen-swatch .sw-box {
+    display:inline-block; width:14px; height:14px; border-radius:3px;
+  }
+  .gen-row input[type=range] {
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:4px;
+    background: #2a2d35;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .gen-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:14px; height:14px; border-radius:50%;
+    background: var(--accent); cursor:pointer;
+    border: 1px solid #000;
+  }
+  .gen-row input[type=range]::-moz-range-thumb {
+    width:14px; height:14px; border-radius:50%;
+    background: var(--accent); cursor:pointer;
+    border: 1px solid #000;
+  }
+  .gen-row .weight-val {
+    font-family:'SF Mono',monospace; font-size:11px; color:var(--muted);
+    text-align:right;
+  }
+
+  .gen-aux { padding: 8px 0; border-top: 1px solid var(--panel-2); }
+  .gen-avenue-label { color:var(--text); font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+  .gen-avenue-label input { accent-color: var(--accent); }
+
+  .gen-stats {
+    color: var(--muted);
+    font-size: 11px;
+    font-family: 'SF Mono', monospace;
+    padding: 8px 10px;
+    background: var(--panel);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+    word-break: break-word;
+    line-height: 1.5;
+  }
+
+  .gen-canvas-wrap { display:flex; flex-direction:column; gap:10px; }
+  .gen-legend {
+    display:flex; flex-wrap:wrap; gap:10px 18px;
+    justify-content:center;
+    color:var(--muted); font-size:11px;
+  }
+  .gen-legend .sw {
+    display:inline-block; width:12px; height:12px;
+    border-radius:2px; margin-right:4px; vertical-align:middle;
+  }
+</style>
+
+<script>
+(() => {
+    const GW = 20, GH = 20;           // grille de cellules (25 m chacune)
+    const CELL = 26;                  // taille d'une cellule affichée en px
+    const MARGIN = 2;                 // marge pour simuler la demi-route
+
+    // Palette (correspond aux variables CSS du doc)
+    const COLORS = {
+        S:  '#8e8dff',
+        M:  '#ffa257',
+        L:  '#ff6e9c',
+        XL: '#ffd44c',
+        '1x2': '#60c890',
+        '2x3': '#4ea8e8',
+        '2x4': '#c680ff',
+    };
+    const ROAD = '#3a3d42';
+    const ROAD_DARK = '#2a2d31';
+
+    // Types de blocs exposés à l'UI (rectangles = une seule ligne, l'algo
+    // tente les deux orientations automatiquement)
+    const BLOCK_TYPES = [
+        { type:'S',   w:1, h:1, label:'S 1×1'   },
+        { type:'M',   w:2, h:2, label:'M 2×2'   },
+        { type:'L',   w:3, h:3, label:'L 3×3'   },
+        { type:'XL',  w:4, h:4, label:'XL 4×4'  },
+        { type:'1x2', w:1, h:2, label:'1×2'     },
+        { type:'2x3', w:2, h:3, label:'2×3'     },
+        { type:'2x4', w:2, h:4, label:'2×4'     },
+    ];
+
+    // L'état UI : enabled + poids par type
+    const state = {};
+    for (const b of BLOCK_TYPES) state[b.type] = { enabled:true, weight:20 };
+
+    // Presets → appliquent enabled/weight par type, plus le flag avenue
+    const PRESETS = {
+        random: {
+            weights: { S:8, M:25, L:10, XL:5, '1x2':6, '2x3':12, '2x4':8 },
+            enabled: { S:true, M:true, L:true, XL:true, '1x2':true, '2x3':true, '2x4':true },
+            avenue: false,
+        },
+        downtown: {
+            weights: { S:50, M:20, L:25, XL:35, '1x2':4, '2x3':8, '2x4':6 },
+            enabled: { S:true, M:true, L:true, XL:true, '1x2':true, '2x3':true, '2x4':true },
+            avenue: false,
+            // Downtown also biases XL/L to the center — handled in weightFor()
+            center: true,
+        },
+        grid: {
+            weights: { S:0, M:55, L:10, XL:0, '1x2':0, '2x3':0, '2x4':12 },
+            enabled: { S:false, M:true, L:true, XL:false, '1x2':false, '2x3':false, '2x4':true },
+            avenue: true,
+        },
+        mosaic: {
+            weights: { S:40, M:40, L:2, XL:0, '1x2':6, '2x3':6, '2x4':0 },
+            enabled: { S:true, M:true, L:true, XL:false, '1x2':true, '2x3':true, '2x4':false },
+            avenue: false,
+        },
+    };
+    let currentPreset = 'random';
+    let avenueOn = false;
+
+    // ---------- Build the controls ----------
+    const rowsEl = document.getElementById('gen-rows');
+    function buildRows() {
+        rowsEl.innerHTML = '';
+        for (const b of BLOCK_TYPES) {
+            const row = document.createElement('div');
+            row.className = 'gen-row' + (state[b.type].enabled ? '' : ' disabled');
+            row.innerHTML = `
+                <input type="checkbox" data-type="${b.type}" ${state[b.type].enabled ? 'checked' : ''}>
+                <span class="gen-swatch">
+                    <span class="sw-box" style="background:${COLORS[b.type]}"></span>${b.label}
+                </span>
+                <input type="range" min="0" max="100" step="1"
+                       value="${state[b.type].weight}" data-type="${b.type}">
+                <span class="weight-val" data-type="${b.type}">${state[b.type].weight}</span>
+            `;
+            rowsEl.appendChild(row);
+        }
+        // Wire checkboxes
+        rowsEl.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+            cb.addEventListener('change', () => {
+                const t = cb.dataset.type;
+                state[t].enabled = cb.checked;
+                cb.closest('.gen-row').classList.toggle('disabled', !cb.checked);
+                run();
+            });
+        });
+        // Wire sliders
+        rowsEl.querySelectorAll('input[type=range]').forEach((sl) => {
+            sl.addEventListener('input', () => {
+                const t = sl.dataset.type;
+                state[t].weight = +sl.value;
+                rowsEl.querySelector(`.weight-val[data-type="${t}"]`).textContent = sl.value;
+            });
+            sl.addEventListener('change', () => run());   // regenerate on release
+        });
+    }
+
+    function applyPreset(name) {
+        const p = PRESETS[name];
+        if (!p) return;
+        currentPreset = name;
+        for (const b of BLOCK_TYPES) {
+            state[b.type].enabled = p.enabled[b.type];
+            state[b.type].weight  = p.weights[b.type];
+        }
+        avenueOn = !!p.avenue;
+        document.getElementById('gen-avenue').checked = avenueOn;
+        document.querySelectorAll('.gen-preset').forEach((btn) =>
+            btn.classList.toggle('active', btn.dataset.preset === name));
+        buildRows();
+        run();
+    }
+
+    // ---------- Algo ----------
+    function fits(grid, x, y, w, h) {
+        if (x + w > GW || y + h > GH) return false;
+        for (let j = 0; j < h; j++)
+            for (let i = 0; i < w; i++)
+                if (grid[y+j][x+i]) return false;
+        return true;
+    }
+    function place(grid, placements, x, y, w, h, type) {
+        for (let j = 0; j < h; j++)
+            for (let i = 0; i < w; i++) grid[y+j][x+i] = true;
+        placements.push({ x, y, w, h, type });
+    }
+    function rng(seed) {
+        let t = seed | 0;
+        return () => {
+            t = (t + 0x6D2B79F5) | 0;
+            let r = Math.imul(t ^ (t >>> 15), 1 | t);
+            r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+            return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    function weightedPick(options, rand) {
+        const total = options.reduce((s, o) => s + o.weight, 0);
+        if (total <= 0) return null;
+        let r = rand() * total;
+        for (const o of options) {
+            r -= o.weight;
+            if (r <= 0) return o;
+        }
+        return options[options.length - 1];
+    }
+
+    // Weight for a candidate placement at (x, y). Adds a center bias
+    // for the downtown preset so XL/L gravitate toward the middle.
+    function weightFor(type, x, y, w, h) {
+        let base = state[type].weight;
+        if (base <= 0 || !state[type].enabled) return 0;
+
+        if (PRESETS[currentPreset]?.center) {
+            const cx = GW/2, cy = GH/2;
+            const dx = (x+w/2) - cx, dy = (y+h/2) - cy;
+            const d  = Math.sqrt(dx*dx + dy*dy) / (GW/2);  // 0 center → 1 edge
+            if (type === 'XL') base *= Math.max(0.1, 1 - d*1.6);
+            else if (type === 'L')  base *= Math.max(0.3, 1 - d*0.9);
+            else if (type === 'S')  base *= 0.4 + d * 1.5;
+        }
+        return base;
+    }
+
+    function generate(seed = Date.now()) {
+        const rand = rng(seed);
+        const grid = Array.from({ length: GH }, () => Array(GW).fill(false));
+        const placements = [];
+
+        // Avenue = réserve la ligne/colonne centrale
+        if (avenueOn) {
+            const midX = Math.floor(GW/2);
+            const midY = Math.floor(GH/2);
+            for (let y = 0; y < GH; y++) grid[y][midX] = true;
+            for (let x = 0; x < GW; x++) grid[midY][x] = true;
+        }
+
+        // Build the candidate list (types enabled by the user)
+        const candidates = BLOCK_TYPES.filter((b) => state[b.type].enabled && state[b.type].weight > 0);
+        // Sort largest footprint first — we try big blocks, fall back to small
+        candidates.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+        // S is only used as a filler when the user actually enabled it.
+        // If they set weight=0 or unchecked the S row, honor that and
+        // leave orphan 1-cell gaps as empty road (looks like mini plazas).
+        const allowSFallback = candidates.some((c) => c.type === 'S');
+
+        // Row-major iteration. A shuffled cell order gave nicer "organic"
+        // results for very varied palettes, but caused ugly gaps with
+        // single-type configs: random starts at (7,5) leave (6,5) orphan
+        // → can't fit a 2×2 anymore. Scanning cells in order guarantees
+        // the tight packing you'd expect when selecting only one type.
+        // Variety still comes from weighted random pick at each cell.
+        const cells = [];
+        for (let y = 0; y < GH; y++)
+            for (let x = 0; x < GW; x++)
+                if (!grid[y][x]) cells.push({ x, y });
+
+        for (const { x, y } of cells) {
+            if (grid[y][x]) continue;
+            // For each candidate, try both orientations (w×h and h×w) if asymmetric
+            const opts = [];
+            for (const b of candidates) {
+                const orientations = (b.w === b.h) ? [[b.w, b.h]] : [[b.w, b.h], [b.h, b.w]];
+                for (const [w, h] of orientations) {
+                    if (fits(grid, x, y, w, h)) {
+                        opts.push({ type: b.type, w, h, weight: weightFor(b.type, x, y, w, h) });
+                    }
+                }
+            }
+            const picked = weightedPick(opts, rand);
+            if (picked) {
+                place(grid, placements, x, y, picked.w, picked.h, picked.type);
+            } else if (allowSFallback && fits(grid, x, y, 1, 1)) {
+                place(grid, placements, x, y, 1, 1, 'S');
+            } else {
+                // No fit + user disabled S → leave the cell as empty road.
+                // Mark it consumed so we don't revisit it in this pass.
+                grid[y][x] = true;
+            }
+        }
+        return placements;
+    }
+
+    function draw(placements) {
+        const cvs = document.getElementById('gen-canvas');
+        const ctx = cvs.getContext('2d');
+        const scale = cvs.width / (GW * CELL);
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+        ctx.fillStyle = ROAD;
+        ctx.fillRect(0, 0, GW * CELL, GH * CELL);
+
+        if (avenueOn) {
+            const midX = Math.floor(GW/2);
+            const midY = Math.floor(GH/2);
+            ctx.fillStyle = ROAD_DARK;
+            ctx.fillRect(midX * CELL, 0, CELL, GH * CELL);
+            ctx.fillRect(0, midY * CELL, GW * CELL, CELL);
+        }
+
+        for (const p of placements) {
+            ctx.fillStyle = COLORS[p.type] || '#fff';
+            ctx.fillRect(
+                p.x * CELL + MARGIN,
+                p.y * CELL + MARGIN,
+                p.w * CELL - MARGIN * 2,
+                p.h * CELL - MARGIN * 2
+            );
+        }
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 0.5;
+        for (let x = 0; x <= GW; x++) {
+            ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, GH * CELL); ctx.stroke();
+        }
+        for (let y = 0; y <= GH; y++) {
+            ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(GW * CELL, y * CELL); ctx.stroke();
+        }
+    }
+
+    function run() {
+        const placements = generate();
+        draw(placements);
+        const counts = placements.reduce((a, p) => (a[p.type] = (a[p.type]||0)+1, a), {});
+        const summary = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([k, v]) => `${k}×${v}`).join(' · ');
+        // Count cells covered by placements to surface empty gaps
+        const filledCells = placements.reduce((s, p) => s + p.w * p.h, 0);
+        const totalCells = GW * GH - (avenueOn ? (GW + GH - 1) : 0);
+        const empties = totalCells - filledCells;
+        const emptyLabel = empties > 0 ? `  (${empties} cellules vides)` : '';
+        document.getElementById('gen-stats').textContent =
+            `${placements.length} blocs  —  ${summary}${emptyLabel}`;
+    }
+
+    // Wire preset buttons + reroll + avenue checkbox
+    document.querySelectorAll('.gen-preset').forEach((btn) => {
+        btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+    });
+    document.getElementById('gen-reroll').addEventListener('click', () => run());
+    document.getElementById('gen-avenue').addEventListener('change', (e) => {
+        avenueOn = e.target.checked;
+        run();
+    });
+
+    // --------------------------------------------------------------
+    // Per-file weight table — fetched from the actual manifest.
+    // Lets the user see all real block files and tune their weights.
+    // --------------------------------------------------------------
+    let MANIFEST_BLOCKS = [];   // populated by loadManifest() below
+    const filesEl  = document.getElementById('gen-files');
+    const fileStatus = document.getElementById('gen-files-status');
+
+    async function loadManifest() {
+        // Try FBX first, fall back to GLB — same logic as the app.
+        for (const path of ['../fbx/manifest.json', '../glb/manifest.json']) {
+            try {
+                const r = await fetch(path, { cache: 'no-cache' });
+                if (!r.ok) continue;
+                const m = await r.json();
+                if (Array.isArray(m.cityBlocks) && m.cityBlocks.length) {
+                    MANIFEST_BLOCKS = m.cityBlocks;
+                    fileStatus.textContent = `(${m.cityBlocks.length} blocks @ ${path.replace('../', '')})`;
+                    return;
+                }
+            } catch (_) { /* try next */ }
+        }
+        fileStatus.textContent = '(no blocks in manifest — run build_manifest.py)';
+    }
+
+    function renderFiles() {
+        filesEl.innerHTML = '';
+        if (!MANIFEST_BLOCKS.length) return;
+        for (const b of MANIFEST_BLOCKS) {
+            const row = document.createElement('div');
+            row.className = 'gen-file-row';
+            row.innerHTML = `
+                <span class="f-dims">${b.w}×${b.h}</span>
+                <span class="f-name">${b.variant}</span>
+                <input type="range" min="0" max="100" step="1" value="${b.weight}">
+                <span class="f-weight">${b.weight}</span>
+            `;
+            const range  = row.querySelector('input');
+            const weight = row.querySelector('.f-weight');
+            range.addEventListener('input', () => {
+                b.weight = +range.value;
+                weight.textContent = range.value;
+            });
+            range.addEventListener('change', () => run());   // regen on release
+            filesEl.appendChild(row);
+        }
+    }
+
+    // Export the current tuning to config/city.json as a downloadable file.
+    // In-game this is what the CityGenerator will consume for ratios.
+    document.getElementById('gen-export').addEventListener('click', () => {
+        const config = {
+            _comment: "Generated from scripts/gloops-city.html — consumed by the in-game CityGenerator.",
+            grid: { width: GW, height: GH },
+            avenue: avenueOn,
+            preset: currentPreset,
+            // Per-TYPE (footprint) weights from the sliders/checkboxes.
+            // Null weight means the type is disabled.
+            types: {},
+            // Per-FILE weight overrides. If a file is missing here, the
+            // weight from its filename (_wN suffix) is used.
+            files: {},
+        };
+        for (const b of BLOCK_TYPES) {
+            const s = state[b.type];
+            config.types[b.type] = s.enabled ? s.weight : null;
+        }
+        for (const b of MANIFEST_BLOCKS) {
+            config.files[b.file] = b.weight;
+        }
+        const json = JSON.stringify(config, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = 'city.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        console.log('[city] exported config:', config);
+    });
+
+    // Boot
+    buildRows();
+    applyPreset('random');
+    (async () => {
+        await loadManifest();
+        renderFiles();
+    })();
+})();
+</script>
+
+<!-- =============================================================== -->
+<h2>9. 🔗 Pipeline complet</h2>
+
+<div class="panel">
+<pre>1. <b>Modeling (Blender)</b>
+   - Modéliser le bloc en respectant les règles §5.
+   - Export GLB → <code>glb/CITY/block_WxH_NN.glb</code>
+
+2. <b>Manifest</b>
+   - <code>python scripts/build_manifest.py</code>
+     → détecte automatiquement les blocs dans <code>glb/CITY/</code>
+     → ajoute une section <code>cityBlocks</code> au manifest
+
+3. <b>Runtime (JS)</b>
+   - <code>CityGenerator</code> lit le manifest, groupe par (W, H).
+   - Génère la grille 20×20, fait le glouton pondéré.
+   - Instancie les blocs aux bonnes positions mondiales
+     (<code>gridX × 25 m, 0, gridZ × 25 m</code>).</pre>
+</div>
+
+<p>Quand le premier bloc <code>block_2x2_01.glb</code> sera prêt, je câble le <code>CityGenerator</code> et l'intègre à <code>GameWorld</code>.</p>
+
+</body>
+</html>

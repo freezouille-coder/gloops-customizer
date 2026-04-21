@@ -14,8 +14,22 @@ import { AudioManager, buildAudioPlayer } from './audio.js';
 import { Game } from './game/game.js';
 
 // --- Config ---
-const MODEL_PATH = 'fbx/Gloops_skeleton.fbx';
-const MANIFEST_PATH = 'fbx/manifest.json';
+let MODEL_PATH = 'fbx/Gloops_skeleton.fbx';   // overwritten at boot
+// Resolve the manifest path at runtime. FBX is preferred for now —
+// GLB had intermittent blendshape glitches. When the GLB pipeline is
+// fixed we can flip this back by swapping the two fetch attempts.
+async function _resolveManifestPath() {
+    try {
+        const r = await fetch('fbx/manifest.json', { method: 'HEAD' });
+        if (r.ok) return 'fbx/manifest.json';
+    } catch (_) {}
+    try {
+        const r = await fetch('glb/manifest.json', { method: 'HEAD' });
+        if (r.ok) return 'glb/manifest.json';
+    } catch (_) {}
+    return 'fbx/manifest.json';
+}
+let MANIFEST_PATH = 'fbx/manifest.json';   // overwritten at boot
 const BG_COLOR = 0xc8beb0; // warm light grey, matches ground
 const STORAGE_KEY = 'gloops_preset';
 
@@ -86,6 +100,12 @@ function resize() {
     postFX.resize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    // If we're parked in the main menu, re-anchor the Gloops to the right
+    // (or center on narrow screens). Wrapped in try/catch because resize
+    // fires before the UIStates constants are declared.
+    try {
+        if (_uiState === UIStates.MAIN_MENU) _positionCameraMainMenu();
+    } catch (_) { /* pre-init */ }
 }
 window.addEventListener('resize', resize);
 requestAnimationFrame(resize);
@@ -506,7 +526,7 @@ async function _autoConnectTextures(autoConnect) {
 async function _applyCharacterDefaults() {
     let config;
     try {
-        config = await fetch('config/character.json').then(r => r.json());
+        config = await fetch('config/character.json', { cache: 'no-cache' }).then(r => r.json());
     } catch (e) { return; }
 
     const defaults = config.defaults || {};
@@ -616,7 +636,7 @@ async function _applyCharacterDefaults() {
 // Mobile generate button
 document.getElementById('mobile-generate-btn')?.addEventListener('click', async () => {
     try {
-        const cfg = await fetch('config/character.json').then(r => r.json());
+        const cfg = await fetch('config/character.json', { cache: 'no-cache' }).then(r => r.json());
         const randomizable = cfg.randomizable || {};
         for (const [key, attr] of Object.entries(randomizable)) {
             if (attr.enabled === false) continue;
@@ -699,15 +719,414 @@ const audioManager = new AudioManager();
 
 // --- Init ---
 const character = new Character();
-const loadingEl = document.getElementById('loading');
+// The visible loading message lives inside the LOADING overlay. We point
+// loadingEl at the text-only span so `.textContent = ...` doesn't wipe
+// the spinner that sits next to it.
+const loadingEl = document.getElementById('loading-text');
+// Panel + Play button start hidden — the menu flow reveals them as needed.
+document.getElementById('panel')?.classList.add('hidden');
+document.getElementById('loading')?.classList.add('hidden');
+
+// ====================================================================
+// UI STATE MACHINE
+// Drives which overlay is visible and where the Gloops sits on screen.
+// Transitions are triggered by buttons in loading / main-menu / panel /
+// music-picker overlays (wired in _wireMenu below, after Game is built).
+// ====================================================================
+const UIStates = {
+    LOADING:    'loading',
+    MAIN_MENU:  'main-menu',
+    CUSTOMIZER: 'customizer',
+    MUSIC:      'music',
+    GAME:       'game',
+};
+let _uiState = UIStates.LOADING;
+
+function setUIState(state) {
+    const prev = _uiState;
+    _uiState = state;
+    const loading = document.getElementById('loading-screen');
+    const menu    = document.getElementById('main-menu');
+    const music   = document.getElementById('music-picker');
+    const panel   = document.getElementById('panel');
+    const menuBg  = document.getElementById('menu-bg');
+
+    // Hide everything, then reveal only what this state needs.
+    loading.classList.add('hidden');
+    menu.classList.add('hidden');
+    music.classList.add('hidden');
+    panel.classList.add('hidden');
+    // Shared menu bg is shown only for MAIN_MENU and MUSIC — same
+    // element is reused so the video keeps looping across transitions.
+    const wantMenuBg = (state === UIStates.MAIN_MENU || state === UIStates.MUSIC);
+    menuBg?.classList.toggle('hidden', !wantMenuBg);
+
+    switch (state) {
+        case UIStates.LOADING:
+        case UIStates.MUSIC:
+            // Let orbit stay interactive — user can still spin the Gloops
+            // while browsing menus (the overlay passes clicks through on
+            // empty areas thanks to pointer-events: none).
+            (state === UIStates.LOADING ? loading : music).classList.remove('hidden');
+            break;
+        case UIStates.MAIN_MENU:
+            menu.classList.remove('hidden');
+            _positionCameraMainMenu();
+            break;
+        case UIStates.CUSTOMIZER:
+            panel.classList.remove('hidden');
+            _positionCameraCustomizer();
+            break;
+        case UIStates.GAME:
+            // Game rig takes full control — no overlay, panel hidden.
+            break;
+    }
+
+    // Dispatch a resize so the canvas re-measures now that the panel
+    // visibility has changed. Without this the camera aspect is stale
+    // (computed for the previous layout) and the Gloops looks stretched
+    // vertically or horizontally after state transitions.
+    if (prev !== state) {
+        window.dispatchEvent(new Event('resize'));
+    }
+}
+
+/** Character pinned on the RIGHT half of the screen (menu sits on the left). */
+function _positionCameraMainMenu() {
+    if (!character.model) return;
+    const box = new THREE.Box3().setFromObject(character.model);
+    const center = box.getCenter(new THREE.Vector3());
+    const h = box.getSize(new THREE.Vector3()).y;
+    // On narrow screens the menu takes the full width and the character
+    // sits BEHIND it (just visible through the dark vignette) — no shift.
+    // On desktop we shift target left so the Gloops ends up on the right.
+    const narrow = window.innerWidth < 820;
+    const shiftX = narrow ? 0 : -h * 0.8;
+    orbit.target.set(center.x + shiftX, center.y, center.z);
+    camera.position.set(
+        center.x + shiftX + h * 0.3,   // slight 3/4 angle
+        center.y + h * 0.1,
+        center.z + h * (narrow ? 3.0 : 2.4)  // pull back a bit on mobile
+    );
+    orbit.update();
+    orbit.enabled = false;  // locked — menu is the focus
+}
+
+/** Character centered, camera orbitable (default customizer framing). */
+function _positionCameraCustomizer() {
+    if (!character.model) return;
+    const box = new THREE.Box3().setFromObject(character.model);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    orbit.target.copy(center);
+    // Pulled back ~2× from before — gives the character some breathing
+    // room in the frame. FOV is unchanged (camera stays at its native
+    // 20° narrow lens) so this is a pure distance / framing change.
+    camera.position.set(
+        center.x + size.y * 1.4,
+        center.y + size.y * 0.35,
+        center.z + size.y * 4.4
+    );
+    orbit.update();
+    orbit.enabled = true;
+}
+
+// ====================================================================
+// Music picker (standalone audio, separate from emotion sounds)
+// ====================================================================
+// Music tracks are loaded from sound/music.json (built by
+// scripts/build_music_manifest.py — scans sound/mp3/ excluding the
+// NN_xxx.mp3 emotion SFX files). Re-run the script when you add or
+// remove tracks. Until the fetch lands we keep the bundled default.
+let MUSIC_TRACKS = [
+    { id: 'mami', name: "Mami's Potion Dance",
+      path: "sound/mp3/Mami's Potion Dance.mp3", default: true },
+];
+let DEFAULT_TRACK = MUSIC_TRACKS[0];
+
+(async () => {
+    try {
+        const r = await fetch('sound/music.json', { cache: 'no-cache' });
+        if (!r.ok) throw new Error(r.statusText);
+        const list = await r.json();
+        if (Array.isArray(list) && list.length) {
+            MUSIC_TRACKS = list;
+            DEFAULT_TRACK = MUSIC_TRACKS.find((t) => t.default) || MUSIC_TRACKS[0];
+            console.log(`[music] loaded ${list.length} track(s) from music.json`);
+        }
+    } catch (e) {
+        console.warn('[music] falling back to bundled list — music.json not available:', e);
+    }
+})();
+let _currentMusicId = null;
+let _musicAudio = null;
+
+const MUSIC_VOLUME_KEY = 'gloops_music_volume';
+function _getVolume() {
+    const v = parseFloat(localStorage.getItem(MUSIC_VOLUME_KEY));
+    return isNaN(v) ? 0.55 : Math.max(0, Math.min(1, v));
+}
+function _setVolume(v) {
+    v = Math.max(0, Math.min(1, v));
+    localStorage.setItem(MUSIC_VOLUME_KEY, String(v));
+    if (_musicAudio) _musicAudio.volume = v;
+}
+
+/**
+ * Refresh the Music Options screen — update the currently-playing
+ * track label and the volume slider. The track navigation itself is
+ * handled by _wireMenu (prev/next buttons call window._musicAPI.switch).
+ */
+function _buildMusicPicker() {
+    const label = document.getElementById('music-picker-name');
+    if (label) {
+        const cur = window._musicAPI?.current();
+        label.textContent = cur ? cur.name : '— no tracks —';
+    }
+    // Sync the volume slider with the stored value.
+    const slider = document.getElementById('music-volume');
+    const value  = document.getElementById('music-volume-value');
+    if (slider && value) {
+        const pct = Math.round(_getVolume() * 100);
+        slider.value = pct;
+        value.textContent = pct;
+    }
+}
+function _playMenuMusic(track) {
+    if (!_musicAudio) _musicAudio = new Audio();
+    _musicAudio.src = track.path;
+    _musicAudio.loop = true;
+    _musicAudio.volume = _getVolume();
+    _musicAudio.play().catch((e) => console.warn('[music] play failed', e));
+    _currentMusicId = track.id;
+    // Expose so the in-game pause menu can toggle .muted without needing
+    // to route through the full music picker UI.
+    window._musicAudio = _musicAudio;
+}
+
+// ====================================================================
+// Music API shared with the in-game pause menu. Lets the pause overlay
+// cycle tracks ◀ / ▶ without reaching back into app.js internals.
+// ====================================================================
+window._musicAPI = {
+    /** Return the currently playing track, or the default if none yet. */
+    current() {
+        if (_currentMusicId) {
+            const t = MUSIC_TRACKS.find((t) => t.id === _currentMusicId);
+            if (t) return t;
+        }
+        return DEFAULT_TRACK || MUSIC_TRACKS[0];
+    },
+    /** Jump to the previous / next track (dir: -1 or +1). Returns the
+     *  new track object (or null if no tracks available). */
+    switch(dir) {
+        if (!MUSIC_TRACKS.length) return null;
+        const cur = _currentMusicId
+            ? MUSIC_TRACKS.findIndex((t) => t.id === _currentMusicId)
+            : 0;
+        let next = (cur + dir) % MUSIC_TRACKS.length;
+        if (next < 0) next += MUSIC_TRACKS.length;
+        const track = MUSIC_TRACKS[next];
+        _playMenuMusic(track);
+        return track;
+    },
+    /** How many tracks are available (for UI hints) */
+    count() { return MUSIC_TRACKS.length; },
+};
+function _stopMenuMusic() {
+    if (_musicAudio) _musicAudio.pause();
+    _currentMusicId = null;
+}
+
+/**
+ * Try to start the default track as early as possible.
+ * 1. Attempt a direct play() — this succeeds on sites the user has
+ *    already interacted with before (browser autoplay cache).
+ * 2. If the play() promise rejects (no user gesture this session),
+ *    arm one-shot listeners on the first pointerdown/keydown anywhere
+ *    so the track starts on the very first click (typically START).
+ */
+// Also exposed for the in-game pause menu when it needs to kick off
+// the track on demand (e.g. user hit ESC before any interaction fired
+// the gesture listener).
+window._armMusicAutoStart = _armMusicAutoStart;
+function _armMusicAutoStart() {
+    if (!DEFAULT_TRACK || _currentMusicId) return;
+    if (!_musicAudio) _musicAudio = new Audio();
+    window._musicAudio = _musicAudio;
+    _musicAudio.src = DEFAULT_TRACK.path;
+    _musicAudio.loop = true;
+    _musicAudio.volume = _getVolume();
+
+    const armGestureFallback = () => {
+        const start = () => {
+            _musicAudio.play().then(() => {
+                _currentMusicId = DEFAULT_TRACK.id;
+            }).catch((e) => console.warn('[music] play still blocked:', e));
+            window.removeEventListener('pointerdown', start);
+            window.removeEventListener('keydown', start);
+            window.removeEventListener('touchstart', start);
+        };
+        window.addEventListener('pointerdown', start, { once: true });
+        window.addEventListener('keydown',     start, { once: true });
+        window.addEventListener('touchstart',  start, { once: true });
+    };
+
+    const playPromise = _musicAudio.play();
+    if (playPromise && typeof playPromise.then === 'function') {
+        playPromise
+            .then(() => { _currentMusicId = DEFAULT_TRACK.id; })
+            .catch(() => armGestureFallback());
+    } else {
+        armGestureFallback();
+    }
+}
+
+// ====================================================================
+// "Continue" save marker — flipped on the first successful game.enter()
+// so the Continue button shows up on subsequent sessions.
+// ====================================================================
+const SAVE_MARKER_KEY = 'gloops_has_save';
+function _hasContinueSave() { return localStorage.getItem(SAVE_MARKER_KEY) === '1'; }
+function _markSessionSaved() { localStorage.setItem(SAVE_MARKER_KEY, '1'); }
+
+// ====================================================================
+// Wire up every menu button. Called once after Game instance is built
+// so we have a ref to start/exit game mode.
+// ====================================================================
+function _wireMenu(game) {
+    // Loading screen: "Continue" proceeds to the main menu.
+    document.getElementById('btn-loading-start')
+        ?.addEventListener('click', () => setUIState(UIStates.MAIN_MENU));
+
+    // Main menu: Continue / New Game / Music
+    document.getElementById('btn-menu-continue')
+        ?.addEventListener('click', () => {
+            if (_hasContinueSave()) _enterGame(game);
+        });
+    document.getElementById('btn-menu-new')
+        ?.addEventListener('click', () => setUIState(UIStates.CUSTOMIZER));
+    document.getElementById('btn-menu-music')
+        ?.addEventListener('click', () => {
+            _buildMusicPicker();
+            setUIState(UIStates.MUSIC);
+        });
+
+    // Music picker — back + volume slider + prev/next switcher
+    document.getElementById('btn-music-back')
+        ?.addEventListener('click', () => setUIState(UIStates.MAIN_MENU));
+    const slider = document.getElementById('music-volume');
+    const value  = document.getElementById('music-volume-value');
+    if (slider && value) {
+        slider.addEventListener('input', () => {
+            const pct = +slider.value;
+            value.textContent = pct;
+            _setVolume(pct / 100);
+        });
+    }
+    const pickerLabel = document.getElementById('music-picker-name');
+    const refreshPickerLabel = () => {
+        const cur = window._musicAPI?.current();
+        if (pickerLabel) pickerLabel.textContent = cur ? cur.name : '— no tracks —';
+    };
+    document.getElementById('btn-music-picker-prev')
+        ?.addEventListener('click', () => {
+            window._musicAPI?.switch(-1);
+            refreshPickerLabel();
+        });
+    document.getElementById('btn-music-picker-next')
+        ?.addEventListener('click', () => {
+            window._musicAPI?.switch(+1);
+            refreshPickerLabel();
+        });
+
+    // Customizer panel: Back to menu + Start Game.
+    // Music keeps playing across states so a track picked in the menu
+    // carries into the game / customizer seamlessly.
+    document.getElementById('btn-back-menu')
+        ?.addEventListener('click', () => setUIState(UIStates.MAIN_MENU));
+    document.getElementById('btn-start-game')
+        ?.addEventListener('click', () => _enterGame(game));
+
+    // Intercept game.enter() / game.exit():
+    //   - on enter, mark the save so Continue lights up next time
+    //   - on exit, return to main menu instead of customizer
+    const originalEnter = game.enter.bind(game);
+    game.enter = async () => {
+        await originalEnter();
+        _markSessionSaved();
+        _refreshContinueButton();
+    };
+    const originalExit = game.exit.bind(game);
+    game.exit = () => {
+        originalExit();
+        setUIState(UIStates.MAIN_MENU);
+    };
+
+    _refreshContinueButton();
+}
+
+/** Show or hide the Continue button based on whether we have a save.
+ *  No ghost "disabled" state — it just doesn't appear until there's
+ *  something meaningful to resume. */
+function _refreshContinueButton() {
+    const btn = document.getElementById('btn-menu-continue');
+    if (!btn) return;
+    const has = _hasContinueSave();
+    btn.hidden = !has;
+    btn.textContent = 'Continue';
+}
+
+/**
+ * Enter the game with a polished loading screen that covers the world
+ * assembly (tree instancing, physics bodies, NPC spawn). Hides the
+ * visual "popcorn" of objects snapping into place.
+ */
+async function _enterGame(game) {
+    const overlay = document.getElementById('game-loading');
+    const label   = document.getElementById('game-loading-text');
+    overlay?.classList.remove('hidden');
+    if (label) label.textContent = 'Loading city...';
+
+    setUIState(UIStates.GAME);
+
+    // Give the browser 2 paints so the overlay is guaranteed on-screen
+    // BEFORE we start the synchronous-heavy world build (tree instancer,
+    // physics trimesh, etc). rAF x 2 is the reliable pattern for that.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    try {
+        // Swap the label mid-flight so the user sees progress
+        if (label) label.textContent = 'Building world...';
+        await game.enter();
+        if (label) label.textContent = 'Ready!';
+        // Short reveal delay so the "Ready!" is readable + first frames
+        // of the game tick have run and visuals have settled.
+        await new Promise((r) => setTimeout(r, 280));
+        overlay?.classList.add('hidden');
+    } catch (err) {
+        console.error('[game.enter] failed:', err);
+        overlay?.classList.add('hidden');
+        alert(`Failed to start the game:\n${err.message}\n\nSee console for details.`);
+        setUIState(UIStates.MAIN_MENU);
+    }
+}
 
 async function init() {
     try {
+        MANIFEST_PATH = await _resolveManifestPath();
+        const ASSET_ROOT = MANIFEST_PATH.split('/')[0];
+        const MODEL_EXT  = ASSET_ROOT === 'glb' ? '.glb' : '.fbx';
+        MODEL_PATH = `${ASSET_ROOT}/Gloops_skeleton${MODEL_EXT}`;
+        // Shared with game-world.js CityGenerator so it loads from the
+        // same folder (fbx / glb) without re-resolving.
+        window._assetRoot = ASSET_ROOT;
+        console.log('[app] manifest resolved to', MANIFEST_PATH, '— model at', MODEL_PATH);
         // 1. Load base model
         // Load texture library from manifest
         await texLib.loadFromManifest(MANIFEST_PATH);
 
-        loadingEl.textContent = 'Chargement du modele...';
+        loadingEl.textContent = 'Loading model...';
         await character.load(MODEL_PATH);
         const model = character.model;
 
@@ -776,13 +1195,15 @@ async function init() {
         postFX.setOutlineObjects(meshes);
 
         // 2. Load animations from manifest
-        loadingEl.textContent = 'Chargement des animations...';
+        loadingEl.textContent = 'Loading animations...';
 
         const loadPromises = [];
         for (const [catName, catData] of Object.entries(manifestData.categories)) {
+            // Asset root derived from the resolved manifest path (fbx/ or glb/)
+            const ASSET_ROOT = MANIFEST_PATH.split('/')[0];
             character.registerCategory(catName, catData.type, catData.folder);
             for (const file of catData.files) {
-                const url = `fbx/${catData.folder}/${file}`;
+                const url = `${ASSET_ROOT}/${catData.folder}/${file}`;
                 loadPromises.push(
                     character.loadItem(catName, file, url).catch(err => {
                         console.warn(`Failed to load ${url}:`, err);
@@ -801,6 +1222,11 @@ async function init() {
         if (matContainer) {
             shaderControlsRef = new ShaderControls(shadingManager);
             shaderControlsRef.build(matContainer);
+            // Rebuild the MAT panel when paired-prop materials are
+            // added/removed so they appear/disappear in the dropdown.
+            shadingManager.onMaterialsChanged(() => {
+                shaderControlsRef.build(matContainer);
+            });
         }
 
         const sceneContainer = document.getElementById('scene-controls-container');
@@ -826,11 +1252,14 @@ async function init() {
             if (logoDiv) logoDiv.appendChild(audioPlayerEl);
         }
 
-        // Hook audio to emotion selection
+        // Hook audio to emotion selection.
+        // A flag `character._silentEmotion` lets Generate Random skip the
+        // SFX burst (17 overlapping voice clips sounds awful). Normal
+        // user-initiated emotion picks still play their sound.
         const origSelectItem = character.selectItem.bind(character);
         character.selectItem = (catName, filename) => {
             origSelectItem(catName, filename);
-            if (catName === 'Emotion') {
+            if (catName === 'Emotion' && !character._silentEmotion) {
                 if (filename) audioManager.play(filename);
                 else audioManager.stop();
             }
@@ -841,6 +1270,22 @@ async function init() {
         if (propsContainer) {
             const propsManager = new PropsManager(scene, character);
             propsManager.loadCatalog(manifestData.props || {});
+            propsManager.loadPairedManifest(manifestData.pairedProps || {});
+            propsManager.setAssetRoot(ASSET_ROOT);
+            // Let paired-prop materials show up in the MAT panel
+            propsManager.setShadingManager(shadingManager);
+            // Per-prop transform offsets (rotation/position/scale fixes)
+            try {
+                const off = await fetch('config/paired-offsets.json').then((r) => r.ok ? r.json() : {});
+                propsManager.loadPairedOffsets(off);
+                console.log(`[paired-offsets] loaded ${Object.keys(off).filter((k) => !k.startsWith('_')).length} entries`);
+            } catch (e) {
+                console.warn('[paired-offsets] none loaded:', e?.message);
+                propsManager.loadPairedOffsets({});
+            }
+            // Hook back into character so selectItem() can auto-attach
+            // the FBX sitting in <category>/PROPS/<same name>.fbx
+            character.props = propsManager;
             const propsControls = new PropsControls(propsManager);
             propsControls.build(propsContainer);
         }
@@ -862,16 +1307,22 @@ async function init() {
             }
         }
 
-        // Game mode
-        const characterConfig = await fetch('config/character.json').then(r => r.json()).catch(() => ({}));
+        // Game mode — force "city" for now. Sketchbook stays in the codebase
+        // but is not exposed in the UI.
+        localStorage.setItem('gloops_level', 'city');
+        const characterConfig = await fetch('config/character.json', { cache: 'no-cache' }).then(r => r.json()).catch(() => ({}));
         const game = new Game({ scene, camera, renderer, character, orbit, ground, manifestData, characterConfig });
         window._game = game;
-        document.getElementById('btn-play')?.addEventListener('click', () => {
-            if (game.active) game.exit();
-            else game.enter();
-        });
 
-        loadingEl.classList.add('hidden');
+        // Wire every menu button (loading Start → main menu → customizer / game / music).
+        _wireMenu(game);
+
+        // Done — hide the "Loading..." row entirely and reveal the
+        // LET'S GO button. Arm the music auto-start listener so the
+        // first user gesture kicks off the default track.
+        document.getElementById('loading-msg')?.classList.add('hidden');
+        document.getElementById('btn-loading-start')?.classList.remove('hidden');
+        _armMusicAutoStart();
         console.log('Gloops ready!');
 
         // Debug: expose character for console inspection
@@ -889,19 +1340,28 @@ init();
 
 // --- Loop ---
 const clock = new THREE.Clock();
+let _animateErrorReported = false;
 function animate() {
     requestAnimationFrame(animate);
     const dt = clock.getDelta();
-    character.update(dt);
-    // Orbit first, THEN game — so gameCamera has the final word on
-    // camera position/orientation. OrbitControls.update() ignores the
-    // `enabled` flag and re-applies its own position+lookAt every frame,
-    // so if it runs after gameCamera it clobbers the third-person rig.
-    if (window._game && window._game.active) {
-        window._game.update(dt);
-    } else {
-        orbit.update();
+    try {
+        character.update(dt);
+        // Orbit first, THEN game — so gameCamera has the final word on
+        // camera position/orientation. OrbitControls.update() ignores the
+        // `enabled` flag and re-applies its own position+lookAt every frame,
+        // so if it runs after gameCamera it clobbers the third-person rig.
+        if (window._game && window._game.active) {
+            window._game.update(dt);
+        } else {
+            orbit.update();
+        }
+        postFX.render();
+    } catch (err) {
+        // Only log the first time so the console isn't flooded.
+        if (!_animateErrorReported) {
+            console.error('[animate] exception in frame loop — scene may be frozen:', err);
+            _animateErrorReported = true;
+        }
     }
-    postFX.render();
 }
 animate();

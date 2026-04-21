@@ -122,9 +122,23 @@ export function spawnTreeInstances(data, scene, opts = {}) {
     const colliders = [];
     const colliderRadius = opts.colliderRadius ?? 0.25;
 
+    // Optional reject(x, z) → bool  — callers can skip items that land
+    // on roads / arenas. We collapse rejected instances to scale 0 so
+    // they're invisible (InstancedMesh count is fixed at allocation).
+    const reject = typeof opts.reject === 'function' ? opts.reject : null;
+
     for (let i = 0; i < count; i++) {
         const it = items[i];
-        pos.set(it.x || 0, it.y || 0, it.z || 0);
+        const ix = it.x || 0;
+        const iz = it.z || 0;
+        if (reject && reject(ix, iz)) {
+            // Hide this instance by setting scale 0
+            scl.set(0, 0, 0);
+            matrix.compose(new THREE.Vector3(0, -1000, 0), new THREE.Quaternion(), scl);
+            for (const im of instancedMeshes) im.setMatrixAt(i, matrix);
+            continue;
+        }
+        pos.set(ix, it.y || 0, iz);
         quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), it.ry || 0);
         const s = (it.s || 1) * (opts.scaleMultiplier || 1);
         scl.set(s, s, s);

@@ -6,6 +6,16 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
+/* Custom display font for GLOOPS titles / taglines */
+@font-face {
+    font-family: 'Sobiscuit';
+    src: url('../assets/fonts/Sobiscuit.otf') format('opentype'),
+         url('../assets/fonts/Sobiscuit.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* --- Mobile --- */
 @media (max-width: 768px) {
     #app {
@@ -120,6 +130,10 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+/* Menu states hide the panel (loading, main menu, music picker, game) */
+#panel.hidden {
+    display: none !important;
 }
 
 #panel-logo {
@@ -899,7 +913,13 @@ body {
 }
 
 /* === GAME MODE === */
-#btn-play {
+/* Generic .hidden fallback — any element with class="hidden" gets
+   display:none, so we don't depend on element-specific rules. */
+.hidden { display: none !important; }
+
+/* Legacy #btn-play styles kept (empty rule below) in case other code
+   still references them, but the button has been removed from the DOM. */
+#btn-play-legacy-anchor {
     position: fixed;
     top: 12px;
     right: 12px;
@@ -942,6 +962,689 @@ body {
     padding: 8px 14px; font-weight: 700; cursor: pointer;
 }
 .game-hud .gh-exit:hover { background: rgba(233,69,96,0.7); }
+.game-hud .gh-hint {
+    background: rgba(0,0,0,0.45);
+    padding: 6px 12px;
+    border-radius: 10px;
+    color: #ffd;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+}
+
+/* ===== Crazy-Taxi mission HUD ===== */
+.game-hud .gh-mission {
+    position: absolute; top: 110px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.72);
+    border: 2px solid #ffc75a;
+    border-radius: 14px;
+    padding: 10px 18px;
+    color: #fff;
+    font-weight: 700;
+    pointer-events: none;
+    min-width: 360px;
+    text-align: center;
+    box-shadow: 0 4px 22px rgba(255, 199, 90, 0.25);
+}
+.game-hud .gh-mission.hidden { display: none; }
+.game-hud .gh-mission-banner {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    color: #ffe680;
+}
+.game-hud .gh-mission-row {
+    display: flex; justify-content: space-around; gap: 18px;
+    font-size: 1rem;
+}
+.game-hud .gh-mission-timer {
+    color: #9fe1cb;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+.game-hud .gh-mission-timer.warn {
+    color: #ff4455;
+    animation: gh-timer-pulse 0.5s ease-in-out infinite alternate;
+}
+@keyframes gh-timer-pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.12); }
+}
+.game-hud .gh-mission-score { color: #ffd24a; }
+.game-hud .gh-mission-deliveries { color: #b5d4f4; }
+
+.game-hud .gh-mission-popup {
+    position: absolute; top: 40%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 214, 74, 0.92);
+    color: #2a1a0a;
+    padding: 18px 38px;
+    border-radius: 16px;
+    font-size: 1.9rem;
+    font-weight: 900;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.3);
+    pointer-events: none;
+    animation: gh-popup 1.4s ease-out forwards;
+}
+.game-hud .gh-mission-popup.hidden { display: none; }
+
+/* ======================================================================
+   MAIN MENU + LOADING + MUSIC OVERLAYS
+   Full-screen overlays positioned above the 3D canvas. They are
+   transparent enough that the Gloops character stays visible behind
+   (positioned to the right via camera offset in app.js).
+   ====================================================================== */
+.screen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    /* Menu owns the whole screen for clicks. Background is TRANSPARENT by
+       default — individual overlays opt in via .loading-bg / etc. For the
+       MAIN_MENU / MUSIC pair the background comes from the shared
+       #menu-bg element that sits just behind (z-index 2990). */
+    pointer-events: auto;
+    background: transparent;
+}
+.screen-overlay.hidden { display: none; }
+
+/* ============================================================
+   SHARED MENU BACKGROUND
+   Single <video> element that persists across the MAIN_MENU and
+   MUSIC states so navigating between them doesn't restart the
+   video loop. Sits BELOW the .screen-overlay layer (z-index 2990
+   vs 3000), so the overlay's content renders on top with no bg
+   of its own — just transparency.
+   ============================================================ */
+#menu-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 2990;
+    overflow: hidden;
+    pointer-events: none;            /* clicks pass through to the overlay */
+    background:
+        url('../images/webp/ui/background.webp') center/cover no-repeat,
+        #0a0616;
+}
+#menu-bg.hidden { display: none; }
+
+.menu-bg-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.menu-bg-vignette {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to right,
+        rgba(10, 6, 22, 0.82) 0%,
+        rgba(10, 6, 22, 0.55) 35%,
+        rgba(10, 6, 22, 0.25) 65%,
+        rgba(10, 6, 22, 0.35) 100%
+    );
+}
+
+/* Plain dark background for the LOADING screen — no island yet. */
+.loading-bg {
+    background:
+        radial-gradient(
+            ellipse at 50% 50%,
+            #1a0e30 0%,
+            #0a0616 70%,
+            #050208 100%
+        );
+}
+
+/* Dim (not black) behind the pause overlay so the game is still
+   visible but clearly backgrounded. */
+.pause-bg {
+    background: rgba(0, 0, 0, 0.55);
+}
+
+/* Music switcher — triangle prev / next around a live track name.
+   Reused in the ESC pause menu (default size) AND the main Music
+   Options screen via the .music-switcher-large modifier. */
+.music-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 22px;
+    padding: 6px 4px;
+    color: #fff;
+    font-family: 'Sobiscuit', 'Impact', 'Arial Black', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
+}
+.music-switcher-large {
+    gap: 22px;
+    margin: 14px 0 22px;
+    font-size: 1.6rem;
+}
+.music-nav {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 50%;
+    transition: color .15s, transform .15s, background .15s;
+    font-family: inherit;
+}
+.music-switcher-large .music-nav { font-size: 1.5rem; }
+.music-nav:hover {
+    color: #ffc75a;
+    transform: scale(1.15);
+    background: rgba(255, 255, 255, 0.06);
+}
+.music-nav:active {
+    transform: scale(1);
+}
+.music-switcher-name {
+    min-width: 180px;
+    text-align: center;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.music-switcher-large .music-switcher-name {
+    min-width: 280px;
+}
+
+/* Small round icon button (used for mute toggle in the pause menu) */
+.icon-btn {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+    color: #fff;
+    cursor: pointer;
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .15s, transform .15s, color .15s, background .15s;
+    padding: 0;
+}
+.icon-btn:hover {
+    border-color: #ffc75a;
+    color: #ffc75a;
+    transform: scale(1.08);
+}
+.icon-btn.muted {
+    color: #888;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.screen-content {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 22px;
+    padding: 60px 80px;
+    max-width: 560px;
+}
+.screen-center {
+    margin: auto;
+    align-items: center;
+    text-align: center;
+}
+.screen-left {
+    margin-right: auto;           /* pinned to the left edge */
+    align-items: flex-start;
+    text-align: left;
+}
+
+/* ===== GLOOPS logo image (loading + main menu) ===== */
+.gloops-logo-img {
+    width: clamp(280px, 40vw, 560px);
+    height: auto;
+    filter: drop-shadow(0 6px 24px rgba(255, 107, 214, 0.35));
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.gloops-logo-top {
+    width: clamp(240px, 32vw, 420px);
+    margin-bottom: 4px;
+}
+
+/* Logo + tagline grouped so the tagline can tuck right under the logo
+   image (right-aligned to the logo's right edge, tight vertical). */
+.title-block {
+    display: inline-flex;           /* width = logo width */
+    flex-direction: column;
+    align-items: flex-end;          /* items right-aligned within */
+    margin-bottom: 18px;
+}
+.title-block .gloops-logo-img {
+    align-self: flex-start;         /* logo stays left-anchored */
+}
+
+/* Wraps the title-block + menu-list so both share the same horizontal
+   centerline. The column is inline-flex (hug content = logo width)
+   and centers its children, which puts the menu buttons right under
+   the middle of the GLOOPS logo. */
+.menu-column {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gloops-tagline {
+    /* Impact's tall, narrow, condensed glyphs contrast nicely with the
+       chunky rounded GLOOPS logo. Sobiscuit is kept for other headings
+       (screen titles, pause) where the contrast isn't a concern. */
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+    font-weight: 900;
+    letter-spacing: 0.4em;
+    color: #ffc75a;
+    margin: 4px 0 8px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    user-select: none;
+}
+/* Inside the main-menu title block, tuck tight under the logo and push
+   it hard to the right edge (parent align-items: flex-end handles the
+   horizontal anchoring, the negative margin-top pulls it up into the
+   bottom-right corner of the logo for a "stamped-on" look). */
+.title-block .gloops-tagline {
+    margin: -22px -4px 0 0;
+}
+
+.loading-msg {
+    color: #e094c0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ===== Loading spinner ===== */
+.spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 192, 214, 0.25);
+    border-top-color: #ff6bd6;
+    border-radius: 50%;
+    animation: spinner-rot 0.9s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spinner-rot {
+    to { transform: rotate(360deg); }
+}
+
+.screen-title {
+    font-family: 'Sobiscuit', 'Impact', 'Arial Black', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 400;
+    color: #ffc75a;
+    margin: 0 0 10px 0;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Bracketed variant — used on the PAUSED title. Bigger + permanent
+   `< >` on either side. Matches the hover affordance of the menu
+   buttons so the visual language stays consistent. */
+.screen-title-bracketed {
+    font-size: 4.2rem;
+    letter-spacing: 0.12em;
+    margin: 6px 0 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+.screen-title-bracketed::before { content: '<'; }
+.screen-title-bracketed::after  { content: '>'; }
+
+/* ===== Big menu buttons ===== */
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    /* Items hug their own text and are centered in the column so
+       CONTINUE / NEW GAME / MUSIC OPTION share the same visual
+       centerline — which, inside .menu-column, aligns with the
+       GLOOPS logo's center by construction. */
+    align-items: center;
+    gap: 14px;
+}
+.big-btn {
+    /* Display font from the Gloops brand, no container — just typographic
+       buttons. Drop shadow gives them punch against the bg art. */
+    font-family: 'Sobiscuit', 'Impact', 'Arial Black', sans-serif;
+    font-size: 2.1rem;
+    font-weight: 400;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    transition: transform .12s, color .12s, text-shadow .12s, opacity .12s;
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.6);
+    /* Alignment follows the parent overlay layout */
+    text-align: left;
+    /* Positioned so ::before / ::after brackets can hug the text */
+    position: relative;
+}
+.screen-center .big-btn { text-align: center; }
+
+/* Hover brackets — `<` on the left, `>` on the right. Hidden by default
+   (opacity 0), fade in on hover. Positioned absolutely so they don't
+   shift the text layout; they scale along with the button because the
+   button's scale transform applies to its pseudo-children too. */
+.big-btn::before,
+.big-btn::after {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: inherit;
+    opacity: 0;
+    transition: opacity .18s;
+    font-family: inherit;
+    font-size: inherit;
+    pointer-events: none;
+}
+.big-btn::before {
+    content: '<';
+    right: 100%;
+    margin-right: 6px;
+}
+.big-btn::after {
+    content: '>';
+    left: 100%;
+    margin-left: 6px;
+}
+.big-btn:hover:not(:disabled)::before,
+.big-btn:hover:not(:disabled)::after {
+    opacity: 1;
+}
+
+/* Hover = grow slightly from the center + shift color to gold.
+   transform-origin defaults to center, which is what we want. */
+.big-btn:hover:not(:disabled) {
+    transform: scale(1.08);
+    color: #ffc75a;
+    text-shadow: 0 2px 14px rgba(255, 199, 90, 0.5), 0 0 1px rgba(0, 0, 0, 0.6);
+}
+.big-btn:active:not(:disabled) {
+    transform: scale(1.03);
+}
+.big-btn:disabled {
+    opacity: 0.4;
+    cursor: wait;
+}
+/* Primary = the big pink START on the loading screen AND Resume in pause.
+   Keeps its gradient pill look so it reads as the hero CTA. */
+.big-btn-primary {
+    font-family: inherit;   /* Sobiscuit already inherited */
+    background: linear-gradient(135deg, #ff6bd6, #7a3cff);
+    border: 2px solid #ff6bd6;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 2.4rem;
+    padding: 14px 44px;
+    text-align: center;
+    letter-spacing: 0.14em;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.big-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    color: #fff;
+    box-shadow: 0 10px 28px rgba(255, 107, 214, 0.5);
+}
+.big-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* ===== Volume slider ===== */
+.music-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 420px;
+    padding: 10px 16px;
+    background: rgba(40, 20, 70, 0.5);
+    border: 1px solid #3a2a5a;
+    border-radius: 10px;
+    margin-bottom: 8px;
+}
+.music-volume-label {
+    color: #ffc75a;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    min-width: 60px;
+}
+.music-volume {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, #7a3cff 0%, #ff6bd6 100%);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+.music-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    background: #ffc75a;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.music-volume::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: #ffc75a;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.music-volume-value {
+    color: #eee;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.9rem;
+    min-width: 28px;
+    text-align: right;
+}
+
+/* ===== Panel top bar (Back to menu + Start game) ===== */
+#panel-topbar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #2a1a4a;
+    flex-shrink: 0;
+}
+.panel-back-btn,
+.panel-start-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #5a3a8a;
+    background: linear-gradient(135deg, #2a1a4a, #1a0f30);
+    color: #ffe6ff;
+    transition: border-color .12s, background .12s;
+}
+.panel-back-btn:hover {
+    border-color: #ff6bd6;
+}
+.panel-start-btn {
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    border-color: #66bb6a;
+    color: #fff;
+}
+.panel-start-btn:hover {
+    filter: brightness(1.15);
+}
+
+/* ===== Mobile tweaks for the menu overlays ===== */
+@media (max-width: 768px) {
+    .screen-content {
+        padding: 32px 22px;
+        max-width: 100%;
+        gap: 16px;
+    }
+    .screen-left {
+        align-items: center;
+        text-align: center;
+        margin-right: 0;
+    }
+    .gloops-logo-img {
+        width: clamp(200px, 60vw, 340px);
+    }
+    .gloops-logo-top {
+        width: clamp(180px, 55vw, 280px);
+    }
+    .gloops-tagline {
+        font-size: 1rem;
+        letter-spacing: 0.3em;
+    }
+    .tagline-left {
+        align-self: center;
+        margin-left: 0;
+    }
+    .menu-list {
+        max-width: 100%;
+    }
+    .big-btn {
+        min-width: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 1.05rem;
+        padding: 14px 20px;
+    }
+    .big-btn-primary {
+        font-size: 1.2rem;
+    }
+    .music-volume-row {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+}
+
+/* ===== Level picker (legacy, kept for reference) ===== */
+.gh-level-picker {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 2000;
+    flex-wrap: wrap;
+    padding: 40px;
+    backdrop-filter: blur(4px);
+}
+.gh-level-card {
+    background: linear-gradient(135deg, #2a2a3a, #1a1a28);
+    border: 2px solid #ffc75a;
+    border-radius: 14px;
+    padding: 30px 28px;
+    min-width: 280px;
+    max-width: 360px;
+    cursor: pointer;
+    color: #fff;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+    position: relative;
+    font-family: inherit;
+}
+.gh-level-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(255, 199, 90, 0.35);
+    border-color: #ffe680;
+}
+.gh-level-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: #ffc75a;
+}
+.gh-level-desc {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #ccc;
+}
+.gh-level-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #4a8a3a;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+.gh-level-cancel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ===== WASTED overlay (GTA-style drown death) ===== */
+.gh-wasted {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 14rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #8a1010;
+    background: rgba(80, 0, 0, 0.55);
+    text-shadow:
+        0 0 14px rgba(255, 40, 40, 0.7),
+        0 0 40px rgba(255, 20, 20, 0.4),
+        4px 4px 0 #220000;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.15s linear;
+    transform: scale(1.02);
+    animation: wasted-pulse 1.6s ease-in-out infinite;
+}
+.gh-wasted.hidden { display: none; }
+@keyframes wasted-pulse {
+    0%, 100% { transform: scale(1.0); }
+    50%      { transform: scale(1.05); }
+}
+@keyframes gh-popup {
+    0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    15%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    30%  { transform: translate(-50%, -50%) scale(1); }
+    85%  { transform: translate(-50%, -80%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -120%) scale(0.9); opacity: 0; }
+}
 
 .game-hud .gh-prompt {
     position: absolute; top: 60px; left: 50%;

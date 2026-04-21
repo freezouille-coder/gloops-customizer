@@ -35,6 +35,16 @@ export class NpcGloop {
 
         // Clone the rigged model (skeleton/meshes cloned, materials still shared)
         this.model = SkeletonUtils.clone(sourceCharacter.model);
+        // Forward the format tag so ShadingManager.scanModel picks the right
+        // flipV default (GLB = false, FBX = true). SkeletonUtils.clone copies
+        // userData by ref, but belt-and-suspenders in case that changes.
+        if (sourceCharacter.model.userData) {
+            this.model.userData.isGLB = sourceCharacter.model.userData.isGLB;
+            this.model.userData.isFBX = sourceCharacter.model.userData.isFBX;
+        }
+        // Strip any paired props the player happens to be wearing right
+        // now — otherwise every NPC spawns with the player's glasses/hat.
+        this._stripPairedProps(this.model);
         this.model.position.copy(position);
         this.model.rotation.y = Math.random() * Math.PI * 2;
 
@@ -69,26 +79,73 @@ export class NpcGloop {
         this._rootBone = null;
     }
 
-    _pickWanderTarget() {
-        // Bias 70% toward the fountain area (ring of radius 4-14 around
-        // origin) so NPCs tend to hang out near the center. 30% free wander.
-        let tx, tz;
-        if (Math.random() < 0.7) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = 4 + Math.random() * 10;   // ring around fountain
-            tx = Math.cos(angle) * r;
-            tz = Math.sin(angle) * r;
-        } else {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 6 + Math.random() * 14;
-            tx = this.model.position.x + Math.cos(angle) * dist;
-            tz = this.model.position.z + Math.sin(angle) * dist;
+    /**
+     * Walk the cloned model and remove any node tagged as a paired
+     * prop (added at runtime by PropsManager). This prevents NPCs from
+     * inheriting the player's currently-attached glasses / hats.
+     */
+    _stripPairedProps(root) {
+        const toRemove = [];
+        root.traverse((node) => {
+            if (node.userData && node.userData.isPairedProp) toRemove.push(node);
+        });
+        for (const node of toRemove) {
+            node.removeFromParent();
+            node.traverse((c) => {
+                if (c.isMesh || c.isSkinnedMesh) {
+                    c.geometry?.dispose();
+                    if (Array.isArray(c.material)) c.material.forEach((m) => m.dispose());
+                }
+            });
         }
+    }
+
+    _pickWanderTarget() {
+        // NPCs patrol around a city block. Each NPC is assigned a block
+        // center (±14 × ±14) on first call; subsequent wander targets
+        // trace the 4 corners of the sidewalk ring around that block.
+        if (!this._patrolBlock) {
+            const blocks = [
+                [14, 14], [-14, 14], [14, -14], [-14, -14],
+                [14, 42], [-14, 42], [14, -42], [-14, -42],
+                [42, 14], [-42, 14], [42, -14], [-42, -14],
+            ];
+            this._patrolBlock = blocks[Math.floor(Math.random() * blocks.length)];
+            this._patrolStep = Math.floor(Math.random() * 4);
+        }
+        const [bx, bz] = this._patrolBlock;
+        // 4 sidewalk corners around the block (offset 9m from block center)
+        const corners = [
+            [bx + 9, bz + 9], [bx - 9, bz + 9],
+            [bx - 9, bz - 9], [bx + 9, bz - 9],
+        ];
+        this._patrolStep = (this._patrolStep + 1) % 4;
+        let tx = corners[this._patrolStep][0];
+        let tz = corners[this._patrolStep][1];
         // Clamp to island play area
         const r = Math.hypot(tx, tz);
-        if (r > 44) {
-            const k = 44 / r;
+        const MAX = 55;
+        if (r > MAX) {
+            const k = MAX / r;
             tx *= k; tz *= k;
+        }
+
+        // NPCs are PEDESTRIANS — push them off the road onto a sidewalk.
+        // Roads live at x=0, x=±28, z=0, z=±28 with half-width 3 m.
+        // We snap to the sidewalk ~5 m from the road centerline.
+        const ROAD_AXES_X = [0, 28, -28];
+        const ROAD_AXES_Z = [0, 28, -28];
+        for (const rx of ROAD_AXES_X) {
+            if (Math.abs(tx - rx) < 3) {
+                tx = rx + (tx >= rx ? 5 : -5);
+                break;
+            }
+        }
+        for (const rz of ROAD_AXES_Z) {
+            if (Math.abs(tz - rz) < 3) {
+                tz = rz + (tz >= rz ? 5 : -5);
+                break;
+            }
         }
         this._wanderTarget.set(tx, 0, tz);
         this._wanderTimer = 4 + Math.random() * 6;
@@ -162,15 +219,33 @@ export class NpcGloop {
         }
     }
 
+    /**
+     * Extension-tolerant lookup in one of our action Maps.
+     * We can't replace the Map with the resolved key because multiple
+     * call sites pass ".fbx" strings; instead we search by basename.
+     */
+    _findAction(actionMap, filename) {
+        if (actionMap.has(filename)) return actionMap.get(filename);
+        const stripExt = (s) => s.replace(/\.(fbx|glb|gltf)$/i, '').toLowerCase();
+        const needle = stripExt(filename);
+        for (const [key, action] of actionMap) {
+            if (stripExt(key) === needle) return action;
+        }
+        return null;
+    }
+
     _playMove(filename) {
-        if (this._currentMove === filename) return;
-        const target = this._moveActions.get(filename);
+        // Normalise to basename so different call sites ("walk.fbx" vs
+        // "walk.glb") don't defeat the "already playing" short-circuit.
+        const basename = filename.replace(/\.(fbx|glb|gltf)$/i, '').toLowerCase();
+        if (this._currentMove === basename) return;
+        const target = this._findAction(this._moveActions, filename);
         if (!target) return;
         for (const a of this._moveActions.values()) {
             if (a === target) a.setEffectiveWeight(1);
             else a.setEffectiveWeight(0);
         }
-        this._currentMove = filename;
+        this._currentMove = basename;
     }
 
     _zeroAllEmotions() {
@@ -481,15 +556,9 @@ export class NpcManager {
 
     async spawn(count = 4) {
         for (let i = 0; i < count; i++) {
-            // Spawn on a ring 6-12 units from the fountain
-            const angle = (i / count) * Math.PI * 2 + Math.random() * 0.6;
-            const dist = 6 + Math.random() * 6;
-            const x = Math.cos(angle) * dist;
-            const z = Math.sin(angle) * dist;
-            const y = this._world ? this._world.heightAt(x, z) : 0;
-            const pos = new THREE.Vector3(x, y, z);
+            // Spawn on a sidewalk (not on the road, not in a building)
+            const pos = this._pickSidewalkSpawn(i, count);
             const npc = new NpcGloop(this.sourceCharacter, pos);
-            // Face roughly toward center so they look at the player
             npc.model.rotation.y = Math.atan2(-pos.x, -pos.z);
             if (this._manifestData && this._characterConfig) {
                 await npc.initVisuals(this._manifestData, this._characterConfig);
@@ -497,6 +566,59 @@ export class NpcManager {
             npc.addToScene(this.scene);
             this.npcs.push(npc);
         }
+    }
+
+    /** Returns a Vector3 on a city sidewalk, far from buildings and roads.
+     *  In non-city worlds (Sketchbook), falls back to raycast-based ring. */
+    _pickSidewalkSpawn(i, count) {
+        // Non-city world? Use random ring around player spawn + terrain raycast
+        if (this._world && this._world.isCity === false) {
+            const origin = this._world.spawns?.player ?? { x: 0, z: 0 };
+            for (let tries = 0; tries < 20; tries++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 6 + Math.random() * 20;
+                const x = origin.x + Math.cos(angle) * dist;
+                const z = origin.z + Math.sin(angle) * dist;
+                const y = this._world.heightAt(x, z);
+                if (y > 0.1) return new THREE.Vector3(x, y, z);
+            }
+            return new THREE.Vector3(origin.x, 0, origin.z);
+        }
+        // Sidewalks live at ±5m from each road axis (axes at 0, ±28).
+        // Pick a road axis, a side, and a position along that axis.
+        const axes = [0, 28, -28];
+        for (let tries = 0; tries < 40; tries++) {
+            const axisIsX = Math.random() < 0.5;
+            const axisValue = axes[Math.floor(Math.random() * axes.length)];
+            const side = Math.random() < 0.5 ? -1 : 1;
+            // Sidewalk strip at offset 5 m from the axis
+            const offset = axisValue + side * 5;
+            // Position along the perpendicular: spread across the map, avoid
+            // crossing other roads (±3 of each axis)
+            const alongMax = 45;
+            const along = (Math.random() - 0.5) * 2 * alongMax;
+            let tooCloseToOtherRoad = false;
+            for (const otherAxis of axes) {
+                if (otherAxis === axisValue && axisIsX === axisIsX) continue;
+                if (Math.abs(along - otherAxis) < 3) { tooCloseToOtherRoad = true; break; }
+            }
+            if (tooCloseToOtherRoad) continue;
+            const x = axisIsX ? offset : along;
+            const z = axisIsX ? along  : offset;
+            // Stay on the island
+            if (Math.hypot(x, z) > 55) continue;
+            // Don't spawn inside a block (approximate by distance to block centers)
+            let insideBlock = false;
+            for (const [bx, bz] of [[14,14],[14,-14],[-14,14],[-14,-14],[14,42],[14,-42],[-14,42],[-14,-42],[42,14],[42,-14],[-42,14],[-42,-14],[42,42],[42,-42],[-42,42],[-42,-42]]) {
+                if (Math.abs(x - bx) < 9 && Math.abs(z - bz) < 9) { insideBlock = true; break; }
+            }
+            if (insideBlock) continue;
+            const y = this._world ? this._world.heightAt(x, z) : 0;
+            return new THREE.Vector3(x, y, z);
+        }
+        // Fallback — center plaza
+        const angle = (i / count) * Math.PI * 2;
+        return new THREE.Vector3(Math.cos(angle) * 8, 0, Math.sin(angle) * 8);
     }
 
     findClosest(pos, maxDist = 1.8) {

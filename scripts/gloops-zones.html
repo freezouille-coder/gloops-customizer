@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — Zones Monde</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>🗺️ Zones Monde</h1>
+<p class="lede">Comment delimiter les zones de gameplay dans Maya pour le mode jeu 3eme personne.</p>
+
+<!-- =============================================================== -->
+<h2>1. 💡 Concept</h2>
+
+<div class="panel">
+  <p>Les zones de gameplay (pieton, route, parking, spawn...) sont definies dans Maya comme des <b>meshes low-poly nommes</b>, groupes sous <code>ZONES</code>.</p>
+  <p>Au runtime, le code parse les noms, rend les meshes invisibles, et utilise leur geometrie pour des tests point-in-polygon.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>2. 📋 Convention de nommage</h2>
+
+<table>
+  <tr><th>Prefixe mesh</th><th>Type de zone</th><th>Comportement in-game</th></tr>
+  <tr><td><code>zone_pedestrian_*</code></td><td>Trottoir / chemin pieton</td><td>NPCs wanderent ici, voitures interdites</td></tr>
+  <tr><td><code>zone_drive_right_*</code></td><td>Route sens droit</td><td>Voitures traffic suivent ce path (sens horaire)</td></tr>
+  <tr><td><code>zone_drive_left_*</code></td><td>Route sens gauche</td><td>Voitures traffic sens anti-horaire</td></tr>
+  <tr><td><code>zone_parking_*</code></td><td>Parking</td><td>Voiture se gare / spawn</td></tr>
+  <tr><td><code>zone_spawn_*</code></td><td>Spawn generique NPC</td><td>Endroit ou les NPCs apparaissent</td></tr>
+  <tr><td><code>zone_spawn_aveggies_*</code></td><td>Spawn faction Aveggies</td><td>Spawn biaise vers Bobo, Mush, NionNion</td></tr>
+  <tr><td><code>zone_spawn_sugarheads_*</code></td><td>Spawn faction SugarHeads</td><td>Spawn biaise vers SugarHead, CryptoBro, ZogZog</td></tr>
+  <tr><td><code>zone_building_*</code></td><td>Emplacement batiment</td><td>Zone interactive (F pour interagir)</td></tr>
+  <tr><td><code>zone_no_go_*</code></td><td>Barriere invisible</td><td>Bloque joueur + vehicules</td></tr>
+  <tr><td><code>zone_water_*</code></td><td>Eau / mer</td><td>Shader eau, collision splash</td></tr>
+  <tr><td><code>zone_runway_*</code></td><td>Piste d'avion</td><td>Decollage / atterrissage autorise</td></tr>
+  <tr><td><code>zone_helipad_*</code></td><td>Heliport</td><td>Spawn / landing helicoptere</td></tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>3. 🎨 Format dans Maya</h2>
+
+<div class="panel">
+  <ul>
+    <li>Meshes <b>planes ou polygones</b> aplatis sur le sol (la forme 2D vue du dessus = la zone)</li>
+    <li><b>Y = hauteur du sol</b> dans cette zone</li>
+    <li>Pas de materiau visible — <b>rendu invisible au runtime</b></li>
+    <li>Si une zone a du volume (tunnel, pont), utilise un cube</li>
+    <li>Grouper sous <code>ZONES</code></li>
+    <li>Export en <b>FBX separe</b> du decor visible → <code>fbx/WORLD/zones.fbx</code></li>
+  </ul>
+</div>
+
+<h3>Structure recommandee</h3>
+<pre>
+ZONES
+├── zone_pedestrian_01
+├── zone_pedestrian_02
+├── zone_drive_right_main
+├── zone_drive_left_main
+├── zone_building_garden
+├── zone_building_candy_factory
+├── zone_spawn_aveggies_forest
+├── zone_spawn_sugarheads_plaza
+├── zone_no_go_cliff
+└── zone_helipad_rooftop
+</pre>
+
+<!-- =============================================================== -->
+<h2>4. 🚦 Carrefours & feux rouges</h2>
+
+<div class="panel">
+  <p><b>Principe :</b> un carrefour est une zone avec des feux qui cyclent. Les voitures freinent au rouge.</p>
+</div>
+
+<h3>Nommage Maya</h3>
+<table>
+  <tr><th>Nom</th><th>Type</th><th>Role</th></tr>
+  <tr><td><code>zone_intersection_01</code></td><td>Plane au sol</td><td>Couvre toute l'intersection. Les voitures qui y entrent checkent le feu.</td></tr>
+  <tr><td><code>trafficlight_north_01</code></td><td>Locator</td><td>Position du feu pour les voitures venant du Nord</td></tr>
+  <tr><td><code>trafficlight_south_01</code></td><td>Locator</td><td>Position du feu pour les voitures venant du Sud</td></tr>
+  <tr><td><code>trafficlight_east_01</code></td><td>Locator</td><td>Position du feu pour les voitures venant de l'Est</td></tr>
+  <tr><td><code>trafficlight_west_01</code></td><td>Locator</td><td>Position du feu pour les voitures venant de l'Ouest</td></tr>
+</table>
+
+<p>Le suffixe <code>_01</code> doit matcher entre <code>zone_intersection</code> et les <code>trafficlight_*</code>.</p>
+
+<h3>Cycle par defaut</h3>
+<pre>
+t = 0s     N/S vert       E/W rouge
+t = 25s    N/S jaune      E/W rouge
+t = 30s    N/S rouge      E/W vert
+t = 55s    N/S rouge      E/W jaune
+t = 60s    (boucle)
+</pre>
+
+<p>Cycle configurable par intersection dans <code>config/world-entities.json</code> :</p>
+
+<pre>
+"intersections": {
+    "01": {
+        "cycle_ns": 30,
+        "cycle_ew": 30,
+        "yellow_duration": 5,
+        "start_phase": "ns_green"
+    }
+}
+</pre>
+
+<h3>Les feux physiques</h3>
+<p>Au runtime, a chaque position <code>trafficlight_*</code>, un mesh "poteau + 3 lumieres" est instancie. Les 3 lumieres (rouge, jaune, vert) sont des spheres avec emissive que le code pilote selon l'etat du cycle.</p>
+
+<!-- =============================================================== -->
+<h2>5. 🛤️ Trottoirs (sidewalks)</h2>
+
+<div class="panel">
+  <p><b>Une voiture peut monter sur un trottoir si la geometrie le permet.</b> Le code de collision utilise raycast + bbox, donc il respecte exactement ce que tu modelises.</p>
+</div>
+
+<h3>3 approches de modeling</h3>
+<table>
+  <tr><th>Tu veux...</th><th>Modele ainsi</th><th>Comportement</th></tr>
+  <tr>
+    <td><b>Trottoir infranchissable</b></td>
+    <td>Bord vertical a 90°, hauteur 15-30 cm</td>
+    <td>La voiture bloque contre le mur. Collision nette.</td>
+  </tr>
+  <tr>
+    <td><b>Trottoir franchissable</b></td>
+    <td>Bord incline 15-30°, ou hauteur faible (5-10 cm)</td>
+    <td>Les roues peuvent monter en vitesse. Cool pour les poursuites / carambolages.</td>
+  </tr>
+  <tr>
+    <td><b>Trottoir visuel safe</b></td>
+    <td>Bord vertical + <code>zone_no_go_*</code> invisible au-dessus</td>
+    <td>Impossible de rouler dessus meme avec une rampe. Bon pour les zones sensibles.</td>
+  </tr>
+</table>
+
+<h3>Zone vs collision physique</h3>
+<p>⚠️ Attention a ne pas confondre :</p>
+<ul>
+  <li><code>zone_pedestrian_*</code> = zone logique ou les NPCs piétons wanderent. <b>Pas de barriere physique pour le joueur.</b></li>
+  <li>La <b>collision</b> du trottoir vient du mesh visible (le decor 3D)</li>
+  <li>Si tu veux un blocage imaterial → utilise <code>zone_no_go_*</code> en plus</li>
+</ul>
+
+<!-- =============================================================== -->
+<h2>6. 🛣️ Routes courbes (NURBS curves)</h2>
+
+<div class="panel">
+  <p>Pour des routes avec des virages, tu peux ajouter des <b>NURBS curves</b> nommees :</p>
+  <ul>
+    <li><code>path_drive_right</code> — spline que les voitures suivent en sens horaire</li>
+    <li><code>path_drive_left</code> — sens anti-horaire</li>
+    <li><code>path_parade_*</code> — trajet d'un evenement (parade, defile)</li>
+  </ul>
+  <p>Au runtime, elles seront converties en <code>THREE.CatmullRomCurve3</code> pour le traffic AI.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>7. 🔀 Zones empilees (optionnel)</h2>
+
+<div class="panel">
+  <p>Si tu as besoin de <b>plusieurs couches de zones au meme endroit</b> (ex: route en dessous d'un pont pieton), utilise des <b>cubes volumetriques</b> au lieu de planes :</p>
+  <ul>
+    <li>Un test point-in-polygon ne suffit plus — on teste <b>l'inclusion dans un bbox 3D</b></li>
+    <li>La hauteur du joueur determine quelle zone est active</li>
+  </ul>
+  <p>Pour la V1, reste sur des planes 2D (plus simple, plus performant).</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>8. ✅ Checklist</h2>
+
+<div class="panel">
+  <ol>
+    <li>Creer des planes/polygones nommes <code>zone_&lt;type&gt;_&lt;nom&gt;</code></li>
+    <li>Les poser a meme le sol de l'ile (Y = hauteur du sol)</li>
+    <li>Les grouper sous un group <code>ZONES</code></li>
+    <li>(Optionnel) Ajouter des NURBS curves <code>path_*</code> pour les routes courbes</li>
+    <li>Exporter en FBX separe → <code>fbx/WORLD/zones.fbx</code></li>
+    <li>Au runtime, le code les parse par nom, les rend invisibles, et utilise la geometrie pour les tests d'inclusion</li>
+  </ol>
+</div>
+
+</body>
+</html>

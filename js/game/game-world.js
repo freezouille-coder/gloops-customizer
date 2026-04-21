@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { Water } from 'three/addons/objects/Water.js';
+import { Ocean } from './ocean.js';
 import { loadSketchbookAssets } from './game-sketchbook-assets.js';
 import { spawnTreeInstancesFromJSON } from './game-tree-instancer.js';
+import { CityGenerator } from './city-generator.js';
 
 /**
  * Game world: rolling plaza terrain, dense tree clusters, decorative
@@ -17,7 +18,8 @@ export class GameWorld {
         this.scene = scene;
         this.root = new THREE.Group();
         this.root.name = 'GameWorld';
-        this.RADIUS = 50;
+        this.RADIUS = 80;
+        this.isCity = true;   // GameWorld = city layout with blocks & roads
         this.items = [];
         this.balls = [];
         this.bricks = [];
@@ -28,6 +30,17 @@ export class GameWorld {
         // slice — you can walk straight from the play area into the sea.
         this.beachAngle = 0;        // 0 = facing +Z (north)
         this.beachHalf  = 1.05;     // ~60° half-arc — wide visible beach
+
+        // Promise that resolves once the async city build is done. Game
+        // awaits world.ready() so the loading screen stays up until the
+        // real blocks are visible — no popcorn on scene reveal.
+        this._cityReady = null;
+    }
+
+    /** Awaited by Game.build() — returns once async world pieces
+     *  (currently just the CityGenerator) have finished loading. */
+    ready() {
+        return this._cityReady || Promise.resolve();
     }
 
     /**
@@ -100,6 +113,42 @@ export class GameWorld {
      */
     setVehicles(list) { this._vehicles = list || []; }
 
+    /** Wire the cannon-es physics world BEFORE build() so _buildTestArena
+     *  and future builders can register their colliders directly. */
+    setPhysicsWorld(pw) { this._physicsWorld = pw; }
+
+    /**
+     * Mirror every 2D (XZ) collider in `this.colliders` into the cannon
+     * physics world as a tall STATIC cylinder. This lets dynamic bodies
+     * (cannon spheres, later the RaycastVehicle) bump against trees,
+     * rocks and building walls.
+     *
+     * Called from Game.build() after world.build() has populated colliders.
+     * Safe to call multiple times — tracks what it has already mirrored.
+     */
+    mirrorCollidersToPhysics(physicsWorld) {
+        // Remember the world so we can re-mirror after async tree loading
+        this._physicsWorld = physicsWorld || this._physicsWorld;
+        const pw = this._physicsWorld;
+        if (!pw) return;
+        this._physicsBodies = this._physicsBodies || [];
+        const alreadyMirrored = this._physicsBodies.length;
+        let added = 0;
+        for (let i = alreadyMirrored; i < this.colliders.length; i++) {
+            const c = this.colliders[i];
+            const height = 8;
+            const body = pw.addStaticCylinder(
+                c.radius, height,
+                { x: c.x, y: height / 2, z: c.z }
+            );
+            this._physicsBodies.push(body);
+            added++;
+        }
+        if (added > 0) {
+            console.log(`[world] mirrored ${added} colliders to cannon (total ${this._physicsBodies.length})`);
+        }
+    }
+
     /**
      * Collide an entity (player, NPC) against DYNAMIC objects —
      * balls, unsettled bricks, and vehicles. Uses simple circle push-out
@@ -160,76 +209,692 @@ export class GameWorld {
      * and other decor off the road.
      */
     isOnTrack(x, z) {
-        // Same oval parameters as _buildTrack: radius 20..26 scaled X by 1.25
-        const xn = x / 1.25;
-        const r = Math.hypot(xn, z);
-        return r > 19 && r < 27;
+        // Oval track removed in favor of the city grid. Keep the API
+        // for back-compat (other systems call it); always return false.
+        return false;
     }
 
     // Flat ground — no vertical bobbing while walking.
     heightAt(x, z) { return 0; }
 
-    build() {
-        // Kick off the Sketchbook world texture + lights harvest —
-        // resolves async. Textures swap on the island / track / water,
-        // and any lights are added to the scene.
-        loadSketchbookAssets().then((assets) => {
-            this._applySketchbookTextures(assets);
-            this._applySketchbookLights(assets);
-        });
-
-        // Note: no separate ground plane. The island cylinder top IS the
-        // ground — prevents z-fighting with any other y=0 decor.
-
-        // ----- Oval asphalt driving track (purely visual) -----
-        this._buildTrack();
-
-        // ----- Runway (plane take-off strip) -----
-        this._buildRunway();
-
-        // ----- Helipad (helicopter landing circle) -----
-        this._buildHelipad();
-
-        // ----- Fountain at the center of the map -----
-        this._buildFountain();
-
-        // ----- Sea surrounding the island -----
-        this._buildSea();
-
-        // ----- Ring of border mountains to delimit the map -----
-        this._buildMountains();
-
-        // ----- Decorative hills at the edges (not walkable, just depth) -----
-        this._buildHills();
-
-        // ----- Tree clusters (avoid the track) -----
-        this._buildTreeClusters();
-
-        // ----- Dense border forest (between mountains and the plaza) -----
-        this._buildBorderForest();
-
-        // ----- Custom JSON-driven tree instances (from Maya MASH export) -----
-        this._loadJSONTrees();
-
-        // ----- Decorative rocks scattered (with some clusters) -----
-        for (let i = 0; i < 18; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 4 + Math.random() * 18;
-            const x = Math.cos(angle) * dist;
-            const z = Math.sin(angle) * dist;
-            this._addRock(x, z, 0.3 + Math.random() * 0.6);
+    /**
+     * Raycast downward at (x, z) to find the highest walkable surface
+     * under that point. Returns the Y value. Falls back to 0 if nothing
+     * is hit. Used by the player controller so they can walk UP ramps,
+     * stairs, or hills authored in the world.
+     */
+    raycastGroundAt(x, z) {
+        if (!this._groundRay) {
+            this._groundRay = new THREE.Raycaster(
+                new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 12
+            );
         }
+        this._groundRay.set(
+            new THREE.Vector3(x, 10, z),
+            new THREE.Vector3(0, -1, 0),
+        );
+        const hits = this._groundRay.intersectObject(this.root, true);
+        for (const h of hits) {
+            // Ignore water, leaves (branches too thin), sprites
+            const n = h.object.name || '';
+            if (n.startsWith('Sea') || n.startsWith('Tree')) continue;
+            return h.point.y;
+        }
+        return 0;
+    }
 
-        // ----- Pickup items -----
-        this._spawnInitialItems();
+    build() {
+        // --- MINIMAL MODE ---
+        // While we're iterating on the city block pipeline, the world
+        // is stripped down to: flat ground plane + ocean + real blocks
+        // from the manifest. No trees, no ramps, no runway/helipad,
+        // no pickups, no test arena, no Sketchbook dressing.
+        // Everything else is preserved as helper methods for later.
 
-        // ----- Push balls -----
-        this._spawnBalls();
+        // Ground plane at y=0 — where the blocks sit
+        this._buildMinimalGround();
 
-        // ----- Destructible cube towers -----
-        this._buildTowers();
+        // Sea plane just below (y = -1.6) — same Sketchbook shader
+        this._buildMinimalSea();
+
+        // Real city blocks from manifest + config/city.json
+        this._cityReady = this._buildCityAsync();
 
         this.scene.add(this.root);
+    }
+
+    /**
+     * Flat ground plane centered on (0,0,0). Size generous enough to
+     * cover the whole 500×500 m city plus a buffer for scenery.
+     */
+    _buildMinimalGround() {
+        const size = 700;
+        const geo = new THREE.PlaneGeometry(size, size);
+        geo.rotateX(-Math.PI / 2);
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xd6cebf,                 // warm sand/stone tint
+            roughness: 1.0,
+            metalness: 0,
+        });
+        const ground = new THREE.Mesh(geo, mat);
+        ground.name = 'Ground';
+        ground.receiveShadow = true;
+        ground.position.y = 0;
+        this.root.add(ground);
+        this.ground = ground;
+    }
+
+    /**
+     * Ocean around the flat plane, sits at y = -1.6 so the ground edge
+     * clearly shows above water. Uses the same Ocean shader as before.
+     */
+    _buildMinimalSea() {
+        const seaGeo = new THREE.PlaneGeometry(3000, 3000, 64, 64);
+        const sea = new THREE.Mesh(seaGeo);
+        sea.rotation.x = -Math.PI / 2;
+        sea.position.y = -1.6;
+        sea.name = 'Sea';
+        this.root.add(sea);
+        this.sea = sea;
+        this.ocean = new Ocean(sea, {
+            sunDirection: new THREE.Vector3(-0.6, 0.7, -0.4).normalize(),
+        });
+    }
+
+    /**
+     * Test arena for the RaycastVehicle physics — rows of ramps at
+     * different angles, a launch kicker, a pillar slalom and a gentle
+     * hill. Everything has a matching static cannon-es body so the car
+     * behaves realistically when driving over / into props.
+     *
+     * Laid out around (35, 0, -55) — the newly-opened zone behind the
+     * fountain, still well inside the mountain rim (r=84-96).
+     */
+    _buildTestArena() {
+        const root = new THREE.Group();
+        root.name = 'TestArena';
+        // Moved inside the clear zone so all ramps are well inside the map
+        const CENTER_X = 30;
+        const CENTER_Z = -35;
+
+        // Colored material helpers
+        const rampMat = new THREE.MeshStandardMaterial({ color: 0xd28f3f, roughness: 0.85 });
+        const hillMat = new THREE.MeshStandardMaterial({ color: 0x6e8f3f, roughness: 1 });
+        const pillarMat = new THREE.MeshStandardMaterial({ color: 0xb0a890, roughness: 0.9 });
+        const kickerMat = new THREE.MeshStandardMaterial({ color: 0xd04040, roughness: 0.6 });
+
+        /**
+         * Build a single rectangular ramp of the given angle (in degrees)
+         * at a local position. Returns the visual mesh so the caller can
+         * position it — the cannon body is added and rotated to match.
+         */
+        const addRamp = (localX, localZ, angleDeg, w = 6, len = 10) => {
+            const angle = angleDeg * Math.PI / 180;
+            const thickness = 0.6;
+            const geo = new THREE.BoxGeometry(w, thickness, len);
+            const mesh = new THREE.Mesh(geo, rampMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            // Lift the mesh so that the TOP EDGE of the low (+Z) end
+            // sits exactly at ground (y=0) — otherwise the ramp has a
+            // small step the car would bonk into.
+            const halfLen = len / 2;
+            const halfT   = thickness / 2;
+            const posY = halfLen * Math.sin(angle) - halfT * Math.cos(angle);
+            mesh.position.set(CENTER_X + localX, posY, CENTER_Z + localZ);
+            mesh.rotation.x = angle;
+            root.add(mesh);
+            if (this._physicsWorld) {
+                const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, 0));
+                this._physicsWorld.addStaticBox(
+                    { x: w / 2, y: halfT, z: halfLen },
+                    { x: CENTER_X + localX, y: posY, z: CENTER_Z + localZ },
+                    q,
+                    { raycastOnly: true },   // wheel ray hits it, chassis passes through
+                );
+            }
+        };
+
+        // Row of 5 ramps: 8°, 14°, 20°, 26°, 35°
+        const RAMP_ANGLES = [8, 14, 20, 26, 35];
+        RAMP_ANGLES.forEach((deg, i) => {
+            addRamp((i - 2) * 8, 0, deg);
+        });
+
+        // Launch kicker — short & steep for big air (approach from +Z)
+        const kickerLen = 5;
+        const kickerAngle = 28 * Math.PI / 180;
+        const kickerThickness = 0.6;
+        const kickerGeo = new THREE.BoxGeometry(5, kickerThickness, kickerLen);
+        const kicker = new THREE.Mesh(kickerGeo, kickerMat);
+        const kickerPosY =
+            (kickerLen / 2) * Math.sin(kickerAngle)
+          - (kickerThickness / 2) * Math.cos(kickerAngle);
+        kicker.position.set(CENTER_X - 20, kickerPosY, CENTER_Z);
+        kicker.rotation.x = kickerAngle;
+        kicker.castShadow = true;
+        kicker.receiveShadow = true;
+        root.add(kicker);
+        if (this._physicsWorld) {
+            const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(kickerAngle, 0, 0));
+            this._physicsWorld.addStaticBox(
+                { x: 2.5, y: kickerThickness / 2, z: kickerLen / 2 },
+                { x: CENTER_X - 20, y: kickerPosY, z: CENTER_Z },
+                q,
+                { raycastOnly: true },
+            );
+        }
+        // Landing pad shadow decal (visual hint)
+        const landing = new THREE.Mesh(
+            new THREE.PlaneGeometry(8, 20),
+            new THREE.MeshStandardMaterial({
+                color: 0xffffff, roughness: 1, transparent: true, opacity: 0.25,
+            })
+        );
+        landing.rotation.x = -Math.PI / 2;
+        landing.position.set(CENTER_X - 20, 0.02, CENTER_Z + 26);
+        root.add(landing);
+
+        // (slalom pillars removed — they were blocking car access to the ramps)
+        // eslint-disable-next-line no-unused-vars
+        void pillarMat;
+
+        // Gentle hill mound — driveable in both directions
+        // Built from a shallow icosahedron squashed into a dome
+        const hillR = 8;
+        const hillH = 2.4;
+        const hillGeo = new THREE.SphereGeometry(hillR, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hill = new THREE.Mesh(hillGeo, hillMat);
+        hill.scale.set(1, hillH / hillR, 1);
+        hill.position.set(CENTER_X + 20, 0, CENTER_Z - 8);
+        hill.castShadow = true;
+        hill.receiveShadow = true;
+        root.add(hill);
+        // A true smooth hill needs a heightfield or trimesh. For now we
+        // approximate by stacking flat cylinders of shrinking radius —
+        // the car rolls up them like a staircase of gentle plateaus.
+        if (this._physicsWorld) {
+            const steps = 5;
+            for (let i = 0; i < steps; i++) {
+                const t = i / steps;                 // 0..~1
+                const r = hillR * Math.sqrt(1 - t * t) * 0.95;   // circular slice radius
+                const y = hillH * t;
+                // Use 8 thin boxes in a ring to approximate a disk
+                const thickness = hillH / steps + 0.1;
+                this._physicsWorld.addStaticCylinder(r, thickness, {
+                    x: CENTER_X + 20, y: y - thickness / 2 + 0.01, z: CENTER_Z - 8,
+                });
+            }
+        }
+
+        // Mark the arena floor as a concrete pad (purely cosmetic)
+        const padGeo = new THREE.PlaneGeometry(70, 50);
+        padGeo.rotateX(-Math.PI / 2);
+        const pad = new THREE.Mesh(padGeo, new THREE.MeshStandardMaterial({
+            color: 0x8c8478, roughness: 0.95, metalness: 0,
+        }));
+        pad.position.set(CENTER_X + 5, 0.01, CENTER_Z);
+        pad.receiveShadow = true;
+        root.add(pad);
+
+        // Decorative sign posts at the entry
+        const postMat = new THREE.MeshStandardMaterial({ color: 0xffc75a });
+        const boardMat = new THREE.MeshStandardMaterial({ color: 0x1b1e27 });
+        for (const side of [-1, 1]) {
+            const post = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 3.5, 8),
+                postMat
+            );
+            post.position.set(CENTER_X + side * 15, 1.75, CENTER_Z + 22);
+            root.add(post);
+            const board = new THREE.Mesh(
+                new THREE.BoxGeometry(3, 1.2, 0.1),
+                boardMat
+            );
+            board.position.set(CENTER_X + side * 15, 3.2, CENTER_Z + 22);
+            root.add(board);
+        }
+
+        this.root.add(root);
+        this.testArena = root;
+    }
+
+    /**
+     * City grid: 4 radial avenues + 2 ring streets + inner blocks +
+     * Try the data-driven city first (manifest cityBlocks + city.json).
+     * On success, skip the procedural grid — the real blocks have their
+     * own roads / sidewalks baked in. On failure (no config, no blocks,
+     * loader error) fall back to the procedural grid so the map is never
+     * empty.
+     */
+    async _buildCityAsync() {
+        // Asset root = which folder the manifest references
+        // ('fbx' or 'glb'). Peek at our scene's global if set, else default.
+        const assetRoot = (window._assetRoot) || 'fbx';
+        // Attach the city under GameWorld.root so world.hide() / .show()
+        // propagates to it automatically.
+        const gen = new CityGenerator(this.root, assetRoot);
+        try {
+            await gen.load();
+            const cityBlocks = gen._manifest?.cityBlocks || [];
+            const hasConfig  = !!gen._config && Object.keys(gen._config.types || {}).length;
+            if (cityBlocks.length > 0 && hasConfig) {
+                await gen.build();
+                this._cityGenerator = gen;
+                console.log('[city] built from manifest — skipping procedural grid');
+                return;
+            }
+            console.log('[city] manifest empty or no config → procedural grid');
+        } catch (err) {
+            console.warn('[city] generator failed:', err, '→ procedural grid');
+        }
+        this._buildCityGrid();
+    }
+
+    /**
+     * Procedural fallback: 4 radial avenues + 2 ring streets + inner
+     * blocks + aligned trees + sidewalks.
+     */
+    _buildCityGrid() {
+        const root = new THREE.Group();
+        root.name = 'City';
+
+        const asphaltMat = new THREE.MeshStandardMaterial({
+            color: 0x3c3d42, roughness: 0.95, metalness: 0.02,
+        });
+        const sidewalkMat = new THREE.MeshStandardMaterial({
+            color: 0x9a948a, roughness: 1,
+        });
+        const dashMat = new THREE.MeshStandardMaterial({
+            color: 0xf0ebd0, emissive: 0x332200, emissiveIntensity: 0.15,
+        });
+
+        const ROAD_WIDTH = 6;
+        const SIDEWALK_WIDTH = 1.8;
+        const MAP_HALF = 58;        // 2 m inside the perimeter wall
+
+        /** Build a straight road segment. Horizontal = true → along X,
+         *  false → along Z. Center at (0,0) unless `center` override. */
+        const addRoad = (horizontal, center = 0, length = MAP_HALF * 2) => {
+            const w = ROAD_WIDTH;
+            const swW = SIDEWALK_WIDTH;
+            // Asphalt
+            const asphaltGeo = new THREE.PlaneGeometry(
+                horizontal ? length : w,
+                horizontal ? w : length
+            );
+            asphaltGeo.rotateX(-Math.PI / 2);
+            const asphalt = new THREE.Mesh(asphaltGeo, asphaltMat);
+            asphalt.position.set(
+                horizontal ? 0 : center,
+                0.02,
+                horizontal ? center : 0,
+            );
+            asphalt.receiveShadow = true;
+            root.add(asphalt);
+
+            // Sidewalks — split into segments around intersections so
+            // they don't create that brown crossed pattern in the middle.
+            // Each intersection is at the cross-axes 0, ±28.
+            const crosses = [0, -28, 28]
+                .filter(c => Math.abs(c - center) > 0.01)  // skip self
+                .sort((a, b) => a - b);
+            // Build break points along the road's length axis
+            const halfGap = w / 2 + 0.3;
+            const breaks = [-length / 2];
+            for (const c of crosses) {
+                breaks.push(c - halfGap);
+                breaks.push(c + halfGap);
+            }
+            breaks.push(length / 2);
+            // Merge into consecutive [start, end] sidewalk segments
+            const segments = [];
+            for (let i = 0; i < breaks.length; i += 2) {
+                const a = breaks[i];
+                const b = breaks[i + 1];
+                if (b - a > 0.5) segments.push([a, b]);
+            }
+            for (const [a, b] of segments) {
+                const segLen = b - a;
+                const segMid = (a + b) / 2;
+                for (const side of [-1, 1]) {
+                    const swGeo = new THREE.PlaneGeometry(
+                        horizontal ? segLen : swW,
+                        horizontal ? swW : segLen,
+                    );
+                    swGeo.rotateX(-Math.PI / 2);
+                    const sw = new THREE.Mesh(swGeo, sidewalkMat);
+                    const perp = side * (w / 2 + swW / 2);
+                    sw.position.set(
+                        horizontal ? segMid : center + perp,
+                        0.08,
+                        horizontal ? center + perp : segMid,
+                    );
+                    sw.receiveShadow = true;
+                    root.add(sw);
+                }
+            }
+
+            // Dashed centerline
+            const dashCount = Math.floor(length / 4);
+            for (let i = 0; i < dashCount; i++) {
+                const t = (i / dashCount - 0.5) * length + 1.5;
+                const dashGeo = new THREE.BoxGeometry(
+                    horizontal ? 1.4 : 0.3,
+                    0.04,
+                    horizontal ? 0.3 : 1.4
+                );
+                const dash = new THREE.Mesh(dashGeo, dashMat);
+                dash.position.set(
+                    horizontal ? t : center,
+                    0.12,
+                    horizontal ? center : t
+                );
+                root.add(dash);
+            }
+
+            // (trees removed from street alignments — now lives in the park)
+        };
+
+        // Main cross: two wide avenues intersecting at origin
+        addRoad(true,  0);   // east-west avenue at z=0
+        addRoad(false, 0);   // north-south avenue at x=0
+
+        // Two secondary streets parallel to each main axis
+        addRoad(true, -28);  // horizontal street at z=-28
+        addRoad(true,  28);  // horizontal street at z=+28
+        addRoad(false, -28); // vertical street at x=-28
+        addRoad(false,  28); // vertical street at x=+28
+
+        // Intersection pads — clean asphalt squares at every crossing,
+        // slightly bigger than the road width, to hide UV/z-fighting
+        // seams between crossing road planes.
+        const INTER_SIZE = ROAD_WIDTH + 0.4;
+        const interGeo = new THREE.PlaneGeometry(INTER_SIZE, INTER_SIZE);
+        interGeo.rotateX(-Math.PI / 2);
+        for (const ix of [0, -28, 28]) {
+            for (const iz of [0, -28, 28]) {
+                const inter = new THREE.Mesh(interGeo, asphaltMat);
+                inter.position.set(ix, 0.03, iz);   // 1cm above asphalt
+                inter.receiveShadow = true;
+                root.add(inter);
+            }
+        }
+
+        // City blocks — colored low boxes between streets
+        // Each block is approximately 22x22, with a building 12-18m wide
+        // centered inside. We place 4 blocks per quadrant — 16 total,
+        // minus those that would overlap the arena / runway / helipad.
+        const blockCoords = [
+            [ 14,  14], [ 14, -14], [-14,  14], [-14, -14],
+            [ 42,  14], [ 42, -14], [-42,  14], [-42, -14],
+            [ 14,  42], [ 14, -42], [-14,  42], [-14, -42],
+            [ 42,  42], [ 42, -42], [-42,  42], [-42, -42],
+        ];
+        const palette = [0xb79a70, 0x8f756a, 0x8ea7a8, 0xb48d6b, 0x746b88, 0x9a826a];
+        for (const [bx, bz] of blockCoords) {
+            // Skip if overlaps special zones
+            if (Math.hypot(bx - 30, bz + 35) < 20) continue;        // arena
+            if (Math.abs(bx + 40) < 12 && Math.abs(bz + 10) < 40) continue; // runway
+            if (Math.hypot(bx + 30, bz + 35) < 10) continue;        // helipad
+            if (Math.hypot(bx + 42, bz - 42) < 16) continue;        // park at NW
+            if (Math.hypot(bx, bz) > 55) continue;                  // outside map
+            const w = 10 + Math.random() * 6;
+            const d = 10 + Math.random() * 6;
+            const h = 4 + Math.random() * 8;
+            const color = palette[Math.floor(Math.random() * palette.length)];
+            const mat = new THREE.MeshStandardMaterial({
+                color, roughness: 0.85, metalness: 0.05,
+            });
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const building = new THREE.Mesh(geo, mat);
+            building.position.set(bx, h / 2, bz);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            root.add(building);
+
+            // Physics collider (static box)
+            if (this._physicsWorld) {
+                this._physicsWorld.addStaticBox(
+                    { x: w / 2, y: h / 2, z: d / 2 },
+                    { x: bx, y: h / 2, z: bz },
+                );
+            }
+            // Legacy 2D collider — approximate circle around the building
+            this.colliders.push({ x: bx, z: bz, radius: Math.max(w, d) * 0.55 });
+
+            // Windows — rows of emissive small squares on two faces
+            const winMat = new THREE.MeshStandardMaterial({
+                color: 0xffe6a0, emissive: 0xffe6a0, emissiveIntensity: 0.4,
+            });
+            const rows = Math.floor(h / 1.8);
+            const colsX = Math.floor(w / 1.6);
+            const colsZ = Math.floor(d / 1.6);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < colsX; c++) {
+                    for (const faceZ of [-d / 2 - 0.01, d / 2 + 0.01]) {
+                        const win = new THREE.Mesh(
+                            new THREE.PlaneGeometry(0.7, 0.9), winMat
+                        );
+                        win.position.set(
+                            bx + (c - (colsX - 1) / 2) * 1.6,
+                            1.2 + r * 1.8,
+                            bz + faceZ,
+                        );
+                        if (faceZ > 0) win.rotation.y = Math.PI;
+                        root.add(win);
+                    }
+                }
+                for (let c = 0; c < colsZ; c++) {
+                    for (const faceX of [-w / 2 - 0.01, w / 2 + 0.01]) {
+                        const win = new THREE.Mesh(
+                            new THREE.PlaneGeometry(0.7, 0.9), winMat
+                        );
+                        win.position.set(
+                            bx + faceX,
+                            1.2 + r * 1.8,
+                            bz + (c - (colsZ - 1) / 2) * 1.6,
+                        );
+                        win.rotation.y = faceX > 0 ? -Math.PI / 2 : Math.PI / 2;
+                        root.add(win);
+                    }
+                }
+            }
+        }
+
+        this.root.add(root);
+        this.city = root;
+    }
+
+    /**
+     * Returns true if (x, z) falls on any asphalt road in the city grid.
+     * Used so NPCs stay on sidewalks and missions don't drop on streets.
+     */
+    isOnRoad(x, z) {
+        const W = 3;   // road half-width
+        // Main cross avenues
+        if (Math.abs(z) < W) return true;
+        if (Math.abs(x) < W) return true;
+        // Secondary streets at x=±28, z=±28
+        if (Math.abs(x - 28) < W) return true;
+        if (Math.abs(x + 28) < W) return true;
+        if (Math.abs(z - 28) < W) return true;
+        if (Math.abs(z + 28) < W) return true;
+        return false;
+    }
+
+    /**
+     * Dedicated park zone: grass plane + clustered trees + a pond + benches.
+     * Positioned in a free city block so it doesn't overlap streets.
+     */
+    _buildPark() {
+        const root = new THREE.Group();
+        root.name = 'Park';
+        const CX = -42, CZ = 42;       // NW corner of the map, empty block
+        const SIZE = 24;                // park is 24x24 m
+
+        // Grass plane
+        const grassMat = new THREE.MeshStandardMaterial({
+            color: 0x4d7a35, roughness: 1,
+        });
+        const grass = new THREE.Mesh(
+            new THREE.PlaneGeometry(SIZE, SIZE),
+            grassMat,
+        );
+        grass.rotation.x = -Math.PI / 2;
+        grass.position.set(CX, 0.03, CZ);
+        grass.receiveShadow = true;
+        root.add(grass);
+
+        // Clustered trees — poisson-ish distribution with minimum spacing
+        const spots = [];
+        const TRY = 80;
+        for (let i = 0; i < TRY; i++) {
+            const lx = (Math.random() - 0.5) * (SIZE - 3);
+            const lz = (Math.random() - 0.5) * (SIZE - 3);
+            // Keep a clear central glade around the pond
+            if (Math.hypot(lx, lz - 2) < 3.2) continue;
+            // Min spacing 2.4 m between trees
+            let ok = true;
+            for (const s of spots) {
+                if (Math.hypot(lx - s[0], lz - s[1]) < 2.4) { ok = false; break; }
+            }
+            if (!ok) continue;
+            spots.push([lx, lz]);
+            if (spots.length >= 26) break;
+        }
+        for (const [lx, lz] of spots) {
+            this._addTree(CX + lx, CZ + lz, 0.9 + Math.random() * 0.6);
+        }
+
+        // Small pond
+        const pondMat = new THREE.MeshStandardMaterial({
+            color: 0x3f6a9c, roughness: 0.2, metalness: 0.1,
+            transparent: true, opacity: 0.85,
+        });
+        const pond = new THREE.Mesh(
+            new THREE.CircleGeometry(2.4, 24),
+            pondMat,
+        );
+        pond.rotation.x = -Math.PI / 2;
+        pond.position.set(CX, 0.07, CZ + 2);
+        root.add(pond);
+
+        // A couple of stone benches at the pond's edge
+        const benchMat = new THREE.MeshStandardMaterial({ color: 0x8a847a });
+        for (const [bx, bz, ry] of [[CX - 3.5, CZ + 2, 0], [CX + 3.5, CZ + 2, 0]]) {
+            const bench = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.35, 0.5),
+                benchMat,
+            );
+            bench.position.set(bx, 0.25, bz);
+            bench.rotation.y = ry;
+            bench.castShadow = true;
+            root.add(bench);
+            this.colliders.push({ x: bx, z: bz, radius: 0.8 });
+            if (this._physicsWorld) {
+                this._physicsWorld.addStaticBox(
+                    { x: 0.8, y: 0.25, z: 0.3 },
+                    { x: bx, y: 0.25, z: bz },
+                );
+            }
+        }
+
+        // A welcome sign at the park entrance
+        const signPost = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8),
+            new THREE.MeshStandardMaterial({ color: 0x5a4a3a }),
+        );
+        signPost.position.set(CX + SIZE / 2 - 0.5, 1.1, CZ - SIZE / 2 + 0.5);
+        root.add(signPost);
+        const board = new THREE.Mesh(
+            new THREE.BoxGeometry(2.4, 0.9, 0.08),
+            new THREE.MeshStandardMaterial({ color: 0x4d7a35, emissive: 0x224a15, emissiveIntensity: 0.2 }),
+        );
+        board.position.set(CX + SIZE / 2 - 1.5, 2, CZ - SIZE / 2 + 0.5);
+        root.add(board);
+
+        this.root.add(root);
+        this.park = root;
+    }
+
+    /**
+     * Vertical neon beams + labels above the plane & helicopter spawn
+     * points so the player can spot them from anywhere on the map.
+     */
+    _buildWaypointBeacons() {
+        const spots = [
+            { x: -40, z: 21,  color: 0x4aaaff, label: 'AIRPLANE' },
+            { x: -30, z: -35, color: 0xff7a4a, label: 'HELIPAD' },
+            { x: 30,  z: -35, color: 0xffc75a, label: 'ARENA' },
+            { x: -42, z: 42,  color: 0x6aff8e, label: 'PARK' },
+        ];
+        for (const s of spots) {
+            // Tall translucent beam
+            const beam = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.45, 0.45, 30, 12, 1, true),
+                new THREE.MeshBasicMaterial({
+                    color: s.color,
+                    transparent: true,
+                    opacity: 0.42,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                }),
+            );
+            beam.position.set(s.x, 15, s.z);
+            beam.renderOrder = 5;
+            this.root.add(beam);
+
+            // Glowing cap
+            const cap = new THREE.Mesh(
+                new THREE.SphereGeometry(0.8, 12, 8),
+                new THREE.MeshBasicMaterial({ color: s.color }),
+            );
+            cap.position.set(s.x, 30, s.z);
+            cap.renderOrder = 5;
+            this.root.add(cap);
+        }
+    }
+
+    /** Low stone wall around the perimeter to delimit the map cleanly. */
+    _buildPerimeterWall() {
+        const wallMat = new THREE.MeshStandardMaterial({
+            color: 0x7a7266, roughness: 0.95,
+        });
+        const R = 60;
+        const segments = 64;
+        const HALF_W = 0.4;
+        const H = 1.6;
+        const arcLen = (Math.PI * 2 * R) / segments + 0.6;
+        for (let i = 0; i < segments; i++) {
+            const a0 = (i / segments) * Math.PI * 2;
+            // Skip the beach sector (keep it open to the sea)
+            if (this.isInBeachSector(Math.cos(a0) * R, Math.sin(a0) * R)) continue;
+            const x = Math.cos(a0) * R;
+            const z = Math.sin(a0) * R;
+            const seg = new THREE.Mesh(
+                new THREE.BoxGeometry(arcLen, H, HALF_W * 2),
+                wallMat,
+            );
+            seg.position.set(x, H / 2, z);
+            // Tangent direction (for wall orientation)
+            seg.rotation.y = -a0 + Math.PI / 2;
+            seg.castShadow = true;
+            seg.receiveShadow = true;
+            this.root.add(seg);
+            // Legacy 2D collider
+            this.colliders.push({ x, z, radius: HALF_W + 0.2 });
+            // Physics static box
+            if (this._physicsWorld) {
+                const q = new THREE.Quaternion()
+                    .setFromEuler(new THREE.Euler(0, -a0 + Math.PI / 2, 0));
+                this._physicsWorld.addStaticBox(
+                    { x: arcLen / 2, y: H / 2, z: HALF_W },
+                    { x, y: H / 2, z },
+                    q,
+                );
+            }
+        }
     }
 
     /**
@@ -392,14 +1057,24 @@ export class GameWorld {
     }
 
     _buildBorderForest() {
-        const count = 140;
+        // Trees live in the outer ring only (between driveable area and
+        // the mountain rim). Inner 60m radius stays completely clear.
+        const count = 120;
+        const R_MIN = 60;
+        const R_MAX = 78;
         for (let i = 0; i < count; i++) {
             const ang = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.08;
-            const r = 38 + Math.random() * 10;
+            const r = R_MIN + Math.random() * (R_MAX - R_MIN);
             const x = Math.cos(ang) * r;
             const z = Math.sin(ang) * r;
             if (this.isOnTrack(x, z)) continue;
             if (this.isInBeachSector(x, z)) continue;     // leave beach clear
+            // Skip trees that would land inside the test arena (30, -35)
+            if (Math.hypot(x - 30, z + 35) < 28) continue;
+            // Skip trees on the runway strip at (-40, -10), length 70, width 8
+            if (Math.abs(x + 40) < 12 && Math.abs(z + 10) < 45) continue;
+            // Skip trees on the helipad zone (-30, -35) radius 10
+            if (Math.hypot(x + 30, z + 35) < 10) continue;
             const scale = 1 + Math.random() * 0.9;
             this._addTree(x, z, scale);
         }
@@ -410,28 +1085,20 @@ export class GameWorld {
      * flat sand plane at y=0) sits on top of it as an elevated terrace.
      */
     _buildSea() {
-        // HUGE sea plane — "à perte de vue" (1200×1200 units)
-        const seaGeo = new THREE.PlaneGeometry(1200, 1200);
-        // THREE.Water uses a reflective shader with animated normal map
-        // and sun reflection — this is the classic three.js ocean.
-        const waterNormals = new THREE.TextureLoader().load(
-            'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/textures/waternormals.jpg',
-            (tex) => { tex.wrapS = tex.wrapT = THREE.RepeatWrapping; }
-        );
-        const sea = new Water(seaGeo, {
-            textureWidth: 512,
-            textureHeight: 512,
-            waterNormals,
-            sunDirection: new THREE.Vector3(0.4, 0.6, 0.3).normalize(),
-            sunColor: 0xffffff,
-            waterColor: 0x0b4a7a,
-            distortionScale: 3.7,
-            fog: this.scene?.fog !== undefined,
-        });
+        // Sketchbook's Ocean shader — direct port from codepen/knoland.
+        // Uses a ShaderMaterial on a large plane with animated waves,
+        // sun highlights and fake reflections computed in the fragment
+        // stage. No normal map dependency.
+        const seaGeo = new THREE.PlaneGeometry(2000, 2000, 64, 64);
+        const sea = new THREE.Mesh(seaGeo);
         sea.rotation.x = -Math.PI / 2;
         sea.position.y = -1.6;
+        sea.name = 'Sea';
         this.root.add(sea);
         this.sea = sea;
+        this.ocean = new Ocean(sea, {
+            sunDirection: new THREE.Vector3(-0.6, 0.7, -0.4).normalize(),
+        });
 
         // No separate cylinder side — the top plane's slope handles the edge
         const islandR = this.RADIUS;
@@ -446,33 +1113,23 @@ export class GameWorld {
         const topGeo = new THREE.PlaneGeometry(visualR * 2, visualR * 2, 128, 128);
         topGeo.rotateX(-Math.PI / 2);
         const pos = topGeo.attributes.position;
-        const FLAT_R = 22;
         for (let i = 0; i < pos.count; i++) {
             const x = pos.getX(i);
             const z = pos.getZ(i);
             const r = Math.hypot(x, z);
             // Cut the plane off past the visual radius
             if (r > visualR + 0.5) { pos.setY(i, -1.8); continue; }
-            // Flatten the track completely
-            if (this.isOnTrack(x, z)) { pos.setY(i, 0); continue; }
-            // Smooth slope down near the edge using smoothstep
-            // flat until SLOPE_START, then dips to SHORE_Y by visualR
+            // City is FLAT (y=0) — the only deformation is the smooth
+            // beach slope from SLOPE_START down to sea level at visualR.
             const SLOPE_START = islandR - 4;
-            const SHORE_Y = -1.6;    // matches sea level
-            let base = 0;
+            const SHORE_Y = -1.6;
             if (r > SLOPE_START) {
                 const t = Math.min(1, (r - SLOPE_START) / (visualR - SLOPE_START));
-                // smoothstep
-                const s = t * t * (3 - 2 * t);
-                base = SHORE_Y * s;
+                const s = t * t * (3 - 2 * t);   // smoothstep
+                pos.setY(i, SHORE_Y * s);
+            } else {
+                pos.setY(i, 0);                  // city flat
             }
-            // Subtle interior noise, fading to 0 at the edge
-            const noiseFade = Math.max(0, Math.min(1, (r - FLAT_R) / (SLOPE_START - FLAT_R)))
-                              * (r < SLOPE_START ? 1 : 0);
-            const noise =
-                Math.sin(x * 0.23 + z * 0.17) * 0.09 +
-                Math.cos(z * 0.31 - x * 0.15) * 0.07;
-            pos.setY(i, base + noise * noiseFade);
         }
         topGeo.computeVertexNormals();
         const topMat = new THREE.MeshStandardMaterial({
@@ -502,10 +1159,10 @@ export class GameWorld {
             polygonOffsetFactor: -4,
             polygonOffsetUnits: -4,
         });
-        const COUNT = 34;
+        const COUNT = 48;
         for (let i = 0; i < COUNT; i++) {
             const ang = (i / COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
-            const r = 54 + Math.random() * 12;
+            const r = 84 + Math.random() * 12;
             const x = Math.cos(ang) * r;
             const z = Math.sin(ang) * r;
             // Skip mountains that fall in the open beach sector
@@ -552,9 +1209,21 @@ export class GameWorld {
             'assets/trees/oak.json',
             'assets/trees/rock.json',
         ];
+        // Skip any JSON-placed tree that lands on a road, runway,
+        // helipad, fountain, or inside the test arena.
+        const reject = (x, z) => {
+            if (this.isOnTrack(x, z)) return true;
+            if (Math.hypot(x, z) < 6) return true;                 // fountain / center
+            if (Math.abs(x + 40) < 12 && Math.abs(z + 10) < 45) return true;  // runway
+            if (Math.hypot(x + 30, z + 35) < 10) return true;      // helipad
+            if (Math.hypot(x - 30, z + 35) < 28) return true;      // test arena
+            if (this.isInBeachSector(x, z)) return true;
+            return false;
+        };
         Promise.allSettled(
             files.map(url => spawnTreeInstancesFromJSON(url, this.root, {
                 colliderRadius: 0.25,
+                reject,
             }))
         ).then(results => {
             let totalCount = 0;
@@ -569,15 +1238,18 @@ export class GameWorld {
             if (totalCount > 0) {
                 console.log('[World] Loaded ' + totalCount + ' JSON-driven trees');
             }
+            // Re-mirror any new colliders that came from the JSON trees
+            if (this._physicsWorld) this.mirrorCollidersToPhysics();
         });
     }
 
     _buildRunway() {
-        // Long rectangle running W→E outside the track, on the west side.
-        const length = 34;
-        const width  = 6;
-        const cx = -34, cz = -10;   // center position
-        const rot = Math.PI * 0.15; // slight angle so it's not axis-aligned
+        // Long rectangle running N→S on the west side of the island.
+        // Kept fully inside the mountain rim (r < 80) for easy access.
+        const length = 70;
+        const width  = 8;
+        const cx = -40, cz = -10;
+        const rot = 0;              // axis-aligned along Z
 
         const baseMat = new THREE.MeshStandardMaterial({
             color: 0x3a3a40, roughness: 0.92, metalness: 0.02
@@ -612,7 +1284,7 @@ export class GameWorld {
             color: 0xf0ebd0, emissive: 0x332200, emissiveIntensity: 0.1
         });
         const cos = Math.cos(rot), sin = Math.sin(rot);
-        const dashes = 10;
+        const dashes = 22;
         for (let i = 0; i < dashes; i++) {
             const t = (i / (dashes - 1) - 0.5) * (length - 4);
             // local (0, t) → rotated by `rot` around Y
@@ -650,8 +1322,9 @@ export class GameWorld {
     }
 
     _buildHelipad() {
-        // Circular pad with an "H" in the center, placed on the NE corner.
-        const cx = 30, cz = -22;
+        // Moved NW (per user request) — far from the arena so the two
+        // aerial spawn points are on opposite sides of the city.
+        const cx = -30, cz = -35;
 
         // Concrete disc
         const padMat = new THREE.MeshStandardMaterial({
@@ -836,10 +1509,20 @@ export class GameWorld {
     }
 
     _spawnItem(type) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 2 + Math.random() * 18;
-        const x = Math.cos(angle) * dist;
-        const z = Math.sin(angle) * dist;
+        // Spawn on a sidewalk (5 m off the nearest street axis) — never
+        // on asphalt so cars don't pick them up accidentally.
+        let x, z;
+        for (let tries = 0; tries < 20; tries++) {
+            const axes = [0, 28, -28];
+            const axisIsX = Math.random() < 0.5;
+            const axisV = axes[Math.floor(Math.random() * axes.length)];
+            const side = Math.random() < 0.5 ? -1 : 1;
+            const offset = axisV + side * 5;
+            const along = (Math.random() - 0.5) * 50;
+            x = axisIsX ? offset : along;
+            z = axisIsX ? along  : offset;
+            if (Math.hypot(x, z) < 50 && !this.isOnRoad?.(x, z)) break;
+        }
         const y = this.heightAt(x, z);
         const mesh = type === 'donut' ? this._makeDonut() : this._makeVeggie();
         mesh.position.set(x, y + 0.4, z);
@@ -1002,13 +1685,11 @@ export class GameWorld {
         return null;
     }
 
-    update(dt, playerPos) {
+    update(dt, playerPos, camera) {
         const t = performance.now();
 
-        // THREE.Water animated shader — advance its time uniform
-        if (this.sea && this.sea.material?.uniforms?.['time']) {
-            this.sea.material.uniforms['time'].value += dt;
-        }
+        // Sketchbook ocean — drives the shader time + camera pos
+        if (this.ocean && camera) this.ocean.update(dt, camera);
 
         // Items: spin + bob; respawn after timer
         for (const it of this.items) {

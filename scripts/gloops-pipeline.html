@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — Pipeline Technique</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>🛠️ Pipeline Technique</h1>
+<p class="lede">Arborescence du projet, chargement du personnage, systeme de materiaux, animations overlay.</p>
+
+<!-- =============================================================== -->
+<h2>1. 📁 Arborescence</h2>
+
+<pre>
+WEB/
+├── index.html                      ← Point d'entree du customizer
+├── fbx/
+│   ├── Gloops_skeleton.fbx         ← Mesh + skeleton de base (T-pose)
+│   ├── manifest.json               ← Genere par build_manifest.py
+│   └── ANIM/
+│       ├── Emotion/                ← 18 animations faciales
+│       ├── Eyes/                   ← 17 animations de positionnement
+│       │   └── PROPS/              ← Props paires (meme nom)
+│       ├── Horns/                  ← 38 animations cornes/chapeaux
+│       │   └── PROPS/              ← Props paires
+│       ├── Move/                   ← Locomotion (walk, run, panic...)
+│       └── Teeths/                 ← 10 variantes de dents
+├── images/chr/                     ← Textures du personnage (voir doc Textures)
+├── config/
+│   ├── character.json              ← Config du generateur
+│   ├── gloops-classes.json         ← Breeds, factions, legendaries
+│   ├── paired-offsets.json         ← Offsets props
+│   └── dialogues.json              ← Dialogues NPC
+├── js/                             ← Sources JavaScript (modules ES)
+│   ├── app.js                      ← Bootstrap principal
+│   ├── character.js                ← Character class
+│   ├── shading.js                  ← ShadingManager
+│   ├── props.js                    ← PropsManager (paired props)
+│   ├── gloops-classes.js           ← Helpers breeds/factions
+│   ├── controls.js                 ← ANIM tab UI
+│   ├── shader-controls.js          ← MAT tab UI
+│   ├── props-controls.js           ← PROPS tab UI
+│   ├── generate-controls.js        ← GENERATE tab (random)
+│   └── game/                       ← Module jeu 3eme personne
+└── scripts/                        ← Outils Maya + Python
+</pre>
+
+<!-- =============================================================== -->
+<h2>2. 🧬 Le Generateur de Personnage</h2>
+
+<div class="panel">
+  <h3>Pipeline au chargement (7 etapes)</h3>
+  <ol>
+    <li><b>Load FBX</b> — <code>Gloops_skeleton.fbx</code> via <code>Character.load()</code></li>
+    <li><b>Capture T-pose</b> — position/quaternion/scale de chaque bone + matrices monde inversees (<code>_baseBoneInverses</code>)</li>
+    <li><b>Scan materials</b> — <code>ShadingManager.scanModel()</code> remplace par <code>MeshPhysicalMaterial</code></li>
+    <li><b>Auto-connect textures</b> — lit <code>manifest.json → autoConnect</code> et branche normalMap, roughnessMap, rgbMask, patterns</li>
+    <li><b>Apply defaults</b> — lit <code>character.json → materialDefaults</code></li>
+    <li><b>Load animations</b> — lit <code>manifest.json → categories</code>, prune overlay, cree les actions</li>
+    <li><b>Build UI</b> — ANIM, MAT, PROPS, GENERATE tabs</li>
+  </ol>
+</div>
+
+<h3>Le ShadingManager (compositing CPU)</h3>
+<div class="panel">
+  <p>Chaque materiau du Gloop a un pipeline de compositing CPU sur un canvas 512x512 :</p>
+  <ol>
+    <li><b>RGB Mask</b> (<code>body_ID.png</code>) — 3 zones (R, G, B) chacune avec Color A + Color B</li>
+    <li><b>Blend Mask</b> (<code>body_Ramp.png</code>) — gradient qui mixe entre A et B dans chaque zone</li>
+    <li><b>Pattern</b> (<code>body_Pattern.N.png</code>) — overlay multiplicatif avec hue/sat shift</li>
+    <li><b>Normal / Roughness / AO / SSS / Displacement</b> — branches directement sur le material three.js</li>
+  </ol>
+  <p>Le resultat est bake dans une texture canvas, assignee comme <code>map</code> du <code>MeshPhysicalMaterial</code>.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>3. 🎞️ Categories d'animation & pruning</h2>
+
+<p>Les animations sont mixees en <b>overlay</b> via l'AnimationMixer three.js. Chaque categorie a des regles de <b>pruning</b> qui enlevent les tracks de bones/morphs qui ne lui appartiennent pas.</p>
+
+<table>
+  <tr><th>Categorie</th><th>Dossier</th><th>Type</th><th>Bones gardes (prune)</th></tr>
+  <tr><td><b>Emotion</b></td><td>ANIM/Emotion/</td><td>Base anim</td><td>TOUT (1ere categorie = base)</td></tr>
+  <tr><td><b>Move</b></td><td>ANIM/Move/</td><td>Full-body</td><td>RAW, aucun filtrage</td></tr>
+  <tr><td><b>Teeths</b></td><td>ANIM/Teeths/</td><td>Overlay</td><td><code>Teeth</code> + morphs <code>teeths_low</code></td></tr>
+  <tr><td><b>Horns</b></td><td>ANIM/Horns/</td><td>Overlay</td><td><code>Horns</code>, <code>BS_Horns</code>, <code>Sk_Main_Horns</code></td></tr>
+  <tr><td><b>Eyes</b></td><td>ANIM/Eyes/</td><td>Overlay</td><td><code>Sk_Main_Eye_Lt</code>, <code>Sk_Main_Eye_Rt</code> (<b>exact</b>)</td></tr>
+</table>
+
+<h3>Convention de nommage FBX</h3>
+<div class="panel">
+  <ul>
+    <li><b>Emotion :</b> <code>01_peace.fbx</code> a <code>16_annihilated.fbx</code> (numerotees par mood)</li>
+    <li><b>Move :</b> <code>walk.fbx</code>, <code>run.fbx</code>, <code>run_panic.fbx</code>, <code>walk_stupid.fbx</code>, <code>shake.fbx</code></li>
+    <li><b>Teeths :</b> nom du style (<code>Baby.fbx</code>, <code>Vampire.fbx</code>, <code>Sharp.fbx</code>...)</li>
+    <li><b>Horns :</b> nom du chapeau/cornes (<code>Hat_CowBoy.fbx</code>, <code>kakarot.fbx</code>, <code>bald.fbx</code>...)</li>
+    <li><b>Eyes :</b> nom du style d'yeux (<code>Aviator.fbx</code>, <code>Pirate.fbx</code>, <code>Normal.fbx</code>...)</li>
+  </ul>
+</div>
+
+<h3>Prefixe <code>exact:</code> dans le pruning</h3>
+<p>Dans <code>character.js</code>, la config des patterns accepte un prefixe <code>exact:</code> pour forcer l'egalite stricte au lieu d'un substring match. Utile pour Eyes ou seulement les 2 joints parents doivent bouger, pas leurs enfants.</p>
+
+</body>
+</html>

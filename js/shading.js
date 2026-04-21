@@ -55,7 +55,21 @@ export class ShadingManager {
     /**
      * Scan the model, collect all materials, replace with clean PBR materials.
      */
-    scanModel(model) {
+    scanModel(model, opts = {}) {
+        // Maya FBX has V-flipped UVs (0=top). When Blender re-exports as
+        // glTF it normalises them to the spec (V=0 at bottom) → GLB meshes
+        // need flipV = false, FBX meshes need flipV = true.
+        // character.js tags the loaded object with userData.isGLB / isFBX
+        // so we can auto-detect here. Caller can still force via opts.flipV.
+        let flipV;
+        if (opts.flipV !== undefined) {
+            flipV = opts.flipV;
+        } else if (model.userData && model.userData.isGLB) {
+            flipV = false;
+        } else {
+            flipV = true; // default = Maya/FBX convention
+        }
+        this._defaultFlipV = flipV;    // props will inherit this
         const matMap = new Map(); // material uuid -> { name, meshes }
 
         model.traverse((child) => {
@@ -88,7 +102,10 @@ export class ShadingManager {
 
             const newMat = new THREE.MeshPhysicalMaterial({
                 color: color,
-                roughness: oldMat.roughness !== undefined ? oldMat.roughness : 1.0,
+                // Force full roughness on all Gloops mats — the incoming
+                // material values from GLB often come through as 0.5 or
+                // similar, which looks plasticky on the character.
+                roughness: 1.0,
                 metalness: oldMat.metalness !== undefined ? oldMat.metalness : 0,
                 name: name,
                 // SSS defaults
@@ -117,10 +134,14 @@ export class ShadingManager {
             }
 
             const entry = new MaterialEntry(name, meshes, newMat);
+            entry.flipV = flipV;   // set per load (false for GLB, true for FBX)
             this.entries.set(name, entry);
         }
 
-        console.log(`ShadingManager: ${this.entries.size} materials:`, [...this.entries.keys()]);
+        console.log(
+            `ShadingManager: ${this.entries.size} materials (flipV=${flipV}):`,
+            [...this.entries.keys()]
+        );
     }
 
     // ----- BlendColor: CPU-side canvas compositing -----
@@ -545,19 +566,26 @@ export class ShadingManager {
     }
 
     /**
-     * Create a flipped texture from an Image element.
-     * Applies the same V-flip as the blend color system.
+     * Create a texture from an Image element, optionally V-flipping the
+     * pixels so Maya/FBX UVs (0=top) match standard (0=bottom). For GLB
+     * assets the UVs are already standard so we must NOT flip.
+     *
+     * @param {HTMLImageElement} img
+     * @param {THREE.ColorSpace} colorSpace
+     * @param {boolean} flip  pass entry.flipV here
      */
-    _makeFlippedTexture(img, colorSpace) {
+    _makeFlippedTexture(img, colorSpace, flip = true) {
         const w = img.width || img.naturalWidth || 512;
         const h = img.height || img.naturalHeight || 512;
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
-        // Flip vertically (1-v for Maya FBX UVs)
-        ctx.translate(0, h);
-        ctx.scale(1, -1);
+        if (flip) {
+            // Flip vertically (1-v for Maya FBX UVs)
+            ctx.translate(0, h);
+            ctx.scale(1, -1);
+        }
         ctx.drawImage(img, 0, 0, w, h);
         const tex = new THREE.CanvasTexture(canvas);
         tex.colorSpace = colorSpace;
@@ -569,7 +597,13 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.normalMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.normalMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
+            // Our normal maps are authored with the DirectX convention
+            // (Y = down). three.js defaults to OpenGL (Y = up). The old
+            // FBX pipeline hid this because the pixel V-flip happened to
+            // invert Y as a side effect. On GLB (flipV=false) we have to
+            // flip Y explicitly via normalScale so lighting matches.
+            e.material.normalScale.y = e.flipV ? 1 : -1;
         } else {
             e.material.normalMap = null;
         }
@@ -580,7 +614,7 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.roughnessMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.roughnessMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
         } else {
             e.material.roughnessMap = null;
         }
@@ -591,7 +625,7 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.metalnessMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.metalnessMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
         } else {
             e.material.metalnessMap = null;
         }
@@ -602,7 +636,7 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.aoMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.aoMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
             e.material.aoMapIntensity = 1.0;
         } else {
             e.material.aoMap = null;
@@ -741,7 +775,7 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.alphaMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.alphaMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
             e.material.transparent = true;
             e.material.alphaTest = 0.01;
         } else {
@@ -1218,7 +1252,7 @@ export class ShadingManager {
         const e = this.entries.get(name);
         if (!e) return;
         if (img) {
-            e.material.displacementMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace);
+            e.material.displacementMap = this._makeFlippedTexture(img, THREE.LinearSRGBColorSpace, e.flipV);
             e.material.displacementScale = 0.1;
         } else {
             e.material.displacementMap = null;
@@ -1235,6 +1269,17 @@ export class ShadingManager {
         e.rgbMask = img;
         e._rgbMaskPath = path || null;
         this._refreshMaterial(name);
+    }
+
+    /** Toggle double-sided rendering on a material. OFF by default —
+     *  most Gloops meshes are closed volumes, so back faces are hidden
+     *  anyway. Users turn this ON for sheet-like meshes (capes, flags,
+     *  glass panes) where both sides should render. */
+    setDoubleSided(name, enabled) {
+        const e = this.entries.get(name);
+        if (!e) return;
+        e.material.side = enabled ? THREE.DoubleSide : THREE.FrontSide;
+        e.material.needsUpdate = true;
     }
 
     setRGBColorA(name, channel, color) {
@@ -1275,5 +1320,166 @@ export class ShadingManager {
 
     getEntry(name) {
         return this.entries.get(name) || null;
+    }
+
+    /* -------------------------------------------------------- */
+    /*  Materials change notifications                          */
+    /* -------------------------------------------------------- */
+
+    onMaterialsChanged(cb) {
+        this._matChangedCb = cb;
+    }
+    _fireMaterialsChanged() {
+        if (this._matChangedCb) this._matChangedCb();
+    }
+
+    /* -------------------------------------------------------- */
+    /*  Sub-model registration (paired props)                   */
+    /* -------------------------------------------------------- */
+
+    /**
+     * Register a paired prop's materials in a SHARED per-category pool.
+     * All props in the same category (e.g. all Eyes glasses) reuse the
+     * same materials, keyed by the source material's name.
+     *
+     * Example: Aviator + Pirate + Lenon all have a "Glass" material.
+     * Only ONE "Glass" entry is created in the MAT panel, and all three
+     * meshes are assigned the same Material instance — so editing the
+     * shader updates every glass prop simultaneously.
+     *
+     * Returns the array of entry keys that exist (created or reused).
+     */
+    addCategoryMaterials(propRoot, categoryLabel) {
+        if (!propRoot || !categoryLabel) return [];
+        if (!this._categoryMatPool) this._categoryMatPool = new Map();
+        if (!this._categoryMatPool.has(categoryLabel)) {
+            this._categoryMatPool.set(categoryLabel, new Map());
+        }
+        const pool = this._categoryMatPool.get(categoryLabel);
+
+        // Collect unique source materials in the sub-model.
+        // Handles BOTH single-material and multi-material (array) meshes.
+        // For multi-mat meshes, each slot becomes its own entry; we
+        // remember which slot index it occupies so we can rewrite the
+        // mesh.material array on reuse without losing the others.
+        const matMap = new Map(); // uuid -> { oldMat, name, slots: [{mesh, slotIndex}] }
+
+        const visit = (child, mat, slotIndex) => {
+            if (!mat) return;
+            const key = mat.uuid;
+            if (matMap.has(key)) {
+                matMap.get(key).slots.push({ mesh: child, slotIndex });
+                return;
+            }
+            const fallbackName = slotIndex >= 0
+                ? `${child.name || 'mat'}_${slotIndex}`
+                : (child.name || `mat_${matMap.size}`);
+            matMap.set(key, {
+                oldMat: mat,
+                name: mat.name || fallbackName,
+                slots: [{ mesh: child, slotIndex }],
+            });
+        };
+
+        propRoot.traverse((child) => {
+            if (!child.isMesh && !child.isSkinnedMesh) return;
+            const m = child.material;
+            if (!m) return;
+            if (Array.isArray(m)) {
+                m.forEach((sub, i) => visit(child, sub, i));
+            } else {
+                visit(child, m, -1);
+            }
+        });
+
+        let createdCount = 0;
+        let reusedCount = 0;
+        const allKeys = [];
+
+        // Helper to assign a material to a mesh at the right slot
+        const assignSlot = (mesh, slotIndex, newMat) => {
+            if (slotIndex < 0) {
+                mesh.material = newMat;
+            } else {
+                if (!Array.isArray(mesh.material)) mesh.material = [mesh.material];
+                mesh.material[slotIndex] = newMat;
+            }
+        };
+
+        for (const info of matMap.values()) {
+            const { oldMat, name, slots } = info;
+            const meshes = slots.map((s) => s.mesh);
+            const entryKey = `🔧 ${categoryLabel} / ${name}`;
+            allKeys.push(entryKey);
+
+            let entry = pool.get(name);
+            if (entry) {
+                // REUSE existing material — assign it to every slot
+                for (const { mesh, slotIndex } of slots) {
+                    assignSlot(mesh, slotIndex, entry.material);
+                    if (!entry.meshes.includes(mesh)) entry.meshes.push(mesh);
+                }
+                reusedCount++;
+                continue;
+            }
+
+            // CREATE fresh material for this category
+            const newMat = new THREE.MeshPhysicalMaterial({
+                color: new THREE.Color(0xffffff),
+                roughness: oldMat.roughness ?? 1.0,
+                metalness: oldMat.metalness ?? 0,
+                name: `${categoryLabel}/${name}`,
+                thickness: 0,
+                transmission: 0,
+                sheen: 0,
+                sheenRoughness: 0.5,
+                sheenColor: new THREE.Color(1, 1, 1),
+                clearcoat: 0,
+                clearcoatRoughness: 0,
+                ior: 1.5,
+                attenuationColor: new THREE.Color(0.8, 0.3, 0.2),
+                attenuationDistance: 0.5,
+                specularIntensity: 1.0,
+                specularColor: new THREE.Color(1, 1, 1),
+                skinning: meshes.some((m) => m.isSkinnedMesh),
+            });
+
+            for (const { mesh, slotIndex } of slots) {
+                assignSlot(mesh, slotIndex, newMat);
+            }
+
+            entry = new MaterialEntry(entryKey, meshes, newMat);
+            // Paired props follow the same flipV as the character
+            entry.flipV = this._defaultFlipV ?? true;
+            this.entries.set(entryKey, entry);
+            pool.set(name, entry);
+            createdCount++;
+        }
+
+        if (createdCount > 0) {
+            console.log(`[shading] ${categoryLabel}: +${createdCount} new, ${reusedCount} reused`);
+            this._fireMaterialsChanged();
+        } else if (reusedCount > 0) {
+            console.log(`[shading] ${categoryLabel}: ${reusedCount} material(s) reused`);
+        }
+        return allKeys;
+    }
+
+    /**
+     * Drop all materials registered for a category. Use this when the
+     * user clears every prop of a category and you want a clean slate.
+     * (Not called automatically — paired props swap in/out frequently
+     * so we keep the pool warm for performance.)
+     */
+    clearCategoryMaterials(categoryLabel) {
+        if (!this._categoryMatPool) return;
+        const pool = this._categoryMatPool.get(categoryLabel);
+        if (!pool) return;
+        for (const entry of pool.values()) {
+            this.entries.delete(entry.name);
+        }
+        this._categoryMatPool.delete(categoryLabel);
+        console.log(`[shading] cleared category materials: ${categoryLabel}`);
+        this._fireMaterialsChanged();
     }
 }

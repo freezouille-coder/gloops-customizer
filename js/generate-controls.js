@@ -200,10 +200,17 @@ export class GenerateControls {
 
     _randomizeAll() {
         const randomizable = this.config.randomizable || {};
-        for (const [key, attr] of Object.entries(randomizable)) {
-            if (attr.enabled !== false) {
-                this._randomizeOne(key, attr);
+        // Silence emotion SFX during the randomization burst — otherwise
+        // every Emotion pick fires its voice clip and we get a cacophony.
+        if (this.character) this.character._silentEmotion = true;
+        try {
+            for (const [key, attr] of Object.entries(randomizable)) {
+                if (attr.enabled !== false) {
+                    this._randomizeOne(key, attr);
+                }
             }
+        } finally {
+            if (this.character) this.character._silentEmotion = false;
         }
     }
 

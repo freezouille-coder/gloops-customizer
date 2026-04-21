@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — Paired Props</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  .tldr { background:linear-gradient(135deg,#2a1a3a,#1a2a3a); border:1px solid var(--accent); padding:18px 22px; border-radius:10px; margin:20px 0; }
+  .tldr h3 { margin-top:0; color:var(--accent); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>🔧 Paired Props</h1>
+<p class="lede">Systeme de props auto-attaches par convention de nommage — lunettes, chapeaux, accessoires.</p>
+
+<!-- =============================================================== -->
+<div class="tldr">
+  <h3>⚡ Concept en 30 secondes</h3>
+  <p>Quand tu selectionnes une animation (ex: <code>Horns/Hat_CowBoy</code>), le systeme cherche automatiquement un <b>FBX de meme nom</b> dans <code>Horns/PROPS/Hat_CowBoy.fbx</code>. S'il existe, le mesh 3D du chapeau s'attache au personnage.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>1. 📁 Structure de dossiers</h2>
+
+<pre>
+fbx/ANIM/
+├── Horns/
+│   ├── Hat_CowBoy.fbx          ← animation (blendshape + bones)
+│   └── <b>PROPS/</b>
+│       └── Hat_CowBoy.fbx      ← mesh du chapeau (meme nom)
+├── Eyes/
+│   ├── Aviator.fbx             ← animation yeux
+│   └── <b>PROPS/</b>
+│       └── Aviator.fbx         ← mesh lunettes
+</pre>
+
+<!-- =============================================================== -->
+<h2>2. 🎯 Les 3 types de props (auto-detectes)</h2>
+
+<table>
+  <tr><th>Type</th><th>Detection</th><th>Attache</th><th>Cas d'usage</th></tr>
+  <tr>
+    <td><b>A</b> Static</td>
+    <td>Aucun SkinnedMesh</td>
+    <td>Parente a <code>spine_05</code></td>
+    <td>Objet simple (pomme, roche...)</td>
+  </tr>
+  <tr>
+    <td><b>B</b> Mini-rig</td>
+    <td>SkinnedMesh, bones != Gloops (&lt;50% match)</td>
+    <td>Parente a <code>spine_05</code></td>
+    <td>Prop avec son propre skeleton</td>
+  </tr>
+  <tr>
+    <td><b>C</b> Rebind</td>
+    <td>SkinnedMesh, bones = Gloops (&gt;50% match)</td>
+    <td><b>Rebind</b> sur skeleton character</td>
+    <td>Lunettes, chapeaux (full skeleton export) ⭐</td>
+  </tr>
+</table>
+
+<div class="panel">
+  <h3>Pourquoi Type C est le meilleur</h3>
+  <p>Type C = full skeleton + mesh. Le mesh est lie aux bones du character, donc il <b>suit toutes les deformations</b> automatiquement (head rotation, blendshapes, etc.) sans avoir a choisir un bone parent.</p>
+  <p>Le rebind utilise les <code>_baseBoneInverses</code> du character (T-pose capturee au load), pas ceux du prop. Donc meme si le prop FBX a ete exporte avec une pose differente, le rebind est correct.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>3. 🎨 Export depuis Maya (Batch Prop Export)</h2>
+
+<div class="panel">
+  <ol>
+    <li>Ouvre la scene avec le Gloops skeleton</li>
+    <li>Selectionne les <b>meshes des props</b> dans le viewport</li>
+    <li>Dans <code>export_traits.py</code>, set :
+      <ul>
+        <li><b>Skeleton Root</b> = racine du skeleton</li>
+        <li><b>Target</b> = <code>fbx/ANIM/&lt;Category&gt;/PROPS/</code></li>
+      </ul>
+    </li>
+    <li>Clique <b>BATCH EXPORT PROPS</b> (bouton bleu)</li>
+    <li>→ Un FBX par mesh, nomme d'apres le mesh, contenant skeleton + mesh, sans animation</li>
+  </ol>
+  <p>⚠️ <b>Le nom du mesh dans Maya</b> doit correspondre exactement au <b>nom du FBX d'animation</b>.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>4. ⚙️ Offsets (rotation / position / scale)</h2>
+
+<p>Fichier <code>config/paired-offsets.json</code> — applique automatiquement a l'attach :</p>
+
+<pre>
+{
+    "Eyes/*":                { "rotation": [0, 0, -90] },
+    "Eyes/Pirate.fbx":       { "rotation": [0, 0, -90], "position": [0, 0.05, 0] },
+    "Horns/*":               { "rotation": [0, 0, 0] }
+}
+</pre>
+
+<ul>
+  <li><b>Wildcard</b> <code>Category/*</code> = s'applique a toute la categorie</li>
+  <li><b>Exact</b> <code>Category/file.fbx</code> = override pour un prop specifique (prioritaire)</li>
+  <li><b>Rotations</b> en degres (XYZ Euler), positions en unites monde, scale = nombre ou <code>[x,y,z]</code></li>
+  <li>Type A/B : offset sur le transform du node. Type C : <b>bake dans la geometry</b> (parce que le transform du mesh n'affecte pas les vertices skinnes)</li>
+</ul>
+
+<h3>Sliders live dans l'UI</h3>
+<div class="panel">
+  <p>Dans le panneau <b>Props → Paired Prop Offsets</b>, tu as des sliders pour Rotation X/Y/Z, Position X/Y/Z, Scale. Ils modifient l'offset en temps reel.</p>
+  <p>Bouton <b>📋 Copy JSON</b> → copie la ligne prete a coller dans <code>config/paired-offsets.json</code>.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>5. 🎨 Materiaux partages par categorie</h2>
+
+<p>Tous les props d'une categorie partagent les <b>memes materiaux</b>, identifies par leur nom :</p>
+
+<ul>
+  <li>13 lunettes Eyes → 2 entries dans MAT : <code>🔧 Eyes / Glass</code> et <code>🔧 Eyes / GlassStructure</code></li>
+  <li>Tu edites un shader une fois → toutes les variantes de lunettes sont mises a jour</li>
+  <li>Multi-material par face supporte (<code>geometry.groups</code> → un slot par materiau)</li>
+</ul>
+
+<!-- =============================================================== -->
+<h2>6. 📜 Script de scan</h2>
+
+<p>Apres chaque ajout/suppression de FBX dans un dossier <code>PROPS/</code>, relancer :</p>
+
+<pre>python scripts/build_props_manifest.py</pre>
+
+<p>→ Met a jour la section <code>pairedProps</code> dans <code>fbx/manifest.json</code>.</p>
+
+<div class="panel">
+  <h3>⚠️ Attention sync Google Drive</h3>
+  <p>Le <code>manifest.json</code> peut etre ecrase par la sync Google Drive si une ancienne version est remontee. Dans ce cas, relance le script et c'est repare.</p>
+</div>
+
+<!-- =============================================================== -->
+<h2>7. 👥 NPCs et props</h2>
+
+<p>Les NPCs sont clones du player via <code>SkeletonUtils.clone</code>, qui inclut <b>tous les enfants du modele</b>. Pour eviter que les NPCs heritent de tes lunettes :</p>
+
+<ul>
+  <li>A l'attach, chaque prop est tagge avec <code>userData.isPairedProp = true</code></li>
+  <li>Apres le clone, <code>NpcGloop._stripPairedProps()</code> walk le clone et supprime tout node tagge</li>
+  <li>→ Les NPCs spawnent toujours sans props</li>
+</ul>
+
+</body>
+</html>

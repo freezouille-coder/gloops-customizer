@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Gloops — NPCs Spéciaux</title>
+<style>
+  :root { --bg:#12141a; --panel:#1b1e27; --panel-2:#242836; --text:#e8e6df; --muted:#8a8a8a; --accent:#ffc75a; --danger:#ff4455; --friendly:#4a8a3a; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:40px 24px; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.55; max-width:1000px; margin-inline:auto; }
+  h1 { font-size:36px; margin:0 0 8px; color:var(--accent); }
+  h2 { font-size:22px; margin:36px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--panel-2); color:var(--accent); }
+  h3 { font-size:16px; margin:18px 0 6px; color:#fff; }
+  .lede { color:var(--muted); margin-bottom:24px; }
+  .panel { background:var(--panel); border-radius:10px; padding:16px 20px; margin:12px 0; border-left:4px solid var(--accent); }
+  .panel.danger { border-left-color:var(--danger); }
+  .panel.friendly { border-left-color:var(--friendly); }
+  pre { background:var(--panel); padding:14px; border-radius:8px; font-size:12px; line-height:1.6; overflow-x:auto; color:#ffd; }
+  code { font-family:'SF Mono',Menlo,monospace; font-size:13px; background:#0006; padding:1px 6px; border-radius:3px; color:#ffd; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; margin:12px 0; font-size:14px; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--panel-2); vertical-align:top; }
+  th { background:var(--panel-2); color:var(--accent); font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  tr:last-child td { border-bottom:none; }
+  .nav { margin:20px 0 32px; }
+  .nav a { color:var(--accent); text-decoration:none; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="nav"><a href="gloops-index.html">← Index de la doc</a></div>
+
+<h1>👥 NPCs Spéciaux</h1>
+<p class="lede">Gardes fixes, PNJ a missions (Papy Mush), marchands — tous les NPCs qui ne sont pas des wanderers generiques.</p>
+
+<!-- =============================================================== -->
+<h2>1. 🗂️ Les 3 categories de NPCs</h2>
+
+<table>
+  <tr><th>Categorie</th><th>Comportement</th><th>Config</th></tr>
+  <tr>
+    <td><b>Wanderer</b> (generique)</td>
+    <td>Spawn random dans une zone, wander, fuit le joueur en voiture, petits dialogues, ecrasable</td>
+    <td>Automatique (spawn aleatoire via <code>zone_spawn_*</code>)</td>
+  </tr>
+  <tr>
+    <td><b>Guard</b> (garde)</td>
+    <td>Fixe sur spawn, attaque le joueur si trop proche, poursuit un certain temps, retourne au spawn</td>
+    <td><code>config/world-entities.json → guards</code></td>
+  </tr>
+  <tr>
+    <td><b>Story NPC</b> (PNJ a missions)</td>
+    <td>Fixe, donne des quetes, anim idle, bubble <code>!</code> quand il a une quete</td>
+    <td><code>config/world-entities.json → story_npcs</code></td>
+  </tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>2. 🛡️ Gardes fixes</h2>
+
+<div class="panel danger">
+  <p><b>Concept :</b> un garde a un <b>spawn fixe</b> et attaque si le joueur s'approche trop. Utile pour les batiments sensibles (banque, casino, bordel, labo).</p>
+</div>
+
+<h3>Nommage Maya</h3>
+<p>Utilise un <b>locator</b> nomme selon ce pattern :</p>
+<pre>
+spawn_guard_&lt;type&gt;_&lt;lieu&gt;
+
+Exemples:
+  spawn_guard_security_bank
+  spawn_guard_bouncer_club
+  spawn_guard_cop_plaza
+  spawn_guard_doorman_casino
+  spawn_guard_labcoat_laboratory
+</pre>
+
+<h3>Config JSON</h3>
+<pre>
+// config/world-entities.json
+{
+    "guards": {
+        "spawn_guard_security_bank": {
+            "breed": "zogzog",
+            "attack_radius": 5,
+            "chase_range": 12,
+            "leash_range": 20,
+            "faction": "sugarheads",
+            "weapon": "club",
+            "health": 3,
+            "hat": "militar"
+        },
+        "spawn_guard_bouncer_club": {
+            "breed": "zogzog",
+            "attack_radius": 3,
+            "chase_range": 8,
+            "leash_range": 12,
+            "hat": "Hat_SmallDeamon"
+        },
+        "spawn_guard_cop_plaza": {
+            "breed": "salaryman",
+            "attack_radius": 4,
+            "chase_range": 15,
+            "leash_range": 25,
+            "hat": "Hat_Worker",
+            "chase_in_vehicle": true
+        }
+    }
+}
+</pre>
+
+<h3>Champs du garde</h3>
+<table>
+  <tr><th>Champ</th><th>Defaut</th><th>Role</th></tr>
+  <tr><td><code>breed</code></td><td>"zogzog"</td><td>Breed du gloop (voir <a href="gloops-system.html" style="color:var(--accent)">liste des breeds</a>)</td></tr>
+  <tr><td><code>attack_radius</code></td><td>5</td><td>Rayon en metres ou le garde se declenche</td></tr>
+  <tr><td><code>chase_range</code></td><td>12</td><td>Distance max de poursuite</td></tr>
+  <tr><td><code>leash_range</code></td><td>20</td><td>Au-dela, le garde abandonne et retourne au spawn</td></tr>
+  <tr><td><code>faction</code></td><td>"sugarheads"</td><td>Faction du garde (influence couleurs, ennemis)</td></tr>
+  <tr><td><code>hat</code></td><td>null</td><td>Horn animation a appliquer (<code>Hat_Worker</code>, <code>militar</code>...)</td></tr>
+  <tr><td><code>health</code></td><td>3</td><td>Nombre de hits avant d'etre KO</td></tr>
+  <tr><td><code>weapon</code></td><td>null</td><td>Prop arme si besoin (ex: <code>"club"</code>)</td></tr>
+  <tr><td><code>chase_in_vehicle</code></td><td>false</td><td>Si true, le garde spawn dans une voiture et poursuit</td></tr>
+</table>
+
+<h3>States du garde (FSM)</h3>
+<pre>
+IDLE          → reste au spawn, scan circulaire, petit swaggering
+   |
+   | player in attack_radius
+   v
+ALERT         → bubble ❗, fais face au joueur, 1s de warning
+   |
+   | still close after 1s
+   v
+CHASE         → court apres le joueur (anim run_panic ou run)
+   |
+   | (player within 1.5m)            (player > leash_range)
+   v                                  v
+ATTACK                              RETURN → retourne au spawn → IDLE
+   |
+   | (attack animation played)
+   v
+CHASE (loop)
+</pre>
+
+<!-- =============================================================== -->
+<h2>3. 🧙 Story NPCs (PNJ missions)</h2>
+
+<div class="panel friendly">
+  <p><b>Concept :</b> un personnage nomme, fixe, qui donne des quetes au joueur. Papy Mush, Le Maire, Miss Aveggies, etc.</p>
+</div>
+
+<h3>Nommage Maya</h3>
+<pre>
+spawn_story_&lt;nom&gt;_&lt;lieu&gt;
+
+Exemples:
+  spawn_story_papymush_garden
+  spawn_story_mayor_cityhall
+  spawn_story_miss_aveggies_farm
+  spawn_story_dealer_alley
+  spawn_story_scientist_laboratory
+</pre>
+
+<h3>Config JSON</h3>
+<pre>
+// config/world-entities.json
+{
+    "story_npcs": {
+        "spawn_story_papymush_garden": {
+            "breed": "mush",
+            "name": "Papy Mush",
+            "dialogue_key": "papymush_intro",
+            "missions": [
+                "deliver_carrot",
+                "collect_10_mushrooms",
+                "visit_shaman_temple"
+            ],
+            "hat": "magician",
+            "scale": 1.15,
+            "idle_anim": "01_peace.fbx",
+            "bubble_emoji": "🍄"
+        },
+        "spawn_story_mayor_cityhall": {
+            "breed": "corpo_suit",
+            "name": "Mayor Corpo",
+            "dialogue_key": "mayor_intro",
+            "missions": ["pay_taxes", "run_errand_for_industry"],
+            "hat": "Hat_Ceasar"
+        }
+    }
+}
+</pre>
+
+<h3>Champs du story NPC</h3>
+<table>
+  <tr><th>Champ</th><th>Role</th></tr>
+  <tr><td><code>breed</code></td><td>Breed du gloop</td></tr>
+  <tr><td><code>name</code></td><td>Nom affiche au-dessus de sa tete</td></tr>
+  <tr><td><code>dialogue_key</code></td><td>Cle dans <code>config/dialogues.json</code> pour le dialogue d'intro</td></tr>
+  <tr><td><code>missions</code></td><td>Liste des IDs de missions qu'il peut donner (dans l'ordre)</td></tr>
+  <tr><td><code>hat</code></td><td>Animation Horns appliquee au spawn</td></tr>
+  <tr><td><code>scale</code></td><td>Taille du gloop (1.0 = normal)</td></tr>
+  <tr><td><code>idle_anim</code></td><td>Animation emotion jouee en boucle</td></tr>
+  <tr><td><code>bubble_emoji</code></td><td>Emoji qui apparait au-dessus quand il a une quete disponible</td></tr>
+</table>
+
+<h3>Interaction</h3>
+<ol>
+  <li>Le joueur s'approche (dans rayon ~3m)</li>
+  <li>Bubble <code>!</code> (quete dispo) ou <code>?</code> (continue de parler) au-dessus</li>
+  <li>Touche <b>F</b> → lance le dialogue (lecture depuis <code>dialogues.json</code>)</li>
+  <li>Fin de dialogue → si mission disponible, elle est acceptee et un marker s'affiche sur la mini-map</li>
+</ol>
+
+<h3>Persistance</h3>
+<p>L'etat du story NPC (missions done, dialogue counter, etc.) est save dans <code>localStorage</code> via :</p>
+<pre>
+{
+    "story_state": {
+        "papymush_garden": {
+            "current_mission": "collect_10_mushrooms",
+            "missions_done": ["deliver_carrot"],
+            "dialogue_counter": 3
+        }
+    }
+}
+</pre>
+
+<!-- =============================================================== -->
+<h2>4. 🎯 Missions (data-driven)</h2>
+
+<p>Les missions sont definies dans <code>config/missions.json</code> (fichier a creer) :</p>
+
+<pre>
+{
+    "deliver_carrot": {
+        "title": "Une carotte pour Mush Junior",
+        "description": "Mon petit-fils veut une carotte de Miss Aveggies. Tu peux aller lui chercher?",
+        "giver": "papymush_garden",
+        "objectives": [
+            { "type": "interact", "target": "miss_aveggies_farm" },
+            { "type": "return_to", "target": "papymush_garden" }
+        ],
+        "reward": { "gc": 50, "xp": 10 }
+    },
+    "collect_10_mushrooms": {
+        "title": "Les champignons de la foret",
+        "description": "Cueille 10 champignons dans la foret sacree.",
+        "giver": "papymush_garden",
+        "objectives": [
+            { "type": "collect", "item": "mushroom", "count": 10 },
+            { "type": "return_to", "target": "papymush_garden" }
+        ],
+        "reward": { "gc": 100, "item": "shaman_recipe_01" }
+    }
+}
+</pre>
+
+<h3>Types d'objectifs</h3>
+<table>
+  <tr><th>Type</th><th>Params</th><th>Completion</th></tr>
+  <tr><td><code>interact</code></td><td><code>target</code></td><td>Le joueur presse F sur ce NPC/batiment</td></tr>
+  <tr><td><code>collect</code></td><td><code>item</code>, <code>count</code></td><td>Le joueur ramasse N items de ce type</td></tr>
+  <tr><td><code>kill</code></td><td><code>target</code>, <code>count</code></td><td>Le joueur tue N cibles (gardes, demons)</td></tr>
+  <tr><td><code>crush</code></td><td><code>count</code></td><td>Le joueur ecrase N NPCs en voiture (voie corrupted)</td></tr>
+  <tr><td><code>deliver</code></td><td><code>item</code>, <code>target</code></td><td>Aller porter un item a un NPC</td></tr>
+  <tr><td><code>return_to</code></td><td><code>target</code></td><td>Retourner voir le NPC donneur</td></tr>
+  <tr><td><code>reach</code></td><td><code>zone</code></td><td>Entrer dans une zone precise</td></tr>
+  <tr><td><code>wait</code></td><td><code>seconds</code></td><td>Timer d'attente (livraison dans 60s)</td></tr>
+</table>
+
+<!-- =============================================================== -->
+<h2>5. 🗺️ Zone de spawn aleatoire (wanderers)</h2>
+
+<div class="panel">
+  <p>Les NPCs generiques (non-fixes) spawnent dans des <b>zones</b>, pas sur des locators. Le spawner tire N NPCs aleatoirement dans chaque zone au boot.</p>
+</div>
+
+<h3>Nommage Maya</h3>
+<pre>
+zone_spawn_&lt;faction&gt;_&lt;lieu&gt;
+
+Exemples:
+  zone_spawn_aveggies_forest        ← forest biome → Bobo, Mush, NionNion
+  zone_spawn_aveggies_farm
+  zone_spawn_sugarheads_plaza       ← urban → SugarHead, CryptoBro, ZogZog
+  zone_spawn_sugarheads_industry
+  zone_spawn_neutral_station        ← Salary Man
+  zone_spawn_rebels_underground     ← Street Pirate
+  zone_spawn_mixed_downtown         ← toutes factions melangees
+</pre>
+
+<h3>Config (optionnel)</h3>
+<pre>
+// config/world-entities.json
+{
+    "spawn_zones": {
+        "zone_spawn_aveggies_forest": {
+            "count": 8,
+            "breed_weights": {
+                "bobo": 0.50,
+                "mush": 0.35,
+                "nionnion": 0.15
+            }
+        },
+        "zone_spawn_sugarheads_plaza": {
+            "count": 12,
+            "breed_weights": {
+                "sugarhead": 0.40,
+                "cryptobro": 0.25,
+                "zogzog": 0.15,
+                "salaryman": 0.20
+            }
+        }
+    }
+}
+</pre>
+
+<p>Si un <code>zone_spawn_*</code> n'a pas de config, le code utilise les defauts de la faction (<code>gloops-classes.json</code>).</p>
+
+<!-- =============================================================== -->
+<h2>6. ✅ Checklist workflow</h2>
+
+<div class="panel">
+  <h3>Ajouter un garde</h3>
+  <ol>
+    <li>Dans Maya, creer un locator <code>spawn_guard_&lt;type&gt;_&lt;lieu&gt;</code> a la position voulue</li>
+    <li>Le poser au sol (Y = hauteur terrain) dans le group <code>ZONES</code> ou <code>NPC_SPAWNS</code></li>
+    <li>Ajouter sa config dans <code>config/world-entities.json → guards</code></li>
+    <li>Exporter le FBX mis a jour → <code>fbx/WORLD/zones.fbx</code></li>
+    <li>Refresh → le garde apparait et se comporte selon sa config</li>
+  </ol>
+</div>
+
+<div class="panel">
+  <h3>Ajouter Papy Mush (ou autre story NPC)</h3>
+  <ol>
+    <li>Dans Maya, locator <code>spawn_story_&lt;nom&gt;_&lt;lieu&gt;</code></li>
+    <li>Config dans <code>world-entities.json → story_npcs</code></li>
+    <li>Ecrire le dialogue dans <code>config/dialogues.json</code> sous la cle <code>dialogue_key</code></li>
+    <li>(Optionnel) Ecrire les missions dans <code>config/missions.json</code></li>
+    <li>Exporter FBX + refresh</li>
+  </ol>
+</div>
+
+<div class="panel">
+  <h3>Ajouter un carrefour</h3>
+  <ol>
+    <li>Dans Maya, plane <code>zone_intersection_01</code> couvrant l'intersection</li>
+    <li>4 locators <code>trafficlight_north_01</code>, <code>_south_01</code>, <code>_east_01</code>, <code>_west_01</code></li>
+    <li>(Optionnel) Config du cycle dans <code>world-entities.json → intersections</code></li>
+    <li>Exporter FBX + refresh → feux visibles + voitures qui freinent au rouge</li>
+  </ol>
+</div>
+
+</body>
+</html>

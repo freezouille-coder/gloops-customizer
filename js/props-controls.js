@@ -9,27 +9,160 @@ export class PropsControls {
         this.container.innerHTML = '';
 
         const groups = this.pm.getCatalogByCategory();
-        const hasProps = Object.keys(groups).length > 0;
 
-        if (!hasProps) {
-            // Show file upload for custom props
-            this.container.appendChild(this._buildUploadSection());
-            return;
-        }
-
-        // Build catalog sections by category
+        // Build catalog sections by category (if any)
         for (const [category, props] of Object.entries(groups)) {
             this.container.appendChild(this._buildCategorySection(category, props));
         }
 
-        // Custom upload at the end
+        // Custom upload — always available
         this.container.appendChild(this._buildUploadSection());
 
-        // Active props controls
+        // Active props controls — always built so it can populate later
         const activeDiv = document.createElement('div');
         activeDiv.id = 'active-props-list';
         this.container.appendChild(activeDiv);
         this._rebuildActiveList();
+
+        // Paired props offset tweaker (auto-attached props from animations)
+        const pairedDiv = document.createElement('div');
+        pairedDiv.id = 'paired-props-tweaker';
+        this.container.appendChild(pairedDiv);
+        this._rebuildPairedTweaker();
+        this.pm.onPairedChange(() => this._rebuildPairedTweaker());
+    }
+
+    _rebuildPairedTweaker() {
+        const div = document.getElementById('paired-props-tweaker');
+        if (!div) return;
+        div.innerHTML = '';
+
+        const active = this.pm.getActivePaired ? this.pm.getActivePaired() : [];
+        if (active.length === 0) return;
+
+        const title = document.createElement('div');
+        title.className = 'mat-section-title';
+        title.textContent = 'Paired Prop Offsets';
+        title.style.paddingTop = '12px';
+        div.appendChild(title);
+
+        for (const entry of active) {
+            div.appendChild(this._buildOffsetCard(entry));
+        }
+    }
+
+    _buildOffsetCard(entry) {
+        const { propId, category, filename, type, offset } = entry;
+
+        const card = document.createElement('div');
+        card.className = 'mat-section';
+        card.style.padding = '8px';
+        card.style.marginTop = '6px';
+
+        const head = document.createElement('div');
+        head.className = 'gen-row';
+        head.innerHTML = `<span class="gen-label"><b>${category}/${filename.replace(/\.fbx$/i,'')}</b> <small style="color:#888">[Type ${type}]</small></span>`;
+        card.appendChild(head);
+
+        // Local mutable state
+        const state = {
+            rotation: [...(offset.rotation || [0, 0, 0])],
+            position: [...(offset.position || [0, 0, 0])],
+            scale:    typeof offset.scale === 'number'
+                ? offset.scale
+                : (Array.isArray(offset.scale) ? offset.scale[0] : 1),
+        };
+
+        const apply = () => {
+            this.pm.setPairedOffset(propId, {
+                rotation: state.rotation,
+                position: state.position,
+                scale:    state.scale,
+            });
+        };
+
+        const makeSlider = (label, min, max, step, value, onChange) => {
+            const row = document.createElement('div');
+            row.className = 'mat-row';
+            row.style.gap = '6px';
+            const lbl = document.createElement('span');
+            lbl.className = 'mat-label';
+            lbl.textContent = label;
+            lbl.style.minWidth = '24px';
+            const slider = document.createElement('input');
+            slider.type = 'range';
+            slider.min = min; slider.max = max; slider.step = step; slider.value = value;
+            slider.style.flex = '1';
+            const num = document.createElement('input');
+            num.type = 'number';
+            num.value = value; num.step = step; num.min = min; num.max = max;
+            num.style.width = '60px';
+            slider.addEventListener('input', () => {
+                num.value = slider.value;
+                onChange(parseFloat(slider.value));
+            });
+            num.addEventListener('input', () => {
+                slider.value = num.value;
+                onChange(parseFloat(num.value));
+            });
+            row.appendChild(lbl);
+            row.appendChild(slider);
+            row.appendChild(num);
+            return row;
+        };
+
+        // Rotation X / Y / Z (degrees)
+        const rotHead = document.createElement('div');
+        rotHead.style.cssText = 'font-size:11px;color:#aaa;margin-top:6px;';
+        rotHead.textContent = 'Rotation (deg)';
+        card.appendChild(rotHead);
+        ['X','Y','Z'].forEach((axis, i) => {
+            card.appendChild(makeSlider(axis, -180, 180, 1, state.rotation[i], (v) => {
+                state.rotation[i] = v; apply();
+            }));
+        });
+
+        // Position X / Y / Z
+        const posHead = document.createElement('div');
+        posHead.style.cssText = 'font-size:11px;color:#aaa;margin-top:6px;';
+        posHead.textContent = 'Position';
+        card.appendChild(posHead);
+        ['X','Y','Z'].forEach((axis, i) => {
+            card.appendChild(makeSlider(axis, -2, 2, 0.01, state.position[i], (v) => {
+                state.position[i] = v; apply();
+            }));
+        });
+
+        // Scale
+        const scHead = document.createElement('div');
+        scHead.style.cssText = 'font-size:11px;color:#aaa;margin-top:6px;';
+        scHead.textContent = 'Scale';
+        card.appendChild(scHead);
+        card.appendChild(makeSlider('S', 0.1, 3, 0.01, state.scale, (v) => {
+            state.scale = v; apply();
+        }));
+
+        // Copy JSON button — outputs the line ready to paste in paired-offsets.json
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'prop-select-btn';
+        copyBtn.style.marginTop = '8px';
+        copyBtn.textContent = '📋 Copy JSON for paired-offsets.json';
+        copyBtn.addEventListener('click', () => {
+            const obj = {
+                rotation: state.rotation.map((v) => +v.toFixed(2)),
+                position: state.position.map((v) => +v.toFixed(3)),
+                scale:    +state.scale.toFixed(3),
+            };
+            const line = `"${category}/${filename}": ${JSON.stringify(obj)}`;
+            navigator.clipboard.writeText(line).then(() => {
+                copyBtn.textContent = '✓ Copied!';
+                setTimeout(() => copyBtn.textContent = '📋 Copy JSON for paired-offsets.json', 1200);
+            });
+            console.log('[paired-offset]', line);
+        });
+        card.appendChild(copyBtn);
+
+        return card;
     }
 
     _buildCategorySection(category, props) {
